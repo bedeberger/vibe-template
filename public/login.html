@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login — vibe-template</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/layout/base.css">
+  <link rel="stylesheet" href="/css/components/card.css">
+</head>
+<body>
+  <main class="app-main">
+    <div class="card">
+      <h1>vibe-template</h1>
+      <!-- Dev bypass: only works when LOCAL_DEV_MODE=1 on the server. -->
+      <form method="POST" action="/auth/dev-login">
+        <button class="btn btn--primary" type="submit">Continue as Dev</button>
+      </form>
+      <p class="note-meta">oder</p>
+      <a class="btn" href="/auth/login">Sign in with OIDC</a>
+    </div>
+  </main>
+</body>
+</html>

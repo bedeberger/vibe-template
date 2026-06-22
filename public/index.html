@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>vibe-template</title>
+  <meta name="theme-color" content="#4f46e5">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+
+  <!-- Token facade first (cascade order = link order). -->
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/layout/base.css">
+  <link rel="stylesheet" href="/css/components/card.css">
+  <link rel="stylesheet" href="/css/entities/note.css">
+</head>
+<body>
+  <div class="app-shell" x-data="app" x-cloak>
+    <nav class="app-nav">
+      <h1 x-text="t('app.title')"></h1>
+
+      <template x-for="f in features" :key="f.id">
+        <button class="nav-item"
+                :aria-current="activeFeature === f.id ? 'page' : null"
+                @click="selectFeature(f.id)">
+          <span x-text="f.icon"></span>
+          <span x-text="t(f.labelKey)"></span>
+        </button>
+      </template>
+
+      <div class="app-foot">
+        <span x-text="user ? user.email : ''"></span><br>
+        <a href="/auth/logout">logout</a>
+      </div>
+    </nav>
+
+    <main class="app-main" @note-removed="removeNote($event.detail)">
+      <div class="card" x-show="sessionExpired" x-text="t('session.expired')"></div>
+
+      <p class="note-meta" x-show="!ready">…</p>
+
+      <!-- Notes feature view is injected from /partials/notes-view.html. -->
+      <section x-show="ready && activeFeature === 'notes'" data-partial="notes-view"></section>
+    </main>
+  </div>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

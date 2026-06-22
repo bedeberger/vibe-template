@@ -1,0 +1,35 @@
+{
+  "name": "vibe-template",
+  "version": "0.1.0",
+  "description": "Self-hosted SPA template — Node/Express + better-sqlite3 + Alpine.js (no build step). Facades, job queue, migrations, i18n, design tokens.",
+  "license": "MIT",
+  "main": "server.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20 <26"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "npm run test:unit && npm run test:integration && npm run test:e2e && npm run test:smoke",
+    "test:unit": "node --test \"tests/unit/*.test.js\" \"tests/unit/*.test.mjs\"",
+    "test:integration": "node --test --test-force-exit \"tests/integration/*.test.js\"",
+    "test:e2e": "playwright test",
+    "test:smoke": "playwright test --config=playwright.app.config.js",
+    "squash:check": "node --test \"tests/unit/squash-drift.test.mjs\""
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  },
+  "dependencies": {
+    "alpinejs": "^3.14.0",
+    "better-sqlite3": "^11.0.0",
+    "better-sqlite3-session-store": "^0.1.0",
+    "compression": "^1.7.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "express-session": "^1.18.0",
+    "helmet": "^8.0.0",
+    "openid-client": "^5.7.0",
+    "winston": "^3.17.0"
+  }
+}

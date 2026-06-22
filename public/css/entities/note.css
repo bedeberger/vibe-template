@@ -1,0 +1,25 @@
+/* Note-entity-specific styling. Entity CSS lives here, not mixed into the
+ * generic component layer. */
+
+@layer components {
+  .note-card .note-title { font-weight: var(--fw-bold); font-size: var(--fs-lg); }
+
+  .note-card .note-body {
+    white-space: pre-wrap;
+    color: var(--c-text);
+    margin: var(--sp-2) 0;
+  }
+
+  .note-card .note-meta {
+    font-size: var(--fs-sm);
+    color: var(--c-text-muted);
+  }
+
+  .note-card .note-stats {
+    font-size: var(--fs-sm);
+    color: var(--c-ok);
+    margin-top: var(--sp-2);
+  }
+
+  .note-actions { gap: var(--sp-2); margin-top: var(--sp-3); }
+}

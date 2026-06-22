@@ -1,0 +1,28 @@
+# Secrets & local config
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+
+# Local database (SQLite + WAL/SHM sidecars)
+app.db
+app.db-*
+*.sqlite
+*.sqlite-*
+
+# Logs
+*.log
+logs/
+
+# Vendored libs copied from node_modules at boot (regenerated, not committed)
+public/vendor/
+
+# Test artefacts
+test-results/
+playwright-report/
+tests/.tmp/
+
+# OS
+.DS_Store

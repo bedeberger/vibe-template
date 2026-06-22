@@ -1,0 +1,30 @@
+{
+  "app": {
+    "title": "vibe-template",
+    "subtitle": "Notes"
+  },
+  "nav": {
+    "notes": "Notes"
+  },
+  "session": {
+    "expired": "Session expired. Please sign in again — your input is kept."
+  },
+  "notebook": {
+    "label": "Notebook"
+  },
+  "notes": {
+    "newPlaceholder": "Title of the new note …",
+    "add": "Add",
+    "empty": "No notes yet. Create one above.",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "runStats": "Compute stats",
+    "stats": "{words} words, {chars} characters",
+    "created": "Created",
+    "updated": "Updated",
+    "titlePlaceholder": "Title",
+    "bodyPlaceholder": "Text …"
+  }
+}

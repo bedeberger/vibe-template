@@ -1,0 +1,30 @@
+{
+  "app": {
+    "title": "vibe-template",
+    "subtitle": "Notizen"
+  },
+  "nav": {
+    "notes": "Notizen"
+  },
+  "session": {
+    "expired": "Sitzung abgelaufen. Bitte neu anmelden — deine Eingaben bleiben erhalten."
+  },
+  "notebook": {
+    "label": "Notizbuch"
+  },
+  "notes": {
+    "newPlaceholder": "Titel der neuen Notiz …",
+    "add": "Hinzufügen",
+    "empty": "Noch keine Notizen. Lege oben eine an.",
+    "edit": "Bearbeiten",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "runStats": "Statistik berechnen",
+    "stats": "{words} Wörter, {chars} Zeichen",
+    "created": "Erstellt",
+    "updated": "Geändert",
+    "titlePlaceholder": "Titel",
+    "bodyPlaceholder": "Text …"
+  }
+}

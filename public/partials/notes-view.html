@@ -1,0 +1,53 @@
+<!-- Notes feature view. Loaded into the [data-partial="notes-view"] placeholder
+     in index.html. Runs inside the root `app` scope; cards are noteCard
+     sub-components. Keeping the markup here (one file) is the partial pattern;
+     extract further into smaller partials once it grows past the size limit. -->
+
+<div class="card">
+  <label class="note-meta" x-text="t('notebook.label')"></label>
+  <select class="field" x-model.number="currentNotebookId" @change="selectNotebook(currentNotebookId)">
+    <template x-for="nb in notebooks" :key="nb.id">
+      <option :value="nb.id" x-text="nb.name"></option>
+    </template>
+  </select>
+
+  <div class="row">
+    <input class="field" type="text" x-model="newNoteTitle"
+           :placeholder="t('notes.newPlaceholder')" @keydown.enter="addNote()">
+    <button class="btn btn--primary" @click="addNote()" x-text="t('notes.add')"></button>
+  </div>
+</div>
+
+<p class="note-meta" x-show="!notes.length" x-text="t('notes.empty')"></p>
+
+<template x-for="note in notes" :key="note.id">
+  <div class="card note-card" x-data="noteCard(note)">
+    <template x-if="!editing">
+      <div>
+        <div class="note-title" x-text="note.title"></div>
+        <!-- x-html sink: bodyHtml is escaped in note-card.js (escape invariant). -->
+        <div class="note-body" x-html="bodyHtml"></div>
+        <div class="note-meta">
+          <span x-text="t('notes.updated')"></span>: <span x-text="fmt(note.updated_at)"></span>
+        </div>
+        <div class="note-stats" x-show="stats" x-text="stats ? t('notes.stats', stats) : ''"></div>
+        <div class="row note-actions">
+          <button class="btn" @click="startEdit()" :disabled="busy" x-text="t('notes.edit')"></button>
+          <button class="btn" @click="runStats()" :disabled="busy" x-text="t('notes.runStats')"></button>
+          <button class="btn btn--danger" @click="remove()" :disabled="busy" x-text="t('notes.delete')"></button>
+        </div>
+      </div>
+    </template>
+
+    <template x-if="editing">
+      <div>
+        <input class="field" type="text" x-model="draftTitle" :placeholder="t('notes.titlePlaceholder')">
+        <textarea class="field" x-model="draftBody" :placeholder="t('notes.bodyPlaceholder')"></textarea>
+        <div class="row note-actions">
+          <button class="btn btn--primary" @click="save()" :disabled="busy" x-text="t('notes.save')"></button>
+          <button class="btn" @click="editing = false" x-text="t('notes.cancel')"></button>
+        </div>
+      </div>
+    </template>
+  </div>
+</template>

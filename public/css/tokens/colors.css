@@ -1,0 +1,30 @@
+/* Color tokens. Light defaults + dark override via prefers-color-scheme.
+ * Components consume these custom properties — never raw hex values. */
+
+:root {
+  --c-bg:          #f7f7f8;
+  --c-surface:     #ffffff;
+  --c-surface-2:   #f0f0f3;
+  --c-border:      #d9d9e0;
+  --c-text:        #1a1a1f;
+  --c-text-muted:  #6b6b76;
+  --c-accent:      #4f46e5;
+  --c-accent-text: #ffffff;
+  --c-danger:      #c0392b;
+  --c-ok:          #2e7d52;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --c-bg:          #16161a;
+    --c-surface:     #1e1e24;
+    --c-surface-2:   #26262e;
+    --c-border:      #34343e;
+    --c-text:        #ececed;
+    --c-text-muted:  #9a9aa6;
+    --c-accent:      #8b86f5;
+    --c-accent-text: #16161a;
+    --c-danger:      #e57373;
+    --c-ok:          #6fcf97;
+  }
+}

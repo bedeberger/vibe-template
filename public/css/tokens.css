@@ -1,0 +1,15 @@
+/* Token facade + cascade layer order. This is the single file index.html links
+ * for tokens; it @imports the individual token modules. Add a new token to the
+ * matching module in css/tokens/ — no extra <link> needed.
+ *
+ * Layer order is declared once here. Tokens themselves stay UNLAYERED so the
+ * custom properties are globally available regardless of layer.
+ * See CLAUDE.md → Harte Regeln: "Styles nur in public/css/". */
+
+@layer base, components, utilities;
+
+@import url('/css/tokens/colors.css');
+@import url('/css/tokens/spacing.css');
+@import url('/css/tokens/type.css');
+@import url('/css/tokens/motion.css');
+@import url('/css/tokens/z-index.css');

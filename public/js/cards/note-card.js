@@ -1,0 +1,75 @@
+// Note card — an Alpine sub-component. Each note in the list is its own
+// instance via x-data="noteCard(note)". The root scope owns navigation/session;
+// cards own their local edit + job state.
+
+import { api, escHtml, formatDate } from '../utils.js';
+import { t } from '../i18n.js';
+
+export function noteCard(note) {
+  return {
+    note,
+    editing: false,
+    draftTitle: note.title,
+    draftBody: note.body,
+    stats: null,
+    busy: false,
+
+    t,
+    fmt: formatDate,
+
+    // x-html sink → content is escaped here (escape invariant).
+    get bodyHtml() {
+      return escHtml(this.note.body).replace(/\n/g, '<br>');
+    },
+
+    startEdit() {
+      this.draftTitle = this.note.title;
+      this.draftBody = this.note.body;
+      this.editing = true;
+    },
+
+    async save() {
+      this.busy = true;
+      try {
+        const updated = await api(`/api/notes/${this.note.id}`, {
+          method: 'PATCH',
+          body: { title: this.draftTitle, body: this.draftBody },
+        });
+        this.note = updated;
+        this.editing = false;
+      } finally {
+        this.busy = false;
+      }
+    },
+
+    async remove() {
+      this.busy = true;
+      try {
+        await api(`/api/notes/${this.note.id}`, { method: 'DELETE' });
+        this.$dispatch('note-removed', this.note.id);
+      } finally {
+        this.busy = false;
+      }
+    },
+
+    // Enqueue the example background job and poll until it settles.
+    async runStats() {
+      this.busy = true;
+      this.stats = null;
+      try {
+        let job = await api('/api/jobs', {
+          method: 'POST',
+          body: { note_id: this.note.id, type: 'note-stats' },
+        });
+        while (job.status === 'queued' || job.status === 'running') {
+          await new Promise((r) => setTimeout(r, 200));
+          job = await api(`/api/jobs/${job.id}`);
+        }
+        if (job.status === 'done') this.stats = JSON.parse(job.result_json);
+        else throw new Error(job.status_text || 'job failed');
+      } finally {
+        this.busy = false;
+      }
+    },
+  };
+}
