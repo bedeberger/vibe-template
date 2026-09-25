@@ -90,9 +90,6 @@ async function boot() {
   Alpine.data('noteCard', noteCard);
   window.Alpine = Alpine;
   Alpine.start();
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch((e) => console.warn('[sw]', e));
-  }
 }
 
 boot();
