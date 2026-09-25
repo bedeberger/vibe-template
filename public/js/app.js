@@ -1,16 +1,21 @@
 // Frontend entry point. No build step: Alpine is imported as an ESM module
-// (committed under public/vendor/), so we control start order — partials
-// are injected first, components registered, then Alpine.start().
+// (committed under public/vendor/), so we control start order — i18n first,
+// then all components (js/app/register-cards.js), then Alpine.start().
+//
+// The root scope is the SHELL: session, navigation, routing. Each feature is a
+// card of its own (js/cards/<id>-card.js) whose partial is loaded on first
+// open (js/app/feature-host.js). Anatomy: DESIGN.md → "Feature anatomy".
 
 import Alpine from '/vendor/alpine-3.15.12.esm.min.js';
 import { initialState } from '/js/app/app-state.js';
-import { FEATURES } from '/js/app/features.js';
+import { FEATURES, DEFAULT_FEATURE, findFeature } from '/js/app/features.js';
+import { ensurePartial } from '/js/app/feature-host.js';
+import { setupRouting, hashFor } from '/js/app/router.js';
+import { registerCards } from '/js/app/register-cards.js';
+import { EVT } from '/js/events.js';
 import { configureI18n, t } from '/js/i18n.js';
 import { api, setTimezone, formatDate } from '/js/utils.js';
-import { noteCard } from '/js/cards/note-card.js';
 
-// Root scope: navigation, session, i18n, and the notes data the active view
-// needs. Cards are separate sub-components (cards/note-card.js).
 function appRoot() {
   return {
     ...initialState(),
@@ -19,75 +24,52 @@ function appRoot() {
     fmt: formatDate,
 
     async init() {
-      // Global 401 handler — show a banner instead of redirecting, so unsaved
-      // input can be rescued. See CLAUDE.md → Harte Regeln: 401-Handling.
-      window.addEventListener('session-expired', () => { this.sessionExpired = true; });
+      window.__app = this; // for cards' JS ($app in templates)
+      // Global 401 handler — banner instead of redirect, so unsaved input can
+      // be rescued (public/CLAUDE.md → api()).
+      window.addEventListener(EVT.SESSION_EXPIRED, () => { this.sessionExpired = true; });
       try {
         const cfg = await api('/api/config');
         setTimezone(cfg.timezone);
         this.user = await api('/api/me');
-        await this.loadNotebooks();
       } catch (e) {
         console.error('[app] init failed', e);
       } finally {
         this.ready = true;
       }
+      // Hosts are rendered by x-for — wait one tick, then route (#hash or default).
+      await this.$nextTick();
+      setupRouting(this, { isKnown: (id) => !!findFeature(id), fallback: DEFAULT_FEATURE });
     },
 
-    selectFeature(id) { this.activeFeature = id; },
-
-    async loadNotebooks() {
-      this.notebooks = await api('/api/notebooks');
-      if (this.notebooks.length) await this.selectNotebook(this.notebooks[0].id);
-    },
-
-    async selectNotebook(id) {
-      this.currentNotebookId = id;
-      await this.loadNotes();
-    },
-
-    async loadNotes() {
-      this.notes = this.currentNotebookId
-        ? await api(`/api/notes?notebook_id=${this.currentNotebookId}`)
-        : [];
-    },
-
-    async addNote() {
-      const title = this.newNoteTitle.trim();
-      if (!title || !this.currentNotebookId) return;
-      const note = await api('/api/notes', {
-        method: 'POST',
-        body: { notebook_id: this.currentNotebookId, title, body: '' },
-      });
-      this.notes.unshift(note);
-      this.newNoteTitle = '';
-    },
-
-    // Listens for the card's note-removed event.
-    removeNote(id) {
-      this.notes = this.notes.filter((n) => n.id !== id);
+    // The ONE way to switch features (nav click, hash, code). Exclusive: one
+    // feature visible at a time. Re-click on the active one = refresh.
+    async openFeature(id, sub = '', { fromHash = false } = {}) {
+      const feature = findFeature(id);
+      if (!feature) return;
+      if (!fromHash && id === this.activeFeature && sub === this.featureSub) {
+        window.dispatchEvent(new CustomEvent(EVT.CARD_REFRESH, { detail: { id } }));
+        return;
+      }
+      try {
+        await ensurePartial(feature);
+      } catch (e) {
+        console.error(`[app] feature ${id} failed to load`, e);
+        return;
+      }
+      this.activeFeature = id;
+      this.featureSub = sub;
+      const hash = hashFor(id, sub);
+      if (location.hash !== hash) history.replaceState(null, '', hash);
     },
   };
 }
 
-// Replace <div data-partial="name"> placeholders with /partials/name.html before
-// Alpine processes the tree. Keeps shared markup in one file (the partial).
-async function loadPartials() {
-  const els = [...document.querySelectorAll('[data-partial]')];
-  await Promise.all(
-    els.map(async (el) => {
-      const r = await fetch(`/partials/${el.dataset.partial}.html`);
-      el.innerHTML = await r.text();
-    })
-  );
-}
-
 async function boot() {
-  // Load i18n + partials BEFORE Alpine starts, so the first render already has
-  // translated strings (t() is resolved once, not reactively).
-  await Promise.all([configureI18n('de'), loadPartials()]);
+  // i18n BEFORE Alpine starts: the first render already has translated strings.
+  await configureI18n('de');
+  registerCards(Alpine);
   Alpine.data('app', appRoot);
-  Alpine.data('noteCard', noteCard);
   window.Alpine = Alpine;
   Alpine.start();
 }

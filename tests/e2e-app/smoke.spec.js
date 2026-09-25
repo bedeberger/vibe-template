@@ -27,6 +27,36 @@ test('every registry feature opens without console errors', async ({ page }) => 
   for (const [i, f] of features.entries()) {
     await page.locator('.nav-item').nth(i).click();
     await expect(page.locator('.nav-item').nth(i)).toHaveAttribute('aria-current', 'page');
-    await expect(page.locator(`section[data-partial="${f.view}-view"]`), `view of feature ${f.id}`).toBeVisible();
+    const host = page.locator(`section[data-feature="${f.id}"]`);
+    await expect(host, `host of feature ${f.id}`).toBeVisible();
+    // The lazily loaded partial mounted its feature card.
+    await expect(host.locator(`[x-data="${f.card}"]`), `card ${f.card} of feature ${f.id}`).toHaveCount(1);
+    await expect(page).toHaveURL(new RegExp(`#${f.id}$`));
   }
+});
+
+test('a deep link opens its feature directly', async ({ page }) => {
+  const features = await (async () => { await page.goto('/'); return page.evaluate(async () => (await import('/js/app/features.js')).FEATURES); })();
+  const last = features.at(-1);
+  await page.goto(`/#${last.id}`);
+  await expect(page.locator(`section[data-feature="${last.id}"] [x-data="${last.card}"]`)).toHaveCount(1);
+  await expect(page.locator('.nav-item[aria-current="page"]')).toHaveCount(1);
+});
+
+// Phone width: every feature opens without horizontal overflow — the most
+// common silent mobile break (a fixed px width, a table without scroll box).
+// The DoD Stop hook names this spec as the phone-viewport coverage.
+test.describe('phone viewport', () => {
+  test.use({ viewport: { width: 360, height: 780 } });
+
+  test('every registry feature fits 360px without horizontal scroll', async ({ page }) => {
+    await bootApp(page);
+    const features = await page.evaluate(async () => (await import('/js/app/features.js')).FEATURES);
+    for (const [i, f] of features.entries()) {
+      await page.locator('.nav-item').nth(i).click();
+      await expect(page.locator(`section[data-feature="${f.id}"] [x-data="${f.card}"]`)).toHaveCount(1);
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      expect(overflow, `feature ${f.id} overflows by ${overflow}px at 360px`).toBeLessThanOrEqual(0);
+    }
+  });
 });

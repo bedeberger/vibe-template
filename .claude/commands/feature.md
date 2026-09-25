@@ -1,7 +1,7 @@
 ---
 description: Neues Feature nach dem CLAUDE.md-Rezept anlegen (Registry/i18n/Facade/Job/Migration/Karte/Tests)
 argument-hint: "[Feature-Beschreibung]"
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash(npm run test:unit:*), Bash(npm run test:integration:*), Bash(npm run test:e2e:*), Bash(npm run test:smoke:*), Bash(npm run squash:check:*), Bash(npm run migrations:lock:*), Bash(git status:*), Bash(git diff:*)
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash(npm run feature:new:*), Bash(npm run test:unit:*), Bash(npm run test:integration:*), Bash(npm run test:e2e:*), Bash(npm run test:smoke:*), Bash(npm run squash:check:*), Bash(npm run migrations:lock:*), Bash(git status:*), Bash(git diff:*)
 ---
 
 Du legst ein neues Feature an: **$ARGUMENTS**
@@ -14,7 +14,7 @@ Bestimme (bei Unklarheit **nachfragen**, nicht raten):
 - **Neue Domäne / neue Daten?** → Teil A (DB-Modul + Facade + Routes).
 - **Schema-Änderung?** → erst `/migration` ausführen (oder dessen Schritte), dann hier weiter.
 - **Langläufer?** Alles, was einen Request spürbar blockieren würde (Import, Export, Batch, externer Call, später KI), läuft als Job (Harte Regel „Langläufer nur via Job-Queue"). → Teil B.
-- **Eigene UI?** Neue Ansicht in der Navigation und/oder neue Karte. → Teil C.
+- **Eigene UI?** Ein **neuer Navigationseintrag** → Teil C (Generator). Nur eine **Karte in einem bestehenden Feature** → nicht hier, sondern `/karte`.
 
 ## Teil A — Backend (Daten)
 
@@ -30,15 +30,21 @@ Bestimme (bei Unklarheit **nachfragen**, nicht raten):
 3. Statustexte/Labels als i18n-Keys (`job.xxx`), nicht als fertiger Text.
 4. Den Log-Kontext `[job|…|entity|jobId]` setzt die Queue selbst (`runWithContext` in [routes/jobs/shared/queue.js](routes/jobs/shared/queue.js)) — im Runner nichts nachbauen, nur bei Bedarf per `setContext` ergänzen.
 
-## Teil C — Frontend
+## Teil C — Frontend (neues Feature in der Navigation)
 
-**Vor neuer UI: [DESIGN.md](DESIGN.md)-Pattern-Katalog prüfen** — wiederverwenden, nicht neu erfinden. Fehlt das Pattern: erst dort dokumentieren (Markup + CSS-Datei + Use-Case), dann bauen.
+**Vor neuer UI: [DESIGN.md](DESIGN.md)-Pattern-Katalog prüfen** — wiederverwenden, nicht neu erfinden. Fehlt das Pattern: erst dort dokumentieren (Markup + CSS-Datei + Use-Case), dann bauen. Die Struktur eines Features ist **fest** (DESIGN.md → „Feature anatomy") und wird **generiert, nicht von Hand gebaut**:
 
-1. **Registry:** Eintrag in [public/js/app/features.js](public/js/app/features.js) (`id`, `icon`, `labelKey`, `view`) — die Navigation rendert sich daraus. Keine handgepflegte Nav-Liste.
-2. **Ansicht** als Partial `public/partials/<view>.html` + `<section data-partial="<view>">` in [public/index.html](public/index.html).
-3. **Karten** als `Alpine.data`-Sub-Komponente unter `public/js/cards/<name>-card.js` (Muster: [note-card.js](public/js/cards/note-card.js)), in [public/js/app.js](public/js/app.js) registrieren. State **explizit** als Initial-Felder deklarieren (kein lazy `this._x`); Root-State in [app-state.js](public/js/app/app-state.js).
-4. **`x-html` nur mit `escHtml()`-vorescaptem Content** ([public/js/utils.js](public/js/utils.js)).
-5. **Styles:** nur in `public/css/` (kein Inline-`style`, kein `<style>`), Werte nur aus Tokens. Entity-CSS unter `public/css/entities/`, neue Datei als `<link>` in index.html + Zeile im CSS-Inventar von DESIGN.md.
+1. **Generieren:**
+   ```bash
+   npm run feature:new -- <id> --label-de "…" --label-en "…" --icon <sprite-id>
+   ```
+   `<id>` kebab-case (Hash-Route + Dateistamm), das Icon muss im Sprite stehen (DESIGN.md → Icon system). Erst mit `--dry-run` den Plan zeigen lassen. Das legt an: Feature-Karte `public/js/cards/<id>-card.js`, Fachmodul `public/js/<id>/<id>-methods.js`, Partial `public/partials/<id>.html`, `public/css/entities/<id>.css`, Harness + Spec — und trägt ein: `FEATURES`, Karten-Inventar `register-cards.js`, `<link>` in index.html + allen Harnesses, DESIGN.md-Inventar, i18n `nav.<id>` / `<id>.title` / `<id>.empty` in **beiden** Locales.
+2. **Fachlogik** ins Fachmodul (`<id>Methods`, `this` = die Karte): API-Calls über `api()`, reine Berechnungen als eigene Exporte (unit-testbar). **Jedes Feld, das dort zugewiesen wird, als Initialfeld in der Karte deklarieren** (Gate `architecture-tripwire`).
+3. **Karte** (`cards/<id>-card.js`): State ergänzen, `setupCardLifecycle`-Konfiguration anpassen (`load`, `resetState`, `timerKeys`, ggf. `reloadOnReopen: false`). Root-Felder im Template über `$app.…`, im JS über `window.__app` — **nie** Feature-Daten in den Root.
+4. **Partial** ausbauen: Wurzel bleibt `x-data="<id>Card"`; Listeneinträge als eigene Sub-Komponente (`<entity>ItemCard`, Muster [note-item-card.js](public/js/cards/note-item-card.js)), Rückmeldung per DOM-Event. > 250 LOC → Teil-Partials unter `partials/<id>/` per `data-partial`.
+5. **Sub-Route** nötig (`#<id>/<sub>`)? Die Karte liest `$app.featureSub`, **validiert** ihn und besitzt den Fallback.
+6. **CSS** nur in `css/entities/<id>.css` und nur die Abweichung vom Karten-Vokabular.
+7. **`x-html` nur mit `escHtml()`-vorescaptem Content** ([public/js/utils.js](public/js/utils.js)).
 
 ## Querschnitt (immer)
 
@@ -48,10 +54,11 @@ Bestimme (bei Unklarheit **nachfragen**, nicht raten):
 
 ## Tests
 
-- **Unit** für die Facade (Muster: [tests/unit/note-store.test.js](tests/unit/note-store.test.js) — eigene Temp-DB via `DB_PATH` **vor** dem ersten `require`).
-- **Integration** für die API (Muster: [tests/integration/notes-api.test.js](tests/integration/notes-api.test.js)).
-- **E2E/Smoke**, sobald UI dazukommt — der Smoke-Test ist die einzige Schicht, die verschluckte Alpine-Template-Fehler sichtbar macht. Neue Nav-Einträge: erwartete Anzahl in [tests/smoke/app-boots.spec.js](tests/smoke/app-boots.spec.js) nachziehen.
-- Abschluss: `npm run test:unit` + `npm run test:integration` grün; bei UI zusätzlich `npm run test:e2e` + `npm run test:smoke`.
+- **Unit** für die Facade (Muster: [tests/unit/note-store.test.js](tests/unit/note-store.test.js) — eigene Temp-DB via `DB_PATH` **vor** dem ersten `require`) und für reine Funktionen des Fachmoduls.
+- **Integration** für die API (Muster: [tests/integration/notes-api.test.js](tests/integration/notes-api.test.js), Bootstrap `_helpers/setup.js`).
+- **Harness-Spec** `tests/e2e/<id>-card.spec.js` (vom Generator angelegt) ausbauen: die Mock-Routen der Karte in [tests/server.js](tests/server.js) ergänzen, Verhalten prüfen (Muster: [notes-card.spec.js](tests/e2e/notes-card.spec.js)).
+- **Smoke:** [tests/e2e-app/smoke.spec.js](tests/e2e-app/smoke.spec.js) liest die Registry selbst — das neue Feature ist automatisch dabei (öffnen, Karte gemountet, Hash-Route, Deep-Link).
+- Abschluss: `npm run test:unit` + `npm run test:integration` + `npm run test:e2e` + `npm run test:smoke` grün.
 
 ## Abschluss
 

@@ -28,49 +28,17 @@
   <link rel="stylesheet" href="/css/components/confirm-dialog.css">
   <link rel="stylesheet" href="/css/components/danger-zone.css">
   <link rel="stylesheet" href="/css/components/job-toast.css">
-  <link rel="stylesheet" href="/css/entities/note.css">
+  <link rel="stylesheet" href="/css/entities/notes.css">
 </head>
 <body>
-  <!-- Fixture harness: the REAL notes partial + the REAL noteCard component,
-       mounted under a stub root scope, against the mock API of tests/server.js.
-       Faster and more isolated than the full app (tests/e2e-app/). -->
-  <main x-data="harness" @note-removed="removeNote($event.detail)">
-    <section data-partial="notes-view"></section>
+  <!-- Fixture harness for the notes feature: the REAL card + partial, mounted by
+       tests/fixtures/_harness.js against the mock API of tests/server.js. -->
+  <main class="layout-main" x-data="harnessRoot">
+    <section data-feature="notes"></section>
   </main>
-
   <script type="module">
-    import Alpine from '/vendor/alpine-3.15.12.esm.min.js';
-    import { configureI18n, t } from '/js/i18n.js';
-    import { formatDate } from '/js/utils.js';
-    import { noteCard } from '/js/cards/note-card.js';
-
-    // Stub root: exactly the fields/methods notes-view.html reads from the app
-    // root. Seed data is overridable via window.__harnessNotes before load.
-    const notes = window.__harnessNotes || [
-      { id: 1, notebook_id: 1, title: 'Erste', body: 'Hallo <b>Welt</b>', updated_at: '2026-01-01T09:00:00.000Z' },
-      { id: 2, notebook_id: 1, title: 'Zweite', body: '', updated_at: '2026-01-01T09:30:00.000Z' },
-    ];
-    function harness() {
-      return {
-        t, fmt: formatDate,
-        notebooks: [{ id: 1, name: 'Harness' }],
-        currentNotebookId: 1,
-        notes,
-        newNoteTitle: '',
-        selectNotebook() {},
-        addNote() {},
-        removeNote(id) { this.notes = this.notes.filter((n) => n.id !== id); },
-      };
-    }
-
-    const el = document.querySelector('[data-partial="notes-view"]');
-    await configureI18n('de');
-    el.innerHTML = await (await fetch('/partials/notes-view.html')).text();
-    Alpine.data('harness', harness);
-    Alpine.data('noteCard', noteCard);
-    window.Alpine = Alpine;
-    Alpine.start();
-    window.__harnessReady = true;
+    import { mountFeature } from '/tests/fixtures/_harness.js';
+    mountFeature('notes');
   </script>
 </body>
 </html>

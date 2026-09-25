@@ -20,9 +20,7 @@ const de = flattenKeys(JSON.parse(read(localeFile('de'))));
 
 // Keys that exist on purpose without a current consumer. Ratchet: remove the
 // entry once the key is used (or deleted). One-line reason each.
-const ALLOW_UNUSED = new Set([
-  'notes.created', // example string for a "created at" line; not rendered by the note card yet
-]);
+const ALLOW_UNUSED = new Set([]);
 
 const KEY_RE = /(?:\bt(?:Raw)?\(\s*|\blabelKey\s*:\s*)'([a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)+)'/g;
 

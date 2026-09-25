@@ -92,3 +92,23 @@ test('SessionStart liefert valides JSON; Stop-Hook respektiert stop_hook_active'
   const stop = run('stop-run-unit-tests.js', { stop_hook_active: true });
   assert.deepEqual([stop.code, stop.out, stop.err], [0, '', '']);
 });
+
+test('prompt-disambiguation: leere Tabelle schweigt, der Mechanismus greift', () => {
+  const r = run('prompt-disambiguation.js', { prompt: 'fix the editor' });
+  assert.equal(r.code, 0);
+  assert.equal(r.out, '', 'mit leerer CATEGORIES-Tabelle muss der Hook schweigen');
+  assert.equal(run('prompt-disambiguation.js', 'kein json').code, 0);
+  const { hintsFor } = require('../../scripts/hooks/prompt-disambiguation.js');
+  const cats = [{ key: 'editor', generic: [/\beditor\b/i], specifiers: [/\bfocus\b/i], hint: 'EDITOR?' }];
+  assert.deepEqual(hintsFor('fix the editor', cats), ['• EDITOR?']);
+  assert.deepEqual(hintsFor('fix the editor in focus mode', cats), [], 'ein Spezifizierer macht den Hinweis still');
+  assert.deepEqual(hintsFor('fix the bookeditor', cats), [], '\\b trifft nicht innerhalb eines Worts');
+});
+
+test('session-stop-check: ohne Transcript/kaputtes JSON sauber still', () => {
+  for (const payload of ['kein json', {}, { session_id: 'x', transcript_path: '/does/not/exist' }]) {
+    const r = run('session-stop-check.js', payload);
+    assert.equal(r.code, 0);
+    assert.equal(r.out, '');
+  }
+});

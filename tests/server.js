@@ -29,8 +29,15 @@ const MIME = {
 // A job answers "running" on its first poll and "done" afterwards, so the
 // frontend's poll loop runs through a real state transition.
 let state;
+// Seed the harness sees on every reset: one note with markup in its body (the
+// escape invariant), one empty. Two notebooks so switching can be tested.
+const SEED_NOTES = () => [
+  { id: 1, notebook_id: 1, title: 'Erste', body: 'Hallo <b>Welt</b>', updated_at: '2026-01-01T09:30:00.000Z' },
+  { id: 2, notebook_id: 1, title: 'Zweite', body: '', updated_at: '2026-01-01T09:00:00.000Z' },
+  { id: 3, notebook_id: 2, title: 'Anderes Buch', body: 'x', updated_at: '2026-01-01T08:00:00.000Z' },
+];
 function reset() {
-  state = { patches: [], deletes: [], jobs: new Map(), jobSeq: 0 };
+  state = { notes: SEED_NOTES(), noteSeq: 100, patches: [], deletes: [], creates: [], jobs: new Map(), jobSeq: 0 };
 }
 reset();
 
@@ -53,7 +60,21 @@ async function handleMock(req, res, url) {
   let m;
   if (url === '/__mock/reset' && req.method === 'POST') { reset(); return json(res, 200, {}), true; }
   if (url === '/__mock/state' && req.method === 'GET') {
-    return json(res, 200, { patches: state.patches, deletes: state.deletes, jobs: state.jobs.size }), true;
+    return json(res, 200, { patches: state.patches, deletes: state.deletes, creates: state.creates, jobs: state.jobs.size }), true;
+  }
+  if (url === '/api/notebooks' && req.method === 'GET') {
+    return json(res, 200, [{ id: 1, name: 'Harness' }, { id: 2, name: 'Zweites' }]), true;
+  }
+  if (url === '/api/notes' && req.method === 'GET') {
+    const nb = Number(new URLSearchParams(req.url.split('?')[1] || '').get('notebook_id'));
+    return json(res, 200, state.notes.filter((n) => n.notebook_id === nb)), true;
+  }
+  if (url === '/api/notes' && req.method === 'POST') {
+    const body = await readBody(req);
+    const note = { id: ++state.noteSeq, updated_at: '2026-01-02T10:00:00.000Z', ...body };
+    state.notes.push(note);
+    state.creates.push(note);
+    return json(res, 201, note), true;
   }
   if ((m = url.match(/^\/api\/notes\/(\d+)$/))) {
     const id = Number(m[1]);

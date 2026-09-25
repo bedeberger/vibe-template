@@ -67,13 +67,23 @@ test('State explizit: jedes this.x = … ist vorab deklariert', () => {
   assert.ok(rootKeys.size > 3, 'app-state.js: keine Felder erkannt — Scan kaputt?');
   const violations = [];
   let assignments = 0;
-  for (const f of walk('public/js', JS).map(toRel)) {
+  const files = walk('public/js', JS).map(toRel);
+  const declaredIn = (code) => [
+    ...[...code.matchAll(/^\s*([A-Za-z_]\w*)\s*:/gm)].map((m) => m[1]),
+    ...[...code.matchAll(/^\s*([A-Za-z_]\w*)\s*,\s*$/gm)].map((m) => m[1]), // shorthand `note,`
+    ...[...code.matchAll(/^\s*(?:async\s+|get\s+|set\s+)?([A-Za-z_]\w*)\s*\([^)]*\)\s*\{/gm)].map((m) => m[1]),
+  ];
+  // A domain module (public/js/<feature>/…, `export const xxxMethods`) is spread
+  // into its feature card: `this` is the CARD, so its fields count as declared
+  // if the importing card declares them (DESIGN.md → Feature anatomy).
+  const importersOf = (f) => files.filter((g) => g !== f
+    && new RegExp(`from\\s+['"][./]*[^'"]*/${f.split('/').pop().replace(/\./g, '\\.')}['"]`).test(read(g)));
+  for (const f of files) {
     const code = stripJsComments(read(f));
-    const declared = new Set([
-      ...[...code.matchAll(/^\s*([A-Za-z_]\w*)\s*:/gm)].map((m) => m[1]),
-      ...[...code.matchAll(/^\s*([A-Za-z_]\w*)\s*,\s*$/gm)].map((m) => m[1]), // shorthand `note,`
-      ...[...code.matchAll(/^\s*(?:async\s+|get\s+|set\s+)?([A-Za-z_]\w*)\s*\([^)]*\)\s*\{/gm)].map((m) => m[1]),
-    ]);
+    const declared = new Set(declaredIn(code));
+    if (/export\s+const\s+\w+Methods\s*=/.test(code)) {
+      for (const g of importersOf(f)) for (const k of declaredIn(stripJsComments(read(g)))) declared.add(k);
+    }
     const usesRoot = /\binitialState\(\)/.test(code);
     for (const m of code.matchAll(/\bthis\.([A-Za-z_]\w*)\s*(?:=(?!=)|\+=|-=|\+\+|--)/g)) {
       assignments++;

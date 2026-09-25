@@ -26,7 +26,6 @@
     "delete": "Delete",
     "runStats": "Compute stats",
     "stats": "{words} words, {chars} characters",
-    "created": "Created",
     "updated": "Updated",
     "titlePlaceholder": "Title",
     "bodyPlaceholder": "Text …",

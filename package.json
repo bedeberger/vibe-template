@@ -21,7 +21,8 @@
     "squash:check": "node --test \"tests/unit/squash-drift.test.mjs\"",
     "migrations:lock": "node scripts/migrations-lock.js --write",
     "migration:renumber": "node scripts/migration-renumber.js",
-    "vendor:sync": "node scripts/vendor-sync.js"
+    "vendor:sync": "node scripts/vendor-sync.js",
+    "feature:new": "node scripts/feature-new.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.0",

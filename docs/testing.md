@@ -37,14 +37,16 @@ It puts the throwaway DB on `/dev/shm` when available (`TEST_TMPDIR` overrides)
 and sets `LOCAL_DEV_MODE=0` unless you pass it — the auth guard is armed by
 default ([healthz.test.js](../tests/integration/healthz.test.js) relies on that).
 
-**E2E (fixture harness)** — DOM/module logic of one view or component in
-isolation: rendering, escape invariant of `x-html` sinks, edit/save round trip,
-job polling, events. A harness (`tests/fixtures/<name>-harness.html`) mounts
-the **real** partial and the **real** `Alpine.data` component under a stub root
-scope; [tests/server.js](../tests/server.js) serves `public/` at `/`, `tests/`
-at `/tests/`, and deterministic API mocks (inspect `GET /__mock/state`, reset
-`POST /__mock/reset` in `beforeEach`). Reference:
-[notes-harness.html](../tests/fixtures/notes-harness.html) +
+**E2E (fixture harness)** — DOM/module logic of one feature in isolation:
+load on open, rendering, escape invariant of `x-html` sinks, add/edit/delete
+round trips, job polling, events. One harness per feature
+(`tests/fixtures/<id>-harness.html`, created by `npm run feature:new`) calls
+`mountFeature('<id>')` from [tests/fixtures/_harness.js](../tests/fixtures/_harness.js):
+the **real** card inventory, the **real** lazy partial loader and i18n, under a
+minimal stub root instead of the app shell. [tests/server.js](../tests/server.js)
+serves `public/` at `/`, `tests/` at `/tests/`, and deterministic API mocks with
+seed data (inspect `GET /__mock/state`, reset `POST /__mock/reset` in
+`beforeEach`). Reference: [notes-harness.html](../tests/fixtures/notes-harness.html) +
 [notes-card.spec.js](../tests/e2e/notes-card.spec.js).
 
 - A harness links **the same stylesheets in the same order** as
@@ -58,8 +60,10 @@ at `/tests/`, and deterministic API mocks (inspect `GET /__mock/state`, reset
 
 - [smoke.spec.js](../tests/e2e-app/smoke.spec.js) boots the SPA and opens
   **every feature from the registry** ([features.js](../public/js/app/features.js),
-  read at runtime — a new feature is in the smoke automatically). Pure "renders
-  without an error" — no behaviour assertions in that file.
+  read at runtime — a new feature is in the smoke automatically): nav click →
+  host visible → the lazily loaded partial mounted its card → hash route; plus a
+  deep link. A phone-viewport pass (360 px) asserts no horizontal overflow per
+  feature — the spec the DoD hook names as mobile coverage. Pure "renders without an error" — no behaviour assertions there.
 - Behaviour specs whose assertion depends on the **real backend, the complete
   template tree or the full CSS** (layout heights, overlay geometry) go next to
   it — e.g. [notes.spec.js](../tests/e2e-app/notes.spec.js).

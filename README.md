@@ -35,17 +35,20 @@ db/                connection · now · migrations/ · migrations.lock.json · s
 lib/               domain facades, auth, settings, logging context, local date, dev seed
 routes/            HTTP handlers (call facades, never raw SQL)
 routes/jobs/       one file per background-job type + shared/queue.js
-public/            SPA: index.html, partials/, js/ (app, cards, i18n), css/ (tokens + layers),
-                   fonts/, icons.svg, vendor/ (committed third-party builds + LICENSES)
+public/            SPA: index.html (shell), partials/<feature>.html, css/ (tokens + layers,
+                   entities/<feature>.css), fonts/, icons.svg, vendor/ (committed builds + LICENSES)
+public/js/         app.js (boot) · app/ (registry, card inventory, router, feature host, state) ·
+                   cards/ (feature cards + lifecycle) · <feature>/ (domain modules) · i18n/
 scripts/           migrate · migrations-lock · migration-renumber · pending-migrations ·
-                   vendor-sync · with-env · prepare-lxc.sh · hooks/
+                   vendor-sync · feature-new (+ templates/feature/) · with-env · prepare-lxc.sh · hooks/
 tests/             unit · integration · e2e (fixture harnesses) · e2e-app (real app) · fixtures
 docs/              deployment · migrations · testing
 .github/workflows/ ci (tests) · deploy (self-hosted LXC runner)
-.claude/           commands (/feature · /migration · /release) · settings (hooks)
+.claude/           commands (/feature · /karte · /migration · /regel · /release) · skills (css) · settings (hooks)
 ```
 
-Rules live next to the code: a `CLAUDE.md` in `db/`, `lib/`, `routes/`,
+A new frontend feature: `npm run feature:new -- <id>` (anatomy: DESIGN.md →
+Feature anatomy). Rules live next to the code: a `CLAUDE.md` in `db/`, `lib/`, `routes/`,
 `routes/jobs/`, `public/`, `public/css/` and `tests/` (loaded automatically by
 Claude Code when working there); the root [CLAUDE.md](CLAUDE.md) is the map.
 

@@ -5,123 +5,194 @@ Self-hosted SPA template: **Node + Express**, **better-sqlite3** (local-first),
 domain entity is **`note`** (owned by a **`notebook`**) — replace it with your
 real entity, keeping the patterns below.
 
-This file describes the **current** state only. No history, no "used to be" —
-`git log` is the history. Keep it lean; deeper topics live in `docs/` and are
-linked from here.
+**This file is a map, not a manual.** It carries only what must hold *before* a
+file is opened. Directory-local rules live in a `CLAUDE.md` in that directory
+and load automatically when you work there ("Wo die Regeln liegen"); deeper
+topics live in [docs/](docs/). A rule stands in exactly **one** place. Every
+`CLAUDE.md` describes the **current** state only — no history, no "used to be";
+`git log` is the history. **Why:** this file is paid on every call, a nested one
+only when needed.
+
+**Local start:** `npm install && npm run dev` (→ http://localhost:3000,
+`LOCAL_DEV_MODE=1`: login bypassed, seed data). Tests: `npm test`.
+**Production:** one LXC behind Nginx Proxy Manager, deployed by a self-hosted
+runner after green CI on `main` — [docs/deployment.md](docs/deployment.md).
 
 ## Stack
 
-- **Server:** Express, one fixed port. All HTTP wiring (setup, auth guard, route
-  mounting, cron hook) lives in [server.js](server.js).
-- **DB:** SQLite via better-sqlite3, `PRAGMA foreign_keys = ON`. Code in
-  [db/](db/), split by theme (connection, now, migrations, schema,
-  `squashed-schema/` segments, + one file per domain). Migration mechanism:
-  [docs/migrations.md](docs/migrations.md).
-- **Frontend:** Vanilla SPA + Alpine.js, no bundler. Alpine is a committed,
-  versioned file in [public/vendor/](public/vendor/) (imported as ESM).
-- **Styling:** plain CSS in [public/css/](public/css/), token system in
-  [public/css/tokens/](public/css/tokens/), `@layer base, components, utilities`.
+- **Server:** Express, one fixed port. All HTTP wiring (setup, auth guard,
+  `/healthz`, route mounting) lives in [server.js](server.js). Under
+  `NODE_ENV=production` it refuses to boot with `LOCAL_DEV_MODE=1` or a short
+  `SESSION_SECRET`, sets the cookie `Secure` and trusts one proxy hop.
+- **DB:** SQLite via better-sqlite3, `PRAGMA foreign_keys = ON`, numbered
+  forward-only migrations with a squashed fast path and a frozen lock register.
+- **Frontend:** vanilla SPA + Alpine.js, no bundler; third-party code committed
+  in `public/vendor/`. **Styling:** plain CSS, token system, `@layer` cascade,
+  design system in [DESIGN.md](DESIGN.md).
 - **Auth:** session guard on every route except the public ones. OIDC
-  (provider-agnostic) + `LOCAL_DEV_MODE` bypass with seed data.
-- **Logging:** Winston with a per-request/job context tag.
-- **i18n:** all UI strings in `public/js/i18n/{de,en}.json`, via `t('area.field')`.
-- **Tests:** Node built-in runner (unit + integration, under `NODE_ENV=test`),
-  Playwright (e2e + smoke). CI: [.github/workflows/ci.yml](.github/workflows/ci.yml).
-- **Deploy:** one LXC behind Nginx Proxy Manager, hardened systemd unit,
-  self-hosted runner deploys after green CI on `main` (backup → migration dry
-  run → restart → `/healthz` → rollback). [docs/deployment.md](docs/deployment.md).
+  (provider-agnostic) + `LOCAL_DEV_MODE` bypass.
+- **Logging:** Winston with a per-request/job context tag, self-rotating file.
+- **Tests:** unit + integration (`node --test`), e2e harnesses + real-app e2e
+  (Playwright) — [docs/testing.md](docs/testing.md).
 - **No AI** in this template. The job queue is generic — that is where AI calls
-  would live if you add them (never synchronously in a request).
+  would live (never synchronously in a request).
 
-## Harte Regeln (Architektur-Invarianten — jede Änderung hält sie ein)
+## Harte Regeln (immer gültig)
 
-- **Domänen-Facade als einziger Eintrittspunkt.** The notes domain is reached
-  only through [lib/note-store.js](lib/note-store.js). No raw SQL against
-  `notes`/`notebooks` from routes or jobs. **Why:** one place for invariants,
-  validation and future caching; no scattered SQL.
-- **Langläufer nur via Job-Queue.** Long-running work runs in
-  [routes/jobs/shared/queue.js](routes/jobs/shared/queue.js) (one file per job type in
-  `routes/jobs/`, register a runner, enqueue with dedup,
-  poll status). No synchronous long operations in a request handler. **Why:**
-  requests stay fast; status/dedup/lifecycle are centralized.
-- **UI-Strings nur in `public/js/i18n/{de,en}.json`.** No hardcoded German/English
-  text in HTML/JS/Alpine templates. Use `t('area.field')`. A new string is added
-  to **both** locales in the same commit (de = fallback, en = translation).
-  **Why:** no language drift, no orphaned strings.
-- **Styles nur in `public/css/`.** No inline `style` attributes, no `<style>`
-  blocks. New tokens go into a module in [public/css/tokens/](public/css/tokens/)
-  (the facade `<link>` covers them). **Why:** one token system, predictable
-  `@layer` cascade.
-- **`x-html` nur mit vorab-escaptem Content.** Anything flowing into an `x-html`
-  sink is run through `escHtml()` ([public/js/utils.js](public/js/utils.js))
-  first. No runtime sanitizer (DOMPurify et al.). **Why:** one auditable escape
-  invariant beats scattered sanitizing. Example: `bodyHtml` getter in
-  [public/js/cards/note-card.js](public/js/cards/note-card.js).
-- **Relationale Integrität.** Every `*_id` is a real FOREIGN KEY (no loose ids);
-  every FK column is indexed; `ON DELETE` is deliberate (CASCADE for owned/derived
-  rows, SET NULL for curated data); no snapshot columns (derive display values via
-  JOIN). Migrations are numbered files and forward-only; the runner follows each
-  with `foreign_key_check`. A released migration is **never** renumbered or
-  edited — [db/migrations.lock.json](db/migrations.lock.json) freezes them and
-  `migration-lock.test` gates it; `squash-drift.test` gates squash == chain.
-  **Why:** integrity cannot be retrofitted, and a reused number crash-loops a
-  prod DB that already applied the old meaning.
-- **DB-Timestamps: ISO+Z via `NOW_ISO_SQL`.** All `*_at` columns store ISO-8601
-  with Z. In INSERT/UPDATE interpolate `${NOW_ISO_SQL}` ([db/now.js](db/now.js)),
-  never inline `datetime('now')`. Frontend display only via `tzOpts()`
-  ([public/js/utils.js](public/js/utils.js)); server via
-  [lib/local-date.js](lib/local-date.js). **Why:** `datetime('now')` lacks the Z
-  marker and shows the UTC clock under the local label.
-- **Feature-Registry ist SSoT.** [public/js/app/features.js](public/js/app/features.js)
-  is the single source for navigation (and a future command palette / usage
-  tracking). No hand-maintained parallel nav lists. **Why:** one source, no drift.
-- **DESIGN.md-Pattern-Katalog vor neuer UI prüfen.** Before building a new UI
-  component, check [DESIGN.md](DESIGN.md). Reuse; if the pattern is missing,
-  document it there first, then build. **Why:** prevents parallel reinventions.
-- **State explizit deklariert.** Component state is declared up front (root in
-  [public/js/app/app-state.js](public/js/app/app-state.js), cards as initial
-  fields). No lazy `this._x` that only appears inside methods. **Why:** state must
-  be inventoriable by lookup.
-- **File-Limits / Modularität.** JS > 600 LOC, HTML partials > 250 LOC, CSS > 600
-  LOC get split into a `<name>/` subfolder with a facade re-export. Prefer many
-  small thematic files. **Why:** keeps modules navigable.
-- **Logging-Kontext.** Every route/job fills the context tag
-  `[scope|user|entity|jobId]` via [lib/log-context.js](lib/log-context.js)
-  (`setContext`). **Why:** an end-to-end searchable trace per request and the job
-  it spawns.
+- **Domänen-Facade als einziger Eintrittspunkt.** A domain is reached only
+  through its facade in `lib/` ([lib/note-store.js](lib/note-store.js)). No raw
+  SQL against `notes`/`notebooks` from routes or jobs. **Why:** one place for
+  invariants, validation and future caching.
+- **Langläufer nur via Job-Queue.** Anything that would noticeably block a
+  request runs as a job type in [routes/jobs/](routes/jobs/) (dedup, status,
+  lifecycle centralized). Details: [routes/jobs/CLAUDE.md](routes/jobs/CLAUDE.md).
+- **UI-Strings nur in `public/js/i18n/{de,en}.json`.** No hardcoded text in
+  HTML/JS/Alpine templates (incl. `aria-label`, placeholders, tooltips); always
+  `t('area.field')`. A new string goes into **both** locales in the same change
+  (de = fallback). Exception: Winston logs stay German, they aren't user-facing.
+- **Self-hosted, alles aus dem eigenen Origin.** No CDN, no external font/script;
+  vendored files are versioned + licensed and change only via
+  `npm run vendor:sync`. The CSP stays `'self'`. Details: [public/CLAUDE.md](public/CLAUDE.md).
+- **`x-html` nur mit vorab-escaptem Content** (`escHtml()`), no runtime
+  sanitizer. **Why:** one auditable escape invariant.
+- **Relationale Integrität.** Every `*_id` is a real FK, indexed, with a
+  deliberate `ON DELETE`; no snapshot columns; migrations forward-only, a
+  released one is never renumbered or edited. Details: [db/CLAUDE.md](db/CLAUDE.md).
+- **DB-Timestamps: ISO+Z via `NOW_ISO_SQL`**, never `datetime('now')`. Display
+  only via `tzOpts()`/`formatDate` (frontend) and [lib/local-date.js](lib/local-date.js)
+  (server). **Why:** `datetime('now')` has no Z and shows the UTC clock under
+  the local label.
+- **Feature-Registry ist SSoT, Features haben eine feste Anatomie.** Every nav
+  entry is a registry entry ([public/js/app/features.js](public/js/app/features.js))
+  with a feature card, domain module, partial, entity CSS, harness + spec —
+  generated by `npm run feature:new`, gated by `feature-registry.test`. The root
+  is the shell only. Details: [DESIGN.md → Feature anatomy](DESIGN.md#feature-anatomy).
+- **DESIGN.md-Pattern-Katalog vor neuer UI prüfen.** Reuse; if the pattern is
+  missing, document it there first, then build.
+- **Styles nur in `public/css/`**, tokens instead of raw values, every file in a
+  layer. Details: [public/css/CLAUDE.md](public/css/CLAUDE.md).
+- **State explizit deklariert** — root in `app-state.js`, cards as initial
+  fields (incl. every field their domain module assigns); no lazy `this._x`.
+- **File-Limits / Modularität.** JS (browser **and** server) > 600 LOC, HTML
+  partials > 250, CSS > 600 → split into a `<name>/` subfolder with a facade.
+  Ratchet-gated by `loc-limits.test`.
+- **Logging-Kontext.** Every route fills `[scope|user|entity|jobId]` via
+  `setContext` ([lib/log-context.js](lib/log-context.js)); jobs get it from the
+  queue. **Why:** one searchable trace per request and the job it spawns.
+
+## Mechanisch durchgesetzt — nicht auswendig lernen
+
+Hooks ([.claude/settings.json](.claude/settings.json), [scripts/hooks/](scripts/hooks/))
+warn/block at edit time; the unit guards in [tests/unit/](tests/unit/) are the
+binding gate (CI). Rule logic shared in [scripts/hooks/_rules.js](scripts/hooks/_rules.js).
+A hook warns, it doesn't teach: the alternative stands in the rule's full text.
+
+| Regel | Durchsetzung | Wo |
+|---|---|---|
+| Keine Inline-`style`/`<style>` (nur `:style="{ '--x': … }"`) | `style-guard.js` **blockt** · `no-inline-style.test` | public/ |
+| Kein `datetime('now')` — `${NOW_ISO_SQL}` | `style-guard.js` warnt · `architecture-tripwire.test` | db/, lib/, routes/, scripts/, public/js |
+| Kein Roh-SQL auf `notes`/`notebooks`, kein `db/notes.js`-Import ausserhalb der Facade | `style-guard.js` warnt · `architecture-tripwire.test` | alles ausser db/ + lib/note-store.js |
+| Jeder String in `de.json` **und** `en.json`, gleiche `{Platzhalter}`, kein verwaister/fehlender Key, kein Hardcode-Text | `i18n-check.js` · `i18n-locale-parity` / `i18n-keys-defined` / `i18n-no-hardcoded-text.test` | public/ |
+| LOC-Caps (JS 600, Partial 250, CSS 600) | `loc-limits-check.js` · `loc-limits.test` | public/js, lib, routes, db, scripts, partials, css |
+| Tokens statt Rohwerte, `@layer`-Pflicht, Selektor unique, keine toten Klassen | `spacing-scale` / `css-layers` / `dedup-tripwire` / `css-tokens-defined` / `css-dead-classes` / `css-comment-balance.test` | public/css |
+| CSS-Datei ⇒ `<link>` in index.html + in jedem Harness + DESIGN.md-Inventar | `drift-reminders.js` · `design-css-inventory-drift` / `harness-css-parity.test` | public/css, index.html, tests/fixtures, DESIGN.md |
+| Icons nur aus dem Lucide-Sprite, Icon-only mit `aria-label` + `data-tip` | `icons-sprite` / `button-icons` / `action-icons-tripwire` / `icon-size-consistency.test` | public/icons.svg, public/ |
+| `x-html` nur über einen Getter mit `escHtml()` | `escape-xss.test` · Harness-Spec `notes-card.spec` | public/ |
+| Self-hosted: keine externe URL, Vendor-Datei = Paketversion + Lizenz | `vendor-integrity.test` | public/, tests/fixtures |
+| Feature-Anatomie vollständig (Karte registriert + Lifecycle, Fachmodul, Partial mit Karte als Wurzel, Entity-CSS, Harness + Spec); Nav + Hosts aus der Registry | `feature-registry.test` (Regeln: `scripts/feature-anatomy.js`) · `feature-new.test` · Smoke liest die Registry | public/, tests/fixtures, tests/e2e |
+| State vorab deklariert; `req.params` ⇒ `setContext()` | `architecture-tripwire.test` | public/js, routes/ |
+| FK für jede `*_id`, FK indiziert, bewusstes `ON DELETE`, `*_at` ISO+Z | `schema-integrity.test` | db/ |
+| Migration ⇒ Squash-Fold + `squash:check` + `migrations:lock`; nie umnummerieren | `drift-reminders.js` · `squash-drift` / `migration-lock` / `migration-chain-boot.test` | db/ |
+| deploy.yml ↔ sudoers/Unit aus prepare-lxc.sh | `deploy-contract.test` | .github/workflows, scripts/prepare-lxc.sh |
+| Doku-Links/Anker gültig | `doc-links.test` | **/*.md |
+| Definition of Done (Tests/Doku/Seed/Mobile zum geänderten Code) | `session-stop-check.js` (Turn-Ende, meldet je Kriterium einmal) · `dod-triggers.test` | db/, lib/, routes/, public/ |
+| Mehrdeutige Sammelbegriffe im Prompt klären | `prompt-disambiguation.js` (injiziert Hinweis; Tabelle anfangs leer) | — |
+| Unit-Tests vor dem Commit | `stop-run-unit-tests.js` (Turn-Ende, nicht blockierend) | — |
+| Kein `git stash`/`checkout --`/`restore`/`reset --hard`/`clean`/Force-Push | `permissions.deny` | .claude/settings.json |
+
+## Definition of Done
+
+A change is done when its **kind** of code brings its **kind** of evidence in
+the same change set. The Stop hook (`session-stop-check.js`, table in
+[scripts/hooks/_dod.js](scripts/hooks/_dod.js)) reminds once per criterion and
+session; the binding gate is CI. Deliberately without a need (pure refactoring,
+desktop-only)? Say so and stop.
+
+| Changed | Needs |
+|---|---|
+| `db/`, `lib/`, `routes/`, `server.js` | Unit-Tests (tests/unit/) + Integration-Tests (tests/integration/) + Doku (docs/ bzw. README/CLAUDE/DESIGN) |
+| `public/` (HTML/JS) | E2E/Smoke (tests/e2e/ bzw. tests/e2e-app/) + Doku (docs/ bzw. README/CLAUDE/DESIGN) |
+| `public/` (HTML/JS/CSS) | mobile check — the hook names the specs that test the spot at phone width, or says there are none |
+| `db/migrations/` | additionally Dev-Seed (lib/dev-seed.js) — a new table without data looks like a working view with nothing in it |
+
+## Wo die Regeln liegen
+
+| Datei | Inhalt |
+|---|---|
+| [db/CLAUDE.md](db/CLAUDE.md) | Modul-Aufteilung, Timestamps, FK-Pflicht + ON-DELETE-Wahl, Sentinel-Freiheit, forward-only, Recreate-Pattern |
+| [lib/CLAUDE.md](lib/CLAUDE.md) | Facade-Vertrag, Log-Kontext, Server-Datum, Dev-Seed |
+| [routes/CLAUDE.md](routes/CLAUDE.md) | dünne Routen, Validierung + Statuscodes, Log-Kontext, Mounting + öffentliche Pfade |
+| [routes/jobs/CLAUDE.md](routes/jobs/CLAUDE.md) | neuen Job-Typ anlegen, Dedup, i18n-Status, Fehler |
+| [public/CLAUDE.md](public/CLAUDE.md) | Self-hosting/Vendor, Registry, Partials + Karten, State, `x-html`, `api()` + 401, Datum |
+| [public/css/CLAUDE.md](public/css/CLAUDE.md) | Tokens + Layer, Farben/Dark-Mode, Fonts + Icons, Karten-Akzent + Innenraum, Besitzer-Regel, neue CSS-Datei |
+| [tests/CLAUDE.md](tests/CLAUDE.md) | die vier Schichten, Temp-DB, Console-Guard, Harness vs. App, Mutationsprüfung |
+| [DESIGN.md](DESIGN.md) | UI-Muster-Katalog, **Feature-Anatomie**, CSS-Inventar |
+
+## Doku-Index
+
+Read the doc **before** changing something in its area.
+[deployment.md](docs/deployment.md) LXC, runners, Nginx Proxy Manager, deploy +
+rollback, operations · [migrations.md](docs/migrations.md) squash, lock,
+renumber, pending count · [testing.md](docs/testing.md) which suite when,
+harness, console guard, traps · [DESIGN.md](DESIGN.md) UI pattern catalog + CSS
+inventory.
 
 ## Add a feature
 
-1. **Registry:** add an entry to [public/js/app/features.js](public/js/app/features.js)
-   (`id`, `icon`, `labelKey`, `view`). The nav renders it automatically.
-2. **i18n:** add the new keys to both `de.json` and `en.json`.
-3. **Backend (data):** add a domain DB module under `db/`, expose it through a
-   **facade** in `lib/`; routes import the facade only.
-4. **Backend (long op):** add `routes/jobs/<type>.js` (registers its runner), list
-   it in [routes/jobs/index.js](routes/jobs/index.js) and enqueue via
-   `queue.createJob(type, entityId)` (dedup is built in).
-5. **Migration:** `/migration` — add `db/migrations/000N_*.js`, fold its DDL
-   into the matching segment in `db/squashed-schema/`, bump `SQUASHED_VERSION`,
-   `npm run squash:check`, then `npm run migrations:lock` (commit the lock in
-   the same commit). Colliding number after a rebase: `npm run migration:renumber`.
-6. **Frontend:** new view as a partial in `public/partials/`, cards as
-   `Alpine.data` sub-components in `public/js/cards/`.
-7. **Tests:** unit (facade), integration (API), e2e/smoke if it has UI.
+`/feature` walks through it. In short:
+
+1. **Frontend skeleton:** `npm run feature:new -- <id> --label-de … --label-en …
+   --icon …` — card, domain module, partial, entity CSS, harness + spec, and
+   every registration (registry, card inventory, links, DESIGN.md inventory,
+   i18n in both locales). A card inside an existing feature instead: `/karte`.
+2. **i18n:** every further string in both `de.json` and `en.json`.
+3. **Backend (data):** domain DB module in `db/`, **facade** in `lib/`, router in
+   `routes/` (imports the facade only), mounted in [server.js](server.js).
+4. **Backend (long op):** `routes/jobs/<type>.js` (registers its runner), listed
+   in [routes/jobs/index.js](routes/jobs/index.js), enqueued via
+   `queue.createJob(type, entityId)`.
+5. **Migration:** `/migration` — `db/migrations/000N_*.js`, fold into the
+   matching `db/squashed-schema/` segment, bump `SQUASHED_VERSION`,
+   `npm run squash:check`, `npm run migrations:lock` (same commit). Colliding
+   number after a rebase: `npm run migration:renumber`.
+6. **Frontend:** fill the generated domain module + card + partial
+   ([DESIGN.md → Feature anatomy](DESIGN.md#feature-anatomy)), CSS per
+   [public/css/CLAUDE.md](public/css/CLAUDE.md).
+7. **Tests:** unit (facade, pure helpers), integration (API), the generated
+   harness spec + its mocks in `tests/server.js`, `npm run test:smoke`. New
+   guard tests: `/regel` (mutation-check once; shared rule logic in
+   `scripts/hooks/_rules.js`).
 
 ## Commands
 
 ```bash
-npm start                   # run the server (LOCAL_DEV_MODE=1 → zero-config local start)
 npm run dev                 # LOCAL_DEV_MODE=1 + node --watch
-npm test                    # unit + integration + e2e + smoke
-npm run test:unit
+npm start                   # plain server
+npm test                    # unit + integration + e2e + e2e-app
+npm run test:unit           # incl. all static guards
 npm run test:integration
+npm run test:e2e            # fixture harnesses (mock server)
+npm run test:e2e-app        # real app; test:smoke = only the smoke spec
 npm run db:migrate          # apply pending migrations standalone
 npm run squash:check        # schema-drift gate only
 npm run migrations:lock     # freeze the migration chain (commit the lock)
 npm run migration:renumber  # own unpushed migration → max(origin/main)+1
+npm run vendor:sync         # re-vendor browser libs after a devDependency bump
+npm run feature:new -- <id> # scaffold a frontend feature (--dry-run first)
 ```
 
-Claude commands: `/feature`, `/migration`, `/release`
-([.claude/commands/](.claude/commands/)). VS Code: tasks (`gate` is the
-default build task), debug profiles and test explorer in [.vscode/](.vscode/).
+Claude commands ([.claude/commands/](.claude/commands/)): `/feature` (new
+feature end to end), `/karte` (card/tab in an existing feature), `/migration`,
+`/regel` (new hard rule: gate test first), `/release`. Skill `css`
+([.claude/skills/css/](.claude/skills/css/)): measure (`audit.mjs`) before CSS work. VS Code: tasks (`gate` is the default
+build task), debug profiles and test explorer in [.vscode/](.vscode/).

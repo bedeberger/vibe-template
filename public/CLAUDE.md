@@ -11,19 +11,26 @@ Applies in addition to the root [CLAUDE.md](../CLAUDE.md); CSS rules in
   the deploy ships exactly the reviewed bytes, the app works in a closed
   network, and no third party sees our users. Gated:
   `tests/unit/vendor-integrity.test.mjs`.
-- **Feature registry is SSoT** ([js/app/features.js](js/app/features.js)):
-  `{ id, icon, labelKey, view }` → the nav renders it, the smoke test opens it.
-  No hand-written nav entry. The view is `<section data-partial="<view>-view">`
-  in [index.html](index.html) + [partials/<view>-view.html](partials/).
-- **Partials** are injected before `Alpine.start()` ([js/app.js](js/app.js)
-  `loadPartials`) — they run in the root scope. **Cards** are `Alpine.data`
-  sub-components in [js/cards/](js/cards/) (reference
-  [note-card.js](js/cards/note-card.js)), registered in `js/app.js`.
-- **State declared up front:** root state in [js/app/app-state.js](js/app/app-state.js),
-  card state as initial fields. No lazy `this._x` that first appears in a method.
+- **Features have a fixed anatomy** (DESIGN.md → "Feature anatomy", gated by
+  `feature-registry.test`) and are **generated**: `npm run feature:new -- <id>`.
+  Registry entry in [js/app/features.js](js/app/features.js)
+  `{ id, icon, labelKey, card, partial }` → nav, host, hash route, smoke. Feature
+  card `js/cards/<id>-card.js` with `setupCardLifecycle`
+  ([js/cards/card-lifecycle.js](js/cards/card-lifecycle.js)), domain module
+  `js/<id>/`, partial `partials/<id>.html` rooted in the card, loaded on first
+  open ([js/app/feature-host.js](js/app/feature-host.js)).
+- **Card inventory is SSoT:** every `Alpine.data` is registered in
+  [js/app/register-cards.js](js/app/register-cards.js) — a card missing there
+  renders silently nothing. A card inside an existing feature: `/karte`.
+- **The root is the shell** (session, navigation, routing —
+  [js/app/app-state.js](js/app/app-state.js)); feature data lives in the feature
+  card. Switch features only via `openFeature(id, sub)`. Root access from a card:
+  `$app.x` in templates, `window.__app.x` in JS (`$root` is the card itself).
+- **State declared up front:** card state as initial fields — including every
+  field a domain module assigns (`this` = the card). No lazy `this._x`.
 - **`x-html` only with pre-escaped content** (`escHtml()` from
   [js/utils.js](js/utils.js)), no runtime sanitizer. Reference: `bodyHtml` in
-  note-card.js; gated by the harness spec `tests/e2e/notes-card.spec.js`.
+  note-item-card.js; gated by the harness spec `tests/e2e/notes-card.spec.js`.
 - **Strings only via `t('area.field')`** — including `aria-label`, `data-tip`,
   placeholders. New key → `js/i18n/de.json` **and** `en.json`.
 - **API calls via `api()`** ([js/utils.js](js/utils.js)): JSON in/out, throws on

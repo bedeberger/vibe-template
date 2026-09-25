@@ -7,7 +7,7 @@ suite when, helpers and traps: [docs/testing.md](../docs/testing.md).
 | --- | --- | --- |
 | [unit/](unit/) | pure logic, facades on a temp DB, **static guards** | none |
 | [integration/](integration/) | HTTP API + job queue end to end — `_helpers/setup.js#bootstrap()` | in-process app |
-| [e2e/](e2e/) | fixture harnesses ([fixtures/](fixtures/)*-harness.html): real partial + real component, mocked API | [server.js](server.js) |
+| [e2e/](e2e/) | one harness per feature ([fixtures/](fixtures/)`<id>-harness.html` → `mountFeature('<id>')`, [_harness.js](fixtures/_harness.js)): real card + partial, mocked API | [server.js](server.js) |
 | [e2e-app/](e2e-app/) | the real app: registry-driven [smoke.spec.js](e2e-app/smoke.spec.js) + behaviour needing the real backend/full CSS | `node server.js` |
 
 - **Temp DB before the first require.** Under `NODE_ENV=test` the connection

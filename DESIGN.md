@@ -26,7 +26,7 @@ patterns whose CSS ships in `public/css/` are listed here.
 - [Status / loading / empty / error](#status--loading--empty--error) ·
   [Confirm dialog](#confirm-dialog-modal) · [Danger zone](#danger-zone) ·
   [Job toast](#job-toast) · [Session banner](#session-banner)
-- [Entity card (notes)](#entity-card-notes) · [Naming](#naming) ·
+- [Feature anatomy](#feature-anatomy) · [Entity card (notes)](#entity-card-notes) · [Naming](#naming) ·
   [CSS file inventory](#css-file-inventory)
 
 ---
@@ -325,7 +325,7 @@ actions, the sidebar nav.
 - Card content uses the full card width — no artificial `max-width` on lists
   (reading-width is only for lead paragraphs: `.card-hint--lead`).
 
-**Examples:** [notes-view.html](public/partials/notes-view.html)
+**Examples:** [notes.html](public/partials/notes.html)
 
 ---
 
@@ -789,7 +789,7 @@ full line on ≤ 700px.
 - Empty-state CTA must match the view's real data source.
 
 **Examples:** loading skeleton in [index.html](public/index.html), empty state
-and spinner in [notes-view.html](public/partials/notes-view.html).
+and spinner in [notes.html](public/partials/notes.html).
 
 ---
 
@@ -901,21 +901,75 @@ feature; `aria-live="assertive"` for errors; text via `t()`; never blocking.
 
 ---
 
+## Feature anatomy
+
+**Use:** every frontend feature — anything that gets its own entry in the
+navigation. Pattern from schreibwerkstatt (feature registry, one card per
+feature with a shared lifecycle, card inventory, domain module), adapted to
+this template's view-based shell. **Generate it, don't hand-build it:**
+
+```bash
+npm run feature:new -- <id> --label-de "…" --label-en "…" --icon <sprite-id>
+```
+
+The generator ([scripts/feature-new.js](scripts/feature-new.js), templates in
+[scripts/templates/feature/](scripts/templates/feature/)) writes every file and
+registers it at every SSoT; [feature-registry.test](tests/unit/feature-registry.test.mjs)
+(rules in [scripts/feature-anatomy.js](scripts/feature-anatomy.js)) fails for any
+missing piece — most of them would otherwise fail **silently** (an unregistered
+card renders nothing, no error).
+
+| Piece | File (feature `notes`) | Rule |
+| --- | --- | --- |
+| Registry entry | [features.js](public/js/app/features.js) `{ id, icon, labelKey, card, partial }` | SSoT for nav, host, hash route `#<id>[/<sub>]`, smoke |
+| Host | [index.html](public/index.html) `<section :data-feature="f.id">` (x-for) | never hand-written per feature |
+| Partial | [partials/notes.html](public/partials/notes.html) | loaded on **first open** ([feature-host.js](public/js/app/feature-host.js)); its **root element is the card** (`x-data="notesCard"`); nested `data-partial` resolved before insert; > 250 LOC → `partials/<id>/…` |
+| Feature card | [cards/notes-card.js](public/js/cards/notes-card.js) | `Alpine.data('<id>Card')` + `register<Id>Card()`; state declared up front; lifecycle via `setupCardLifecycle` |
+| Card inventory | [app/register-cards.js](public/js/app/register-cards.js) | the ONE place every `Alpine.data` is registered (app **and** harness) |
+| Domain module | [js/notes/](public/js/notes/) (`notes-methods.js`) | `export const <id>Methods` spread into the card (`this` = card), API calls + data rules; pure helpers as plain exports (unit-testable) |
+| Sub-components | [cards/note-item-card.js](public/js/cards/note-item-card.js) | `<entity>ItemCard` for list items; talk to the feature card by DOM event (`note-removed`), never by reaching into it |
+| Entity CSS | [css/entities/notes.css](public/css/entities/notes.css) | deviations from the card vocabulary only; linked in index.html **and** every harness |
+| i18n | `nav.<id>`, `<id>.*` in de.json **and** en.json | camelCase area for kebab ids (`demo-board` → `demoBoard.title`) |
+| Harness + spec | [tests/fixtures/notes-harness.html](tests/fixtures/notes-harness.html), [tests/e2e/notes-card.spec.js](tests/e2e/notes-card.spec.js) | `mountFeature('<id>')` ([_harness.js](tests/fixtures/_harness.js)) mounts the real card; mocks in [tests/server.js](tests/server.js) |
+
+**Lifecycle** ([card-lifecycle.js](public/js/cards/card-lifecycle.js)): the card
+loads when its feature becomes active (first open and every re-open;
+`reloadOnReopen: false` to load once), reloads on a **re-click of the active nav
+item** (`card:refresh`), resets on `view:reset`, clears its timers and removes
+its listeners on destroy (AbortSignal). Own window listeners: `{ signal }`
+from the returned lifecycle.
+
+**Root access:** `$app.<field>` in card templates, `window.__app` in card JS
+(`$root` is the nearest `x-data` — the card itself). The root is the **shell**
+only (session, navigation, routing — [app-state.js](public/js/app/app-state.js));
+it never holds a feature's data. Switching features only via
+`openFeature(id, sub)` (exclusive: one feature visible).
+
+**Sub-route:** `#<id>/<sub>` → `$app.featureSub`. The router only splits; the
+**feature validates** its sub and owns the fallback.
+
+**A card inside an existing feature** (the more common case): `/karte` — no
+registry entry, a sub-partial `partials/<id>/<name>.html` + a sub-component in
+the card inventory.
+
+---
+
 ## Entity card (notes)
 
 **Use:** reference for a list of domain entities with their own actions — the
-template's example; replace with your entity.
+template's example feature; replace with your entity.
 
-Each note is a `.card.card--notes.note-card` sub-component (`x-data="noteCard(note)"`):
-header with title + timestamp subline + spinner, ghost icon-button cluster
-(edit / stats / sep / delete), serif body rendered into an `x-html` sink via
-the escaped `bodyHtml` getter, job result as `.badge-ok`. Edit mode uses
-`.card-section.form-stack` + a right-aligned `.row`. The view card above holds
-the form grid (notebook select, new-note row) and the `.card-empty` state.
+Each note is a `.card.card--notes.note-card` sub-component
+(`x-data="noteItemCard(note)"`): header with title + timestamp subline +
+spinner, ghost icon-button cluster (edit / stats / sep / delete), serif body
+rendered into an `x-html` sink via the escaped `bodyHtml` getter, job result as
+`.badge-ok`. Edit mode uses `.card-section.form-stack` + a right-aligned `.row`.
+The feature card above holds the form grid (notebook select, new-note row) and
+the `.card-empty` state.
 
-Reference: [notes-view.html](public/partials/notes-view.html),
-[note-card.js](public/js/cards/note-card.js). CSS
-[entities/note.css](public/css/entities/note.css) declares only the deviations
+Reference: [notes.html](public/partials/notes.html),
+[note-item-card.js](public/js/cards/note-item-card.js). CSS
+[entities/notes.css](public/css/entities/notes.css) declares only the deviations
 from the generic card vocabulary (reading font for the body, stats spacing,
 edit-action alignment). Entity CSS lives in `entities/`, never in the generic
 layer.
@@ -970,7 +1024,7 @@ layer.
 | `css/components/confirm-dialog.css` | components | native `<dialog>` confirm/modal | `components/confirm-dialog.css` |
 | `css/components/danger-zone.css` | components | danger zone | `components/danger-zone.css` |
 | `css/components/job-toast.css` | components | job-done toast | `components/job-toast.css` |
-| `css/entities/note.css` | components | note entity deviations | template |
+| `css/entities/notes.css` | components | notes feature deviations | template |
 
 Assets: [public/fonts/](public/fonts/) (Inter + Source Serif 4 variable woff2,
 SIL OFL 1.1 — licence in `fonts/OFL.txt`, keep it next to the files),

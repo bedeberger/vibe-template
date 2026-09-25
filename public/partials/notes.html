@@ -1,9 +1,10 @@
-<!-- Notes feature view. Loaded into the [data-partial="notes-view"] placeholder
-     in index.html. Runs inside the root `app` scope; cards are noteCard
-     sub-components. Keeping the markup here (one file) is the partial pattern;
-     extract further into smaller partials once it grows past the size limit.
+<!-- Notes feature partial — loaded on first open into
+     <section data-feature="notes"> (js/app/feature-host.js). The root element
+     IS the feature card (x-data="notesCard", js/cards/notes-card.js); each list
+     item is a noteItemCard sub-component. Anatomy: DESIGN.md → Feature anatomy.
      Patterns: DESIGN.md → Card, Card interior, Form patterns, Icon button. -->
 
+<div x-data="notesCard" @note-removed="removeNote($event.detail)">
 <div class="card card--notes">
   <div class="card-header card-header--subline">
     <div class="card-header-titlebar">
@@ -42,7 +43,7 @@
 </div>
 
 <template x-for="note in notes" :key="note.id">
-  <article class="card card--notes note-card" x-data="noteCard(note)">
+  <article class="card card--notes note-card" x-data="noteItemCard(note)">
     <template x-if="!editing">
       <div>
         <div class="card-header card-header--subline">
@@ -98,3 +99,4 @@
     </template>
   </article>
 </template>
+</div>

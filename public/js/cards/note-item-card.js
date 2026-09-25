@@ -1,11 +1,12 @@
-// Note card — an Alpine sub-component. Each note in the list is its own
-// instance via x-data="noteCard(note)". The root scope owns navigation/session;
-// cards own their local edit + job state.
+// Note item — a sub-component of the notes feature card. Each note in the list
+// is its own instance via x-data="noteItemCard(note)" (partials/notes.html);
+// it owns its local edit + job state and tells the feature card about a
+// deletion via the `note-removed` event.
 
 import { api, escHtml, formatDate } from '../utils.js';
 import { t } from '../i18n.js';
 
-export function noteCard(note) {
+export function noteItemCard(note) {
   return {
     note,
     editing: false,
@@ -72,4 +73,8 @@ export function noteCard(note) {
       }
     },
   };
+}
+
+export function registerNoteItemCard(Alpine) {
+  Alpine.data('noteItemCard', noteItemCard);
 }
