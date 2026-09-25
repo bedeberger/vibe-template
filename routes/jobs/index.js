@@ -1,11 +1,13 @@
 'use strict';
 // Jobs API — enqueue background work and poll its status. The frontend POSTs to
 // start a job, then polls GET /api/jobs/:id until status is done|error.
+// Requiring a job module registers its runner with the queue; a new job type is
+// one file next to this one plus one entry in KNOWN_TYPES.
 
 const express = require('express');
-const queue = require('../lib/jobs/queue');
-const { TYPE: NOTE_STATS } = require('../lib/jobs/example-job');
-const { setContext } = require('../lib/log-context');
+const queue = require('./shared/queue');
+const { TYPE: NOTE_STATS } = require('./note-stats');
+const { setContext } = require('../../lib/log-context');
 
 const router = express.Router();
 

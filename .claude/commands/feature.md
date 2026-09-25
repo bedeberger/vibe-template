@@ -25,10 +25,10 @@ Bestimme (bei Unklarheit **nachfragen**, nicht raten):
 
 ## Teil B — Backend (Job)
 
-1. Runner unter `lib/jobs/<name>.js` registrieren (Muster: [lib/jobs/example-job.js](lib/jobs/example-job.js)), in [server.js](server.js) per `require` einhängen.
+1. Job-Datei `routes/jobs/<typ>.js` (Muster: [routes/jobs/note-stats.js](routes/jobs/note-stats.js)) registriert ihren Runner; Typ in `KNOWN_TYPES` von [routes/jobs/index.js](routes/jobs/index.js) eintragen und dort `require`n.
 2. Enqueue über `queue.createJob(type, entityId)` — Dedup ist eingebaut; kein zweiter paralleler Job für dieselbe Entity.
 3. Statustexte/Labels als i18n-Keys (`job.xxx`), nicht als fertiger Text.
-4. Den Log-Kontext `[job|…|entity|jobId]` setzt die Queue selbst (`runWithContext` in [lib/jobs/queue.js](lib/jobs/queue.js)) — im Runner nichts nachbauen, nur bei Bedarf per `setContext` ergänzen.
+4. Den Log-Kontext `[job|…|entity|jobId]` setzt die Queue selbst (`runWithContext` in [routes/jobs/shared/queue.js](routes/jobs/shared/queue.js)) — im Runner nichts nachbauen, nur bei Bedarf per `setContext` ergänzen.
 
 ## Teil C — Frontend
 

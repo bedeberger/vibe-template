@@ -1,8 +1,8 @@
 // Frontend entry point. No build step: Alpine is imported as an ESM module
-// (vendored from node_modules at boot), so we control start order — partials
+// (committed under public/vendor/), so we control start order — partials
 // are injected first, components registered, then Alpine.start().
 
-import Alpine from '/vendor/alpine.esm.js';
+import Alpine from '/vendor/alpine-3.15.12.esm.min.js';
 import { initialState } from '/js/app/app-state.js';
 import { FEATURES } from '/js/app/features.js';
 import { configureI18n, t } from '/js/i18n.js';

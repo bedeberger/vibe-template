@@ -16,9 +16,6 @@ app.db-*
 *.log
 logs/
 
-# Vendored libs copied from node_modules at boot (regenerated, not committed)
-public/vendor/
-
 # Test artefacts
 test-results/
 playwright-report/

@@ -17,8 +17,8 @@ linked from here.
   [db/](db/), split by theme (connection, now, migrations, schema,
   `squashed-schema/` segments, + one file per domain). Migration mechanism:
   [docs/migrations.md](docs/migrations.md).
-- **Frontend:** Vanilla SPA + Alpine.js, no bundler. Alpine is vendored from
-  node_modules at boot ([lib/vendor.js](lib/vendor.js)) and imported as ESM.
+- **Frontend:** Vanilla SPA + Alpine.js, no bundler. Alpine is a committed,
+  versioned file in [public/vendor/](public/vendor/) (imported as ESM).
 - **Styling:** plain CSS in [public/css/](public/css/), token system in
   [public/css/tokens/](public/css/tokens/), `@layer base, components, utilities`.
 - **Auth:** session guard on every route except the public ones. OIDC
@@ -40,7 +40,8 @@ linked from here.
   `notes`/`notebooks` from routes or jobs. **Why:** one place for invariants,
   validation and future caching; no scattered SQL.
 - **Langläufer nur via Job-Queue.** Long-running work runs in
-  [lib/jobs/queue.js](lib/jobs/queue.js) (register a runner, enqueue with dedup,
+  [routes/jobs/shared/queue.js](routes/jobs/shared/queue.js) (one file per job type in
+  `routes/jobs/`, register a runner, enqueue with dedup,
   poll status). No synchronous long operations in a request handler. **Why:**
   requests stay fast; status/dedup/lifecycle are centralized.
 - **UI-Strings nur in `public/js/i18n/{de,en}.json`.** No hardcoded German/English
@@ -96,7 +97,8 @@ linked from here.
 2. **i18n:** add the new keys to both `de.json` and `en.json`.
 3. **Backend (data):** add a domain DB module under `db/`, expose it through a
    **facade** in `lib/`; routes import the facade only.
-4. **Backend (long op):** register a runner in `lib/jobs/` and enqueue via
+4. **Backend (long op):** add `routes/jobs/<type>.js` (registers its runner), list
+   it in [routes/jobs/index.js](routes/jobs/index.js) and enqueue via
    `queue.createJob(type, entityId)` (dedup is built in).
 5. **Migration:** `/migration` — add `db/migrations/000N_*.js`, fold its DDL
    into the matching segment in `db/squashed-schema/`, bump `SQUASHED_VERSION`,

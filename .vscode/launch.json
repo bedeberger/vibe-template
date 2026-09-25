@@ -1,5 +1,9 @@
 // Debug configurations. No `runtimeVersion`: the node on the PATH (nvm/.nvmrc)
-// decides. No PORT override: the server takes it from .env, so F5 collides with a
+// decides. No `npm` as runtimeExecutable either: on macOS a VS Code started from
+// the Dock gets its PATH from a resolved login shell, and with lazily loaded nvm
+// (zsh-nvm, auto-switch hooks) `npm` may be missing there while `node` is found
+// — and `node` directly also lets the debugger attach to the test processes.
+// The test globs are expanded by `node --test` itself (no shell involved). No PORT override: the server takes it from .env, so F5 collides with a
 // running `npm run dev` (EADDRINUSE) instead of silently starting a SECOND
 // server on the same app.db.
 //
@@ -27,11 +31,13 @@
       }
     },
     {
+      // Same as `npm run test:unit` (NODE_ENV=test arms the DB guard).
       "type": "node",
       "request": "launch",
       "name": "Unit tests",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "test:unit"],
+      "program": "${workspaceFolder}/scripts/with-env.js",
+      "args": ["NODE_ENV=test", "--", "node", "--test", "--test-concurrency=4",
+               "tests/unit/**/*.test.js", "tests/unit/**/*.test.mjs"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"]
@@ -40,8 +46,9 @@
       "type": "node",
       "request": "launch",
       "name": "Integration tests",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "test:integration"],
+      "program": "${workspaceFolder}/scripts/with-env.js",
+      "args": ["NODE_ENV=test", "--", "node", "--test", "--test-concurrency=4", "--test-force-exit",
+               "tests/integration/*.test.js"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"]

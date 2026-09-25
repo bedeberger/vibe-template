@@ -7,10 +7,10 @@
 // table so the frontend can poll. Dedup: createJob() returns the existing
 // active job instead of enqueuing a duplicate for the same (type, note_id).
 
-const { db } = require('../../db/schema');
-const { NOW_ISO_SQL } = require('../../db/now');
-const { runWithContext, setContext } = require('../log-context');
-const logger = require('../../logger');
+const { db } = require('../../../db/schema');
+const { NOW_ISO_SQL } = require('../../../db/now');
+const { runWithContext, setContext } = require('../../../lib/log-context');
+const logger = require('../../../logger');
 
 const runners = new Map(); // type -> async (job) => resultObject
 

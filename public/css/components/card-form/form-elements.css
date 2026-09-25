@@ -128,7 +128,7 @@ select[aria-invalid="true"] {
   font-size: var(--font-size-mini);
   color: var(--color-muted);
   line-height: 1.4;
-  margin: 22px 0 var(--space-14);
+  margin: var(--space-xl) 0 var(--space-14);
   padding-top: var(--space-14);
   border-top: var(--border-thin) solid var(--color-border);
 }

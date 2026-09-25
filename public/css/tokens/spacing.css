@@ -19,6 +19,8 @@
   --space-20:  20px;
   --space-xl:  24px;
   --space-2xl: 32px;
+  /* Page geometry: breathing room below the last card (body bottom padding). */
+  --space-page-end: 56px;
 
   /* === Card rhythm — the spacing INSIDE a card body ===
      Two steps, nothing more: `section` separates two independent blocks,

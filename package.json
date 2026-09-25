@@ -12,20 +12,22 @@
     "start": "node server.js",
     "dev": "node scripts/with-env.js LOCAL_DEV_MODE=1 -- node --watch server.js",
     "db:migrate": "node scripts/migrate.js",
-    "test": "npm run test:unit && npm run test:integration && npm run test:e2e && npm run test:smoke",
-    "test:unit": "node scripts/with-env.js NODE_ENV=test -- node --test \"tests/unit/*.test.js\" \"tests/unit/*.test.mjs\"",
-    "test:integration": "node scripts/with-env.js NODE_ENV=test -- node --test --test-force-exit \"tests/integration/*.test.js\"",
+    "test": "npm run test:unit && npm run test:integration && npm run test:e2e && npm run test:e2e-app",
+    "test:unit": "node scripts/with-env.js NODE_ENV=test -- node --test --test-concurrency=4 \"tests/unit/**/*.test.js\" \"tests/unit/**/*.test.mjs\"",
+    "test:integration": "node scripts/with-env.js NODE_ENV=test -- node --test --test-concurrency=4 --test-force-exit \"tests/integration/*.test.js\"",
     "test:e2e": "playwright test",
-    "test:smoke": "playwright test --config=playwright.app.config.js",
+    "test:e2e-app": "playwright test --config=playwright.app.config.js",
+    "test:smoke": "playwright test --config=playwright.app.config.js tests/e2e-app/smoke.spec.js",
     "squash:check": "node --test \"tests/unit/squash-drift.test.mjs\"",
     "migrations:lock": "node scripts/migrations-lock.js --write",
-    "migration:renumber": "node scripts/migration-renumber.js"
+    "migration:renumber": "node scripts/migration-renumber.js",
+    "vendor:sync": "node scripts/vendor-sync.js"
   },
   "devDependencies": {
-    "@playwright/test": "^1.49.0"
+    "@playwright/test": "^1.49.0",
+    "alpinejs": "^3.14.0"
   },
   "dependencies": {
-    "alpinejs": "^3.14.0",
     "better-sqlite3": "^11.0.0",
     "better-sqlite3-session-store": "^0.1.0",
     "compression": "^1.7.5",

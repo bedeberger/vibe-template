@@ -19,7 +19,7 @@
   font-family: var(--font-sans);
   font-size: var(--font-size-md);
   line-height: 1;
-  padding: var(--space-3) 9px;
+  padding: var(--space-3) var(--space-sm);
   min-width: 28px;
   min-height: 28px;
   text-decoration: none;

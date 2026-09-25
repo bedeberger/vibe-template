@@ -1,5 +1,7 @@
-// E2E: exercise the notes feature through the UI like a user would.
-const { test, expect } = require('@playwright/test');
+// App behaviour (real app, real backend): the notes feature end to end like a
+// user — create, run the stats job through the real queue, delete. Belongs here
+// and not in a harness because the assertion depends on the real backend.
+const { test, expect } = require('../e2e/_helpers/fixtures');
 
 test('create, run stats, and delete a note', async ({ page }) => {
   await page.goto('/');

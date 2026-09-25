@@ -1,20 +1,32 @@
-// Smoke: the real app boots and every main view opens without a console error.
-const { test, expect } = require('@playwright/test');
+// Smoke against the REAL app: boot the complete SPA and open every feature from
+// the registry without a single unhandled browser error.
+//
+// Why this layer exists: Alpine swallows template expression errors (logs +
+// re-throws async), so unit/integration never see them and a fixture harness
+// only sees its one component. Only a real browser over the COMPLETE template
+// tree catches a broken $data wiring, a missing t() key or method in a template.
+// The feature list comes from public/js/app/features.js at runtime — a new
+// feature is in the smoke automatically, no drift.
+//
+// Pure "renders without crashing" — behaviour assertions belong in other specs.
 
-test('app boots and main view opens without errors', async ({ page }) => {
-  const errors = [];
-  page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
-  page.on('pageerror', (e) => errors.push(e.message));
+const { test, expect } = require('../e2e/_helpers/fixtures');
+const { bootApp } = require('./_helpers/app');
 
-  await page.goto('/');
-
-  // Shell + nav rendered.
+test('SPA boots without console errors', async ({ page }) => {
+  await bootApp(page);
   await expect(page.locator('.app-shell')).toBeVisible();
-  await expect(page.locator('.nav-item')).toHaveCount(1);
+});
 
-  // Notes view (the only feature) opens.
-  await page.locator('.nav-item').first().click();
-  await expect(page.locator('section[data-partial="notes-view"]')).toBeVisible();
+test('every registry feature opens without console errors', async ({ page }) => {
+  await bootApp(page);
+  const features = await page.evaluate(async () => (await import('/js/app/features.js')).FEATURES);
+  expect(features.length, 'at least one feature in the registry').toBeGreaterThan(0);
+  await expect(page.locator('.nav-item')).toHaveCount(features.length);
 
-  expect(errors, `console errors: ${errors.join(' | ')}`).toEqual([]);
+  for (const [i, f] of features.entries()) {
+    await page.locator('.nav-item').nth(i).click();
+    await expect(page.locator('.nav-item').nth(i)).toHaveAttribute('aria-current', 'page');
+    await expect(page.locator(`section[data-partial="${f.view}-view"]`), `view of feature ${f.id}`).toBeVisible();
+  }
 });

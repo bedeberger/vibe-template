@@ -1,0 +1,73 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(git stash:*)",
+      "Bash(git checkout --:*)",
+      "Bash(git restore:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push --force-with-lease:*)",
+      "Bash(git push -f:*)"
+    ],
+    "//": "Denied is exactly what destroys someone else's uncommitted work (several sessions/people may share one checkout) or rewrites published history. Hooks: scripts/hooks/ — rules shared with the unit guards via scripts/hooks/_rules.js."
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hooks/style-guard.js\"",
+            "statusMessage": "Style-/SQL-/Timestamp-Regeln pruefen …"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hooks/i18n-check.js\"",
+            "statusMessage": "i18n-Locales pruefen …"
+          },
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hooks/loc-limits-check.js\"",
+            "statusMessage": "LOC-Limits pruefen …"
+          },
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hooks/drift-reminders.js\"",
+            "statusMessage": "Drift-Artefakte pruefen …"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hooks/session-git-status.js\"",
+            "statusMessage": "git status …"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hooks/stop-run-unit-tests.js\"",
+            "statusMessage": "Unit-Tests laufen …"
+          }
+        ]
+      }
+    ]
+  }
+}

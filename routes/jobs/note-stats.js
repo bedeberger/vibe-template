@@ -1,14 +1,16 @@
 'use strict';
 // Example job type: "note-stats". Stands in for any long-running task (an AI
 // call, an export, a batch import). It reads a note through the facade and
-// computes trivial stats. Replace with real work; keep the shape:
+// computes trivial stats. Replace with real work; keep the shape — one file per
+// job type in routes/jobs/:
 //
 //   1. register a runner under a stable type string,
 //   2. the runner reads via a facade, returns a plain result object,
-//   3. routes enqueue via queue.createJob(type, noteId) with dedup.
+//   3. routes/jobs/index.js lists the type and enqueues via
+//      queue.createJob(type, noteId) with dedup.
 
-const noteStore = require('../note-store');
-const { registerRunner } = require('./queue');
+const noteStore = require('../../lib/note-store');
+const { registerRunner } = require('./shared/queue');
 
 const TYPE = 'note-stats';
 

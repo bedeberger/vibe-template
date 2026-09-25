@@ -8,7 +8,8 @@ triggers [deploy.yml](../.github/workflows/deploy.yml), which runs on a
 GitHub.
 
 ```
- push main ──► CI (GitHub-hosted: audit, gitleaks, unit, integration, e2e, smoke)
+ push main ──► CI (GitHub-hosted, or the LXC runners with SELF_HOSTED_CI=true:
+                   audit, gitleaks, unit, integration, e2e, e2e-app)
                  │ green
                  ▼
             deploy.yml on the LXC runner
@@ -35,8 +36,9 @@ pct create 120 local:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst \
   (`ProtectSystem=`, `PrivateTmp=`) working inside the container.
 - **Static IP** (or a DHCP reservation): NPM forwards to it.
 - Size: the app needs ~150–250 MB RAM. 2 GB leaves room for `npm ci`
-  (native build of better-sqlite3) during deploys. Tests do **not** run here —
-  they run on GitHub's hosted runner.
+  (native build of better-sqlite3) during deploys. If CI runs here too
+  (`SELF_HOSTED_CI=true`), give it 4 GB / 4 cores — Playwright's Chromium is
+  the heavy part, not the app.
 - Put the rootfs on storage that is in your Proxmox backup job — the SQLite DB
   lives in `/var/lib/<app>`.
 
@@ -49,7 +51,10 @@ checkout needed. Paste its content into the container and run it:
 pct enter 120                    # or: ssh root@192.168.1.120
 nano prepare-lxc.sh              # paste, save
 chmod +x prepare-lxc.sh
-APP_NAME=my-app PORT=3000 REPO_SLUG=you/my-app ./prepare-lxc.sh
+# RUNNER_TOKEN = registration token: GitHub → repo → Settings → Actions →
+# Runners → New self-hosted runner (valid ~1 h). Without it the runners are only
+# downloaded; re-run the script with the token later.
+APP_NAME=my-app PORT=3000 REPO_SLUG=you/my-app RUNNER_TOKEN=<token> ./prepare-lxc.sh
 ```
 
 It is idempotent and sets up:
@@ -64,29 +69,42 @@ It is idempotent and sets up:
 | Hardened unit `<app>.service` | `/etc/systemd/system/` |
 | journald retention (persistent, 500 MB / 1 month) | `/etc/systemd/journald.conf.d/` |
 | sudoers: runner may `systemctl restart/start/stop/status <app>` and run `env`/`sqlite3` as `<app>` | `/etc/sudoers.d/<app>-runner` |
-| GitHub Actions runner (downloaded, not yet registered) | `/opt/actions-runner` |
+| Playwright OS libraries for Chromium (for self-hosted CI) | system |
+| `RUNNER_COUNT` (default 2) GitHub Actions runners, label `<app>`, registered + running as services when `RUNNER_TOKEN` is set | `/opt/actions-runner-<n>` |
+| Runner watchdog (timer, every 5 min) | `/usr/local/sbin/<app>-runner-watchdog` |
 
 The unit pins `NODE_ENV=production`, `PORT`, `DB_PATH` and `LOG_PATH`. Under
 `NODE_ENV=production` [server.js](../server.js) **refuses to boot** with
 `LOCAL_DEV_MODE=1` or a `SESSION_SECRET` shorter than 32 characters, sets the
 session cookie `Secure` and trusts exactly one proxy hop (`trust proxy = 1`).
 
-## 3. Register the runner
+## 3. Runners
 
-GitHub → repo → *Settings → Actions → Runners → New self-hosted runner* → copy
-the token, then in the LXC (the script prints this with your values):
+With `RUNNER_TOKEN` the script registers `RUNNER_COUNT` runners named
+`<hostname>-<n>` with the labels `self-hosted,linux,<APP_NAME>` and starts them
+as services. Check: GitHub → *Settings → Actions → Runners* shows them *Idle*;
+on the box `systemctl list-units 'actions.runner.*'`.
 
-```bash
-cd /opt/actions-runner
-sudo -u github-runner ./config.sh --unattended \
-  --url https://github.com/you/my-app --token <TOKEN> \
-  --name $(hostname) --labels self-hosted,linux,my-app
-sudo ./svc.sh install github-runner
-sudo ./svc.sh start
-```
+- **Why two:** a runner takes one job at a time. With one, a PR check waits
+  behind a running deploy. More are cheap (`RUNNER_COUNT=3`, re-run the script —
+  existing runners are left alone).
+- **The label must equal `APP_NAME`:** deploy.yml (and self-hosted CI) target
+  `[self-hosted, linux, <APP_NAME>]`, so jobs never land on another app's box.
+- **Watchdog:** a runner sometimes loses its broker connection right after a
+  job and never asks for work again while GitHub still shows it online (jobs
+  hang in "Waiting for a runner"). The timer checks every runner and restarts
+  one only on evidence — broker failure as the last `_diag` event, a `_diag` log
+  silent for 15 min, or a session older than 6 h — never while it runs a job,
+  never within 2 min of a start. `journalctl -u <app>-runner-watchdog.service`.
+- Registering by hand instead (e.g. a token expired mid-run):
 
-The label **`my-app` must equal `APP_NAME`**: deploy.yml targets
-`[self-hosted, linux, <APP_NAME>]`, so it never lands on another app's runner.
+  ```bash
+  cd /opt/actions-runner-1
+  sudo -u github-runner ./config.sh --unattended --replace \
+    --url https://github.com/you/my-app --token <TOKEN> \
+    --name $(hostname)-1 --labels self-hosted,linux,my-app
+  sudo ./svc.sh install github-runner && sudo ./svc.sh start
+  ```
 
 ## 4. Configure and enable
 
@@ -99,6 +117,7 @@ The label **`my-app` must equal `APP_NAME`**: deploy.yml targets
    | Variable | Value |
    | --- | --- |
    | `DEPLOY_ENABLED` | `true` (the deploy job is skipped until this is set) |
+   | `SELF_HOSTED_CI` | `true` to run CI on the LXC runners (fork PRs always stay GitHub-hosted) |
    | `APP_NAME` | `my-app` (only if not `vibe-template`) |
    | `PORT` | only if not `3000` |
 
@@ -150,7 +169,7 @@ commit CI tested:
    ([scripts/pending-migrations.js](../scripts/pending-migrations.js)) and runs
    the new chain against a **copy** of the live DB. If it throws, the deploy
    stops and the running instance is untouched.
-5. Empties `/opt/<app>`, rsyncs the new code, prepares `public/vendor`.
+5. Empties `/opt/<app>` and rsyncs the new code.
 6. `systemctl restart` — pending migrations run at boot (`server.js` imports
    `db/schema`).
 7. **Health check** `GET /healthz` (up to 30 s).
@@ -190,8 +209,7 @@ open.
 
 - Single process, no horizontal scaling (SQLite file lock) — by design.
 - No TLS in the app — the reverse proxy is mandatory.
-- `ProtectSystem=strict`: only `/var/lib/<app>` and `/opt/<app>/public/vendor`
-  are writable. Code writing elsewhere fails with `EROFS` → add the path to
+- `ProtectSystem=strict`: only `/var/lib/<app>` is writable. Code writing elsewhere fails with `EROFS` → add the path to
   `ReadWritePaths` in prepare-lxc.sh and re-run it.
 - A staging stage is not set up. To add one, run a second LXC with its own
   `APP_NAME` (e.g. `my-app-staging`) and a second deploy workflow for a

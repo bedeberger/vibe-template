@@ -31,20 +31,15 @@ const { runWithContext, setContext } = require('./lib/log-context');
 const { db } = require('./db/schema');
 const appSettings = require('./lib/app-settings');
 const { ensureAdminFromEnv, requireAuth } = require('./lib/auth');
-const { ensureVendor } = require('./lib/vendor');
 const { runDevSeedIfNeeded } = require('./lib/dev-seed');
-
-// Registering the job runner has the side effect of wiring it into the queue.
-require('./lib/jobs/example-job');
 
 const authRouter = require('./routes/auth');
 const notesRouter = require('./routes/notes');
-const jobsRouter = require('./routes/jobs');
+const jobsRouter = require('./routes/jobs'); // also registers the job runners
 
 // ── Boot-time bootstrap (idempotent) ───────────────────────────────────────
 try { appSettings.bootstrapFromEnv(); } catch (e) { logger.warn(`settings bootstrap: ${e.message}`); }
 try { ensureAdminFromEnv(); } catch (e) { logger.warn(`admin bootstrap: ${e.message}`); }
-try { ensureVendor(); } catch (e) { logger.warn(`vendor copy: ${e.message}`); }
 try { runDevSeedIfNeeded(); } catch (e) { logger.warn(`dev seed: ${e.message}`); }
 
 const app = express();

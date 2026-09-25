@@ -35,9 +35,8 @@ test('deploy.yml runs only env/sqlite3 as the service user', () => {
   assert.match(prepare, /NOPASSWD: \/usr\/bin\/env, \/usr\/bin\/sqlite3/);
 });
 
-test('public/vendor is writable in the unit and created by the deploy', () => {
-  assert.match(prepare, /ReadWritePaths=\$\{DATA_DIR\} \$\{APP_DIR\}\/public\/vendor/);
-  assert.match(deploy, /mkdir -p "\$\{APP_DIR\}\/public\/vendor"/);
+test('the service may write only its data dir (vendored assets are committed)', () => {
+  assert.match(prepare, /^ReadWritePaths=\$\{DATA_DIR\}$/m);
 });
 
 test('prepare-lxc.sh is self-contained (pasted onto an empty LXC, no checkout)', () => {

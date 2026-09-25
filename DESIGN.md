@@ -17,9 +17,9 @@ patterns whose CSS ships in `public/css/` are listed here.
   [Cascade layers](#cascade-layers) ·
   [Dark mode](#dark-mode) · [Mobile breakpoints](#mobile-breakpoints) ·
   [Motion](#motion) · [Z-index stack](#z-index-stack)
-- [App shell](#app-shell) · [Row / list header / table scroll](#row-list-header-table-scroll)
+- [App shell](#app-shell) · [Row / list header / table scroll](#row--list-header--table-scroll)
 - [Card](#card-card) · [Card interior](#card-interior) · [Heading hierarchy](#heading-hierarchy)
-- [Buttons](#buttons) · [Badges](#badges) · [Icon system](#icon-system-lucide-sprite) ·
+- [Buttons](#buttons) · [Badges](#badges) · [Action icon library](#action-icon-library-verbindlich) · [Icon system](#icon-system-lucide-sprite) ·
   [Icon button](#icon-button-icon-btn) · [Close button](#close-button) ·
   [Tooltip](#tooltip-data-tip)
 - [Forms](#forms) · [Toggle switch](#toggle-switch) · [Tabs](#tabs--mode-toggle)
@@ -78,7 +78,7 @@ a second time becomes a token. New token → the matching module; no extra
 | **Status** | `--color-ok-{bg,text,border}`, `--color-warn-{bg,text}`, `--color-err-{bg,text,border,light,hover}`, `--color-pending`, `--color-success(-hover)` | Operational status only (banners, validation, jobs). Never a card accent. |
 | **Card accent** | `--card-accent-<key>-base` → `--card-accent-<key>` → `.card--<key>` | See [Card](#card-card). |
 | **Shadow** | `--shadow-sm` (sheet lift), `--shadow-md` (popover, tooltip, toast), `--shadow-lg` (modal), `--shadow-inset-top` (motion) | Cards are flat — no shadow. |
-| **Spacing** | `--space-xs` 4 · `--space-sm` 8 · `--space-md` 12 · `--space-lg` 16 · `--space-xl` 24 · `--space-2xl` 32, plus `--space-1/2xs/3/5/6/10/14/18/20` (spacing) | 4px grid; in-between steps only for dense rows. |
+| **Spacing** | `--space-xs` 4 · `--space-sm` 8 · `--space-md` 12 · `--space-lg` 16 · `--space-xl` 24 · `--space-2xl` 32, plus `--space-1/2xs/3/5/6/10/14/18/20` (spacing); `--space-page-end` 56 (body bottom padding) | 4px grid; in-between steps only for dense rows. Raw rem/px in margin/padding/gap is gated by `spacing-scale.test.mjs`. |
 | **Card rhythm** | `--card-gap-section` (16), `--card-gap-tight` (8) | The only two gaps inside a card body — see [Card interior](#card-interior). |
 | **Padding** | `--pad-btn-compact`, `--pad-badge`, `--pad-detail` | Recurring cell sizes. |
 | **Border width** | `--border-thin` (0.5px), `--border-thick` (2px) | Only the deviations are tokens; the 1px default stays literal (`1px solid var(--color-border)`). |
@@ -269,7 +269,7 @@ and wide tables.
 
 **Classes** [layout/utilities.css](public/css/layout/utilities.css):
 - `.row` — flex row, children grow, buttons keep their width; ≤ 480px inputs go full width.
-- `.list-header` (+ `--between`, `--wrap`) — title + actions line; stacks ≤ 600px.
+- `.list-header` (+ `.list-header--between`, `.list-header--wrap`) — title + actions line; stacks ≤ 600px.
 - `.table-scroll` — wrapper that scrolls a wide `<table>` horizontally.
 - `.tabular-nums`, `.display-contents`, `.visually-hidden` (screen-reader-only text).
 
@@ -303,7 +303,7 @@ actions, the sidebar nav.
 - `.card-eyebrow` — tracked caps context label above the title.
 - `.card-subline`, `.card-timestamp` — meta line (timestamp, spinner, links).
 - `.card-header-aside` — right side for badges/status (not for buttons).
-- `.card-actions` ([card-actions.css](public/css/components/card-form/card-actions.css)) — right side for action buttons; `--grouped` + `.action-sep` for semantic bundles.
+- `.card-actions` ([card-actions.css](public/css/components/card-form/card-actions.css)) — right side for action buttons; `--grouped` + `.action-sep` for semantic bundles; `.action-group` (`display: contents`) wraps one bundle without breaking the flex row.
 - `.card-toolbar` — action row in the card **body**.
 
 **Accent per card (SSoT):**
@@ -375,9 +375,9 @@ the block:
 | `.card-section-title` | tracked caps line above a section | — |
 | `.card-hint` | grey explanatory sentence | `--sm`, `--right`, `--warn`, `--lead` (60ch) |
 | `.card-status` | loading / empty / error line | `--error` |
-| `.muted-msg` | muted state message | `--sm`, `--block`, `--spaced` |
+| `.muted-msg` | muted state message | `.muted-msg--sm`, `.muted-msg--block`, `.muted-msg--spaced` |
 | `.progress-bar-wrap` + `.progress-bar` | job progress | — |
-| `.filter-bar` (+ `.filter-search-input`, `.filter-toggle`, `.filter-count`) | list filter row | `--inline` |
+| `.filter-bar` (+ `.filter-search-input`, `.filter-toggle`, `.filter-count`) | list filter row | `.filter-bar--inline` (inside a `.card-toolbar`), `.filter-search-input--wide` |
 
 `.card-hint` **explains** (stays under its element); `.muted-msg` **reports a
 state** ("no entries") where the missing content would be.
@@ -453,51 +453,161 @@ status tokens, never the card accent.
 
 ---
 
+## Action icon library (verbindlich)
+
+**Use:** the **binding** vocabulary for action buttons across the app. Every
+new feature uses it — no parallel button inventions. Goal: one consistent,
+"real app" frontend. Gated by the icon guard tests below (`npm run test:unit`).
+
+**Building blocks:**
+- [Icon system](#icon-system-lucide-sprite) — Lucide sprite `<svg class="icon"><use href="/icons.svg#name"/></svg>`. The **only** icon source.
+- [Icon button](#icon-button-icon-btn) — `.icon-btn` (outlined) / `.icon-btn--ghost` (soft until hover) for icon-only actions; `.icon-btn--success` / `.icon-btn--danger` for the confirming / destructive signal.
+- [Close button](#close-button) — `.btn-close` primitive, `.btn-card-close` alone in a card header.
+- `.action-sep` — the only divider between action bundles.
+- [Tooltip](#tooltip-data-tip) — `data-tip` (mandatory on icon-only) + `aria-label`.
+
+**Rules (verbindlich):**
+- **Icon-only** for: toolbars, header action clusters (`.card-actions`),
+  close, inline item actions (delete/remove), toasts. Mandatory: `data-tip`
+  **and** `aria-label` (the label lives in the tooltip), `type="button"`,
+  `aria-hidden="true"` on the inner `<svg>`.
+- **Icon + label** stays for primary form actions (Save in a form footer) and
+  prominent text navigation. Consistency there comes from [Buttons](#buttons),
+  not from icon-only. A labelled button inside `.card-actions` carries
+  `data-label-ok` to say "deliberately labelled".
+- **Close = always `x`** (sprite), never `×` / `&#x2715;` / a text "Close".
+- **Destructive** (delete) = `trash`; **remove / chip / dismiss** = `x` —
+  different semantics than closing.
+- **Bundle divider = `.action-sep`.** When an icon row splits semantically
+  (edit/run ↔ delete), only `<span class="action-sep" aria-hidden="true"></span>`
+  separates the bundles — never a border hack or `<hr>` per feature.
+- **One glyph size** for icon-only action/close buttons: `.icon` is `1em` and
+  would drift with every button's font-size, so
+  [icon-btn.css](public/css/components/icon-btn.css) normalises the glyph to
+  `var(--icon-size-action)` ([tokens/typography.css](public/css/tokens/typography.css)),
+  desktop and mobile (where the tap target grows to 40px, the glyph does not).
+  A new icon-only close/action class goes into BOTH selector lists there.
+- **Reactive icons** via `<use :href="…">`, never `x-text` (it kills the SVG).
+- **Forbidden:** Unicode glyphs as a button's icon content (`× ✕ ↑ ↓ ← → ⤢ ⛶ ▾ …`).
+- **New action** → check/extend the [icon map](#icon-system-lucide-sprite)
+  first, add the symbol to [public/icons.svg](public/icons.svg) if missing.
+
+**Guard tests:**
+- [button-icons.test.mjs](tests/unit/button-icons.test.mjs) — over all
+  `public/**/*.html`: (1) no button whose content is a Unicode glyph icon;
+  (2) every `.icon-btn` contains `<svg class="icon"><use…>`; (3) every button
+  in a `.card-actions` row is an icon button **or** carries `data-label-ok`
+  (`.tabs-btn` mode toggles are exempt).
+- [action-icons-tripwire.test.mjs](tests/unit/action-icons-tripwire.test.mjs) —
+  every icon-only `.icon-btn` / `.btn-card-close` / `.btn-close`: `type="button"`
+  (on `<button>`), `aria-label`, `data-tip` (not on `.btn-close`, whose host
+  names it), `aria-hidden="true"` svg.
+- [icon-size-consistency.test.mjs](tests/unit/icon-size-consistency.test.mjs) —
+  coarse-pointer tap-target set ⊆ glyph-normalisation set in `icon-btn.css`.
+- [icons-sprite.test.mjs](tests/unit/icons-sprite.test.mjs) — unique symbol
+  ids, every `#name` reference (and every feature-registry `icon`) exists, no
+  query string on `/icons.svg`, the list below == the sprite.
+
+---
+
 ## Icon system (Lucide sprite)
 
-**Use:** the single source for UI icons — Lucide (ISC) as a static SVG sprite,
-no icon JS, no Unicode glyphs.
+**Use:** single source of truth for UI icons — the Lucide set (ISC,
+[lucide.dev](https://lucide.dev)) as a static SVG sprite. No icon JS, no
+Unicode glyphs as icons.
 
 **Markup:**
 ```html
 <svg class="icon" aria-hidden="true"><use href="/icons.svg#pencil"/></svg>
 <svg class="icon" aria-hidden="true"><use :href="open ? '/icons.svg#chevron-up' : '/icons.svg#chevron-down'"/></svg>
 ```
+Never `x-text` on an icon button with two states — `x-text` sets
+`textContent` and kills the SVG. Bind `<use :href="…">` reactively, or use
+two `<template x-if>` branches.
+
+**Sprite** [public/icons.svg](public/icons.svg) — one `<symbol id="<lucide-name>" viewBox="0 0 24 24">`
+per icon; licence text in [public/icons.LICENSE.txt](public/icons.LICENSE.txt).
+Stroke/fill are **not** set on the paths — they inherit from the `.icon` class
+on the consuming `<svg>` (shadow-tree cascade). Served as `/icons.svg#name`
+without a query string (every `?v=` variant is its own URL and its own fetch).
 
 **Classes** [icons.css](public/css/components/icons.css):
-- `.icon` — 1em square, `stroke: currentColor`, `fill: none`, round caps; size follows the parent `font-size`.
-- `.icon--sm` — 14px with a heavier stroke.
-- `--icon-chevron-right`, `--icon-check` — mask data-URLs for CSS pseudo-icons (`.card-form-saved::before`).
+- `.icon` — `1em` square, `fill: none`, `stroke: currentColor`, `stroke-width: 2`, round caps/joins, `vertical-align: -0.125em`, `pointer-events: none`; size follows the parent `font-size`.
+- `.icon--sm` — 14px with a heavier stroke (the only size variant — any other size belongs on the parent).
+- `button:has(> .icon)` — icon + label buttons become `inline-flex` with a gap.
+- `--icon-chevron-right`, `--icon-check`, `--icon-image` — mask data-URLs for CSS pseudo-icons (`.card-form-saved::before`).
 
-**Sprite** [public/icons.svg](public/icons.svg) — shipped symbols:
-`chevron-right/left/down/up`, `arrow-right/left`, `check`, `x`, `plus`, `minus`,
-`pencil`, `trash`, `search`, `copy`, `download`, `external-link`, `rotate-cw`,
-`more-horizontal`, `maximize-2`, `minimize-2`, `archive`, `pin`,
-`alert-triangle`, `circle-help`, `loader`, `activity`, `calendar`, `list`,
-`user`, `file-text`, `log-out`.
+**Shipped symbols** (Lucide names; the gate compares this list with the sprite):
+<!-- icon-list:start -->
+- Chevrons + arrows: `chevron-right`, `chevron-left`, `chevron-down`, `chevron-up`, `chevron-last`, `arrow-right`, `arrow-left`, `arrow-up`, `arrow-down`
+- Core actions: `check`, `x`, `plus`, `minus`, `pencil`, `trash`, `search`, `copy`, `download`, `external-link`, `share-2`, `unlink`, `undo`, `redo`, `rotate-cw`, `rotate-ccw`, `more-horizontal`, `grip-vertical`, `pin`, `archive`, `lock`, `lock-open`, `log-out`
+- Status + media controls: `circle`, `square`, `alert-triangle`, `circle-help`, `loader`, `activity`, `play`, `pause`, `zap`
+- Viewport: `focus`, `maximize-2`, `minimize-2`, `scan`, `move-horizontal`, `separator-horizontal`
+- Text + editor: `heading`, `pilcrow`, `quote`, `spell-check`, `message-square`, `lightbulb`, `mic`, `headphones`, `radio`
+- Files + structure: `file-text`, `file-plus`, `folder-plus`, `list`, `list-tree`, `book-open`, `scroll`, `image`, `package`, `calendar`
+- People + places: `user`, `users`, `map-pin`, `compass`, `landmark`, `mountain`, `plane`, `truck`
+- Themes + misc (no fixed meaning yet): `heart`, `heart-crack`, `heart-handshake`, `heart-off`, `baby`, `skull`, `swords`, `git-fork`, `trophy`, `banknote`, `bomb`, `cpu`, `scale`, `laptop-minimal`, `smartphone`, `puzzle`
+<!-- icon-list:end -->
 
-**Icon map (verbindlich):**
+**Icon map (verbindlich — one icon per action):**
 
 | Action | Icon |
 |---|---|
 | Close / dismiss / remove chip | `x` |
 | Delete (destructive) | `trash` |
 | Edit | `pencil` |
-| Add / create | `plus` |
+| Add / create | `plus` (new file / folder: `file-plus` / `folder-plus`) |
 | Save / confirm | `check` |
-| Run / recompute a job | `activity` (stats) or `rotate-cw` (re-run) |
+| Search | `search` |
+| Copy / share / open externally | `copy` / `share-2` / `external-link` |
+| Export / download | `download` |
+| Undo / redo | `undo` / `redo` |
+| Run / recompute a job | `activity` (stats) or `rotate-cw` (re-run / reload) |
+| Play / pause / stop | `play` / `pause` / `square` |
 | Overflow menu | `more-horizontal` |
+| Drag handle | `grip-vertical` |
+| Pin / archive | `pin` / `archive` |
+| Lock / unlock | `lock` / `lock-open` |
+| Zoom in / out, fit to view | `plus` / `minus`, `scan` |
 | Fullscreen on / off | `maximize-2` / `minimize-2` |
+| Expand / collapse (all) | `chevron-down` / `chevron-up` |
+| Warning / help | `alert-triangle` / `circle-help` |
+| Loading | `loader` (static glyph; the spinner is `.spinner`) |
 | Sign out | `log-out` |
 
+New actions extend this table **and** the sprite.
+
+**Mask variant for CSS pseudo-elements:** where an icon is drawn from CSS
+(rotating disclosure marker, `.card-form-saved::before`), use the
+`--icon-…` custom properties from `icons.css`:
+```css
+.my-thing::before {
+  content: '';
+  display: inline-block;
+  width: 1em; height: 1em;
+  background-color: currentColor;
+  -webkit-mask: var(--icon-chevron-right) center / contain no-repeat;
+          mask: var(--icon-chevron-right) center / contain no-repeat;
+}
+```
+Add a mask to `:root` there once it is needed a second time.
+
+**Allowed Unicode (not icons):** mathematical/typographic characters in
+running text (`·`, `–`, `∑`).
+
 **Rules:**
-- New icon: copy the Lucide paths as a `<symbol id="…" viewBox="0 0 24 24">`
-  into the sprite (no presentation attributes on paths — they inherit from
-  `.icon`) and add it to the list above.
-- `aria-hidden="true"` on every decorative icon; icon-only buttons carry
-  `aria-label` on the **button**.
-- Reactive icons via `<use :href="…">`, never `x-text` (it kills the SVG).
-- No Unicode glyphs (`× ✕ ↑ ⤢ …`) as button content.
+- **No icon library via `<script>`** (Lucide JS, icon fonts) — the sprite needs
+  no JS and no build step.
+- **New icon:** copy the Lucide paths from [lucide.dev](https://lucide.dev) into
+  a `<symbol id="<lucide-name>" viewBox="0 0 24 24">` in the fitting group of
+  the sprite — no `fill`/`stroke` on the symbol (inheritance only works when
+  the properties sit on the consuming `<svg>`) — and add the name to the list
+  above (the sprite gate fails otherwise).
+- **`aria-hidden="true"`** on every decorative icon; icon-only buttons carry
+  `aria-label` on the **button**, not the SVG.
+- **No hex colour / inline stroke** — colour comes from the parent's `color`.
+- Size follows the parent `font-size` (`1em`); a fixed size is a class on the
+  parent in `public/css/`, never a `style` attribute.
 
 ---
 
@@ -590,7 +700,7 @@ target's `::after` renders `attr(data-tip)` above it on `:hover` /
 **Classes** [card-form/form-elements.css](public/css/components/card-form/form-elements.css):
 - Element defaults: `label`, `input[type=text|email|password|url|search|tel|number|date|month|datetime-local]`, `select`, `.card-form-input`, `.card-form-textarea` — 1px `--color-border-input`, `--radius-md`, focus = `--color-border-focus`, disabled = `--opacity-hint`; ≥ 16px under 768px (no iOS zoom).
 - Grid: `.card-form-grid`, `.card-form-row` (170px label column; one column ≤ 600px), `--top`, `--full` (label-less full width), `.card-form-label`, `.card-form-field`, `.card-form-section-divider`.
-- Value column: `.form-stack` (vertical), `.form-inline` + `.form-inline-field`, `.form-num`, `.form-check` (+ `-title`, `-desc`), `.form-radio-group` + `.form-radio-option` (`--card` = bordered options tinted with `--card-accent`), `.form-lead`, `.form-section`.
+- Value column: `.form-stack` (vertical), `.form-inline` + `.form-inline-field`, `.form-num`, `.form-check` (+ `.form-check-title`, `.form-check-desc`), `.form-radio-group` + `.form-radio-option` (`.form-radio-group--card` = bordered options tinted with `--card-accent`), `.form-lead`, `.form-section`.
 - Result lines: `.card-form-saved` (✓ prefix, ok colour), `.card-form-error`, `.card-form-warn` (action succeeded with a consequence the user must know — tinted, `role="status"`, no auto-dismiss).
 - Hints: `.card-form-hint`, `.card-form-field-note` (see [Card interior](#card-interior)).
 
@@ -702,8 +812,10 @@ modal panel. Never `window.confirm()`.
 ```
 
 **Classes** [confirm-dialog.css](public/css/components/confirm-dialog.css):
-`.confirm-dialog` (panel + `::backdrop`), `-title`, `-message`, `-input`
-(prompt variant), `-actions`, `-btn` (`--primary`, `--danger`).
+`.confirm-dialog` (panel + `::backdrop`), `.confirm-dialog-title`,
+`.confirm-dialog-message`, `.confirm-dialog-input` (prompt variant),
+`.confirm-dialog-actions`, `.confirm-dialog-btn` (`.confirm-dialog-btn--primary`,
+`.confirm-dialog-btn--danger`).
 
 **Rules:**
 - Native `<dialog>` + `showModal()`: focus trap, inert background and ESC come
@@ -763,7 +875,7 @@ job queue) finishes. Card-internal results stay in the card.
 ```
 
 **Classes** [job-toast.css](public/css/components/job-toast.css): `.job-toast`
-(fixed bottom-right, full width ≤ 600px, `--z-toast`), `--ok`, `--err`,
+(fixed bottom-right, full width ≤ 600px, `--z-toast`), `.job-toast--ok`, `.job-toast--err`,
 `.job-toast-msg`, `.job-toast-close`.
 
 **Rules:** one toast state on the root (declared in `app-state.js`), not one per
@@ -784,7 +896,7 @@ feature; `aria-live="assertive"` for errors; text via `t()`; never blocking.
 ```
 
 **Classes** [layout-base.css](public/css/layout/layout-base.css):
-`.session-banner` (error tint, `--z-banner`), `--offline` (warn tint),
+`.session-banner` (error tint, `--z-banner`), `.session-banner--offline` (warn tint),
 `.session-banner-text`, `.session-banner-btn`.
 
 ---
@@ -862,7 +974,8 @@ layer.
 
 Assets: [public/fonts/](public/fonts/) (Inter + Source Serif 4 variable woff2,
 SIL OFL 1.1 — licence in `fonts/OFL.txt`, keep it next to the files),
-[public/icons.svg](public/icons.svg) (Lucide sprite, ISC).
+[public/icons.svg](public/icons.svg) (Lucide sprite, ISC — licence in
+[public/icons.LICENSE.txt](public/icons.LICENSE.txt), keep it next to the sprite).
 
 **Add a CSS file:** put it in the right subfolder (`layout/`, `components/`,
 `entities/`), wrap it in `@layer components`, add a `<link>` to

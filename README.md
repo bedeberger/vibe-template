@@ -32,15 +32,22 @@ and a seed notebook with two notes is created on first boot. No login needed.
 ```
 server.js          Express setup, auth guard, /healthz, route mounting
 db/                connection · now · migrations/ · migrations.lock.json · schema · squashed-schema/ · <domain>
-lib/               facades, auth, settings, logging context, job queue, vendor copy
+lib/               domain facades, auth, settings, logging context, local date, dev seed
 routes/            HTTP handlers (call facades, never raw SQL)
-public/            SPA: index.html, css/ (tokens + layers), fonts/, js/ (app, cards, i18n), partials/
-scripts/           migrate · migrations-lock · migration-renumber · pending-migrations · prepare-lxc.sh
-tests/             unit · integration · e2e · smoke
-docs/              deployment · migrations
+routes/jobs/       one file per background-job type + shared/queue.js
+public/            SPA: index.html, partials/, js/ (app, cards, i18n), css/ (tokens + layers),
+                   fonts/, icons.svg, vendor/ (committed third-party builds + LICENSES)
+scripts/           migrate · migrations-lock · migration-renumber · pending-migrations ·
+                   vendor-sync · with-env · prepare-lxc.sh · hooks/
+tests/             unit · integration · e2e (fixture harnesses) · e2e-app (real app) · fixtures
+docs/              deployment · migrations · testing
 .github/workflows/ ci (tests) · deploy (self-hosted LXC runner)
-.claude/commands/  /feature · /migration · /release
+.claude/           commands (/feature · /migration · /release) · settings (hooks)
 ```
+
+Rules live next to the code: a `CLAUDE.md` in `db/`, `lib/`, `routes/`,
+`routes/jobs/`, `public/`, `public/css/` and `tests/` (loaded automatically by
+Claude Code when working there); the root [CLAUDE.md](CLAUDE.md) is the map.
 
 ## Configuration
 
@@ -63,11 +70,14 @@ All config is via environment (`.env`, see `.env.example`):
 
 ```bash
 npm test                 # all layers
-npm run test:unit        # facade / pure logic + migration gates (drift, lock, chain)
-npm run test:integration # HTTP API against a temp DB
-npm run test:e2e         # Playwright (needs: npx playwright install chromium)
-npm run test:smoke       # app boots, main view opens, no console errors
+npm run test:unit        # pure logic, facades, static guards (migrations, CSS, i18n, LOC, vendor …)
+npm run test:integration # HTTP API + job queue against a temp DB
+npm run test:e2e         # Playwright: fixture harnesses against a mock server
+npm run test:e2e-app     # Playwright: the real app (smoke + behaviour)
+npm run test:smoke       # only the registry-driven smoke
 ```
+
+First time: `npx playwright install chromium`. Concept: [docs/testing.md](docs/testing.md).
 
 ## Deployment (self-hosted)
 

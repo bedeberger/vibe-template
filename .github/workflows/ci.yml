@@ -1,8 +1,12 @@
 name: CI
 
-# The test gate. Runs on every PR and every push to main, on a GitHub-hosted
-# runner (throwaway VM — foreign PR code never touches the prod LXC). A green
-# run on main is what triggers the deploy (deploy.yml, `workflow_run`).
+# The test gate. Runs on every PR and every push to main. A green run on main
+# is what triggers the deploy (deploy.yml, `workflow_run`).
+#
+# WHERE it runs: GitHub-hosted by default. With the repository variable
+# SELF_HOSTED_CI=true it runs on the LXC runners (scripts/prepare-lxc.sh) —
+# warm node_modules + browser cache, same Node binary as prod. FORK PRs always
+# stay on GitHub-hosted: foreign code never runs on the prod box.
 #
 # ONE job, all suites in sequence: one checkout + one `npm ci` + one browser
 # install. Splitting into jobs would pay the setup N times for a suite that
@@ -25,7 +29,11 @@ permissions:
 jobs:
   test:
     name: Checks + Unit + Integration + Playwright
-    runs-on: ubuntu-latest
+    runs-on: >-
+      ${{ vars.SELF_HOSTED_CI == 'true'
+      && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+      && fromJSON(format('["self-hosted","linux","{0}"]', vars.APP_NAME || 'vibe-template'))
+      || 'ubuntu-latest' }}
     timeout-minutes: 15
     env:
       CI: "true"
@@ -63,11 +71,18 @@ jobs:
       - run: npm run test:unit
       - run: npm run test:integration
 
+      # Hosted: browser + OS libs. Self-hosted: browser only — the runner has no
+      # sudo for apt; prepare-lxc.sh installed the OS libs once as root.
       - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
+        run: |
+          if [ "${{ runner.environment }}" = "github-hosted" ]; then
+            npx playwright install --with-deps chromium
+          else
+            npx playwright install chromium
+          fi
 
       - run: npm run test:e2e
-      - run: npm run test:smoke
+      - run: npm run test:e2e-app
 
       - name: Upload Playwright report on failure
         if: failure()

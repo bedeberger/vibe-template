@@ -5,6 +5,11 @@
 // line is bash syntax — hence a plain `windows` branch per task.
 {
   "version": "2.0.0",
+  // The nvm line is POSIX sh syntax: pin bash on macOS/Linux so a personal
+  // default shell like fish (which can't parse it) doesn't break every task.
+  // macOS ships /bin/bash; zsh would work too, bash is the common denominator.
+  "osx": { "options": { "shell": { "executable": "/bin/bash", "args": ["-c"] } } },
+  "linux": { "options": { "shell": { "executable": "/bin/bash", "args": ["-c"] } } },
   "tasks": [
     {
       "label": "gate",
@@ -46,10 +51,10 @@
     },
     {
       "label": "test:pw",
-      "detail": "Playwright e2e + smoke",
+      "detail": "Playwright: fixture harnesses (e2e) + real app (e2e-app)",
       "type": "shell",
-      "command": "[ -s \"$HOME/.nvm/nvm.sh\" ] && . \"$HOME/.nvm/nvm.sh\" >/dev/null 2>&1; npm run test:e2e && npm run test:smoke",
-      "windows": { "command": "npm run test:e2e && npm run test:smoke" },
+      "command": "[ -s \"$HOME/.nvm/nvm.sh\" ] && . \"$HOME/.nvm/nvm.sh\" >/dev/null 2>&1; npm run test:e2e && npm run test:e2e-app",
+      "windows": { "command": "npm run test:e2e && npm run test:e2e-app" },
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "dedicated" }
     }

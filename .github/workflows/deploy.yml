@@ -132,12 +132,6 @@ jobs:
           rsync -rltD --omit-dir-times --no-perms \
             --exclude='.git' --exclude='tests' --exclude='test-results' --exclude='playwright-report' \
             ./ "${APP_DIR}/"
-          # public/vendor is generated at boot (lib/vendor.js) by the SERVICE
-          # user, and the hardened unit bind-mounts it writable — it must exist
-          # before the start (else 226/NAMESPACE) and be writable for that user.
-          mkdir -p "${APP_DIR}/public/vendor"
-          setfacl -R -m "u:${APP_NAME}:rwX" "${APP_DIR}/public/vendor"
-          setfacl -d -m "u:${APP_NAME}:rwX" "${APP_DIR}/public/vendor"
 
       # server.js imports db/schema at boot → pending migrations run now, as the
       # service user. No separate migrate step.
@@ -190,9 +184,6 @@ jobs:
             rsync -rltD --omit-dir-times --no-perms \
               --exclude='.git' --exclude='tests' --exclude='test-results' --exclude='playwright-report' \
               ./ "${APP_DIR}/"
-            mkdir -p "${APP_DIR}/public/vendor"
-            setfacl -R -m "u:${APP_NAME}:rwX" "${APP_DIR}/public/vendor"
-            setfacl -d -m "u:${APP_NAME}:rwX" "${APP_DIR}/public/vendor"
             echo "Code rolled back to ${PREV_SHA}."
           else
             echo "::warning::No previous commit — code left as is."

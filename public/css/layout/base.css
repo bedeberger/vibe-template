@@ -64,17 +64,17 @@ body {
   font-feature-settings: "kern", "liga", "calt", "cv11";
   min-height: 100vh;
   min-height: 100dvh;
-  padding: var(--space-lg) var(--space-lg) 56px;
+  padding: var(--space-lg) var(--space-lg) var(--space-page-end);
   max-width: 860px;
   margin: 0 auto;
 }
 
 @media (min-width: 600px) {
-  body { padding: var(--space-xl) var(--space-xl) 56px; }
+  body { padding: var(--space-xl) var(--space-xl) var(--space-page-end); }
 }
 
 @media (min-width: 960px) {
-  body { padding: var(--space-2xl) var(--space-xl) 56px; max-width: 1600px; }
+  body { padding: var(--space-2xl) var(--space-xl) var(--space-page-end); max-width: 1600px; }
 }
 
 h1 {

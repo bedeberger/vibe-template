@@ -5,36 +5,15 @@
 
 const test = require('node:test');
 const assert = require('node:assert');
-const os = require('os');
-const fs = require('fs');
-const path = require('path');
+const { bootstrap } = require('./_helpers/setup');
 
-const DB = path.join(os.tmpdir(), `vt-int-${process.pid}.db`);
-for (const suffix of ['', '-wal', '-shm']) fs.rmSync(DB + suffix, { force: true });
-process.env.DB_PATH = DB;
-process.env.LOCAL_DEV_MODE = '1';
-process.env.SESSION_SECRET = 'test-secret';
+const ctx = bootstrap({ LOCAL_DEV_MODE: '1' });
+test.before(ctx.start);
+test.after(ctx.stop);
 
-const { app } = require('../../server');
-
-let server;
-let base;
-test.before(async () => {
-  await new Promise((resolve) => {
-    server = app.listen(0, () => {
-      base = `http://localhost:${server.address().port}`;
-      resolve();
-    });
-  });
-});
-test.after(() => {
-  server.close();
-  for (const suffix of ['', '-wal', '-shm']) fs.rmSync(DB + suffix, { force: true });
-});
-
-const get = (p) => fetch(base + p);
+const get = (p) => fetch(ctx.url(p));
 const send = (p, method, body) =>
-  fetch(base + p, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  fetch(ctx.url(p), { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 
 test('GET /api/config returns timezone', async () => {
   const res = await get('/api/config');
@@ -70,7 +49,7 @@ test('note create → list → job → delete', async () => {
   assert.equal(job.status, 'done');
   assert.deepEqual(JSON.parse(job.result_json), { noteId: note.id, chars: 13, words: 3 });
 
-  const del = await (await fetch(`${base}/api/notes/${note.id}`, { method: 'DELETE' })).json();
+  const del = await (await fetch(ctx.url(`/api/notes/${note.id}`), { method: 'DELETE' })).json();
   assert.equal(del.deleted, true);
 });
 
