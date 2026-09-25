@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert';
 import Database from 'better-sqlite3';
-import squash from '../../db/squashed-schema.js';
+import squash from '../../db/squashed-schema/index.js';
 import migrations from '../../db/migrations.js';
 
 // sqlite_master dump, normalized: ignore whitespace and the runner-managed

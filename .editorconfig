@@ -1,0 +1,18 @@
+# Editor-independent formatting basics (VS Code: EditorConfig extension,
+# recommended in .vscode/extensions.json; JetBrains/Vim read it natively).
+# Deliberately lean — no formatter is enforced, this only keeps a foreign editor
+# default from sprinkling tabs or CRLF.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Markdown: two trailing spaces are a hard line break.
+[*.md]
+trim_trailing_whitespace = false

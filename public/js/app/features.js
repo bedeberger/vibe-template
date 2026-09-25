@@ -4,10 +4,11 @@
 // See CLAUDE.md → Harte Regeln: "Feature-Registry ist SSoT".
 //
 // Each feature: { id, icon, labelKey (i18n), view (matches a <section> id) }.
+// `icon` is a symbol id in the sprite public/icons.svg (DESIGN.md → Icons).
 // Add a feature here and the nav renders it automatically.
 
 export const FEATURES = [
-  { id: 'notes', icon: '📝', labelKey: 'nav.notes', view: 'notes' },
+  { id: 'notes', icon: 'file-text', labelKey: 'nav.notes', view: 'notes' },
 ];
 
 export const DEFAULT_FEATURE = FEATURES[0].id;

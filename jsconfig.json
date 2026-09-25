@@ -1,0 +1,26 @@
+{
+  "//": "Editor/LSP navigation only (go-to-definition, find-references). No build, no typecheck. Covers the SERVER part (CommonJS); the browser ESM in public/ resolves on its own.",
+  "compilerOptions": {
+    "target": "es2022",
+    "lib": ["es2023", "dom"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "maxNodeModuleJsDepth": 0
+  },
+  "include": [
+    "server.js",
+    "logger.js",
+    "playwright.config.js",
+    "playwright.app.config.js",
+    "lib/**/*.js",
+    "db/**/*.js",
+    "routes/**/*.js",
+    "scripts/**/*.js",
+    "tests/**/*.js",
+    "tests/**/*.mjs"
+  ],
+  "exclude": ["node_modules", "public", "test-results", "playwright-report"]
+}

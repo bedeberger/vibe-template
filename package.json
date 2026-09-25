@@ -10,12 +10,16 @@
   },
   "scripts": {
     "start": "node server.js",
+    "dev": "node scripts/with-env.js LOCAL_DEV_MODE=1 -- node --watch server.js",
+    "db:migrate": "node scripts/migrate.js",
     "test": "npm run test:unit && npm run test:integration && npm run test:e2e && npm run test:smoke",
-    "test:unit": "node --test \"tests/unit/*.test.js\" \"tests/unit/*.test.mjs\"",
-    "test:integration": "node --test --test-force-exit \"tests/integration/*.test.js\"",
+    "test:unit": "node scripts/with-env.js NODE_ENV=test -- node --test \"tests/unit/*.test.js\" \"tests/unit/*.test.mjs\"",
+    "test:integration": "node scripts/with-env.js NODE_ENV=test -- node --test --test-force-exit \"tests/integration/*.test.js\"",
     "test:e2e": "playwright test",
     "test:smoke": "playwright test --config=playwright.app.config.js",
-    "squash:check": "node --test \"tests/unit/squash-drift.test.mjs\""
+    "squash:check": "node --test \"tests/unit/squash-drift.test.mjs\"",
+    "migrations:lock": "node scripts/migrations-lock.js --write",
+    "migration:renumber": "node scripts/migration-renumber.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.0"

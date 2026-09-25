@@ -1,0 +1,64 @@
+// Debug configurations. No `runtimeVersion`: the node on the PATH (nvm/.nvmrc)
+// decides. No PORT override: the server takes it from .env, so F5 collides with a
+// running `npm run dev` (EADDRINUSE) instead of silently starting a SECOND
+// server on the same app.db.
+//
+// Migrations run before the start (`preLaunchTask: db:migrate`, tasks.json) —
+// if one fails, its terminal stays open and the server does not start.
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Server (LOCAL_DEV_MODE)",
+      "preLaunchTask": "db:migrate",
+      "program": "${workspaceFolder}/server.js",
+      "runtimeArgs": ["--watch"],
+      "restart": true,
+      "cwd": "${workspaceFolder}",
+      "env": { "LOCAL_DEV_MODE": "1" },
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**", "${workspaceFolder}/node_modules/**"],
+      "serverReadyAction": {
+        "pattern": "läuft auf (https?://\\S+)",
+        "uriFormat": "%s",
+        "action": "openExternally"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Unit tests",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "test:unit"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Integration tests",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "test:integration"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      // Debug the open test file. NODE_ENV=test arms the guard in
+      // db/connection.js: a test without its own DB_PATH fails instead of
+      // touching the repo app.db.
+      "type": "node",
+      "request": "launch",
+      "name": "Current test file",
+      "program": "${file}",
+      "runtimeArgs": ["--test"],
+      "cwd": "${workspaceFolder}",
+      "env": { "NODE_ENV": "test" },
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}

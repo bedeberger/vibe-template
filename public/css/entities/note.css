@@ -1,25 +1,31 @@
-/* Note-entity-specific styling. Entity CSS lives here, not mixed into the
- * generic component layer. */
+/* Note entity (the template's example domain). Entity CSS lives here, not in
+ * the generic component layer — and it declares ONLY the deviations from the
+ * generic card vocabulary (card-shell/card-blocks): the rest comes from
+ * `.card.card--notes` + `.card-header` + `.card-actions` etc. */
 
 @layer components {
-  .note-card .note-title { font-weight: var(--fw-bold); font-size: var(--fs-lg); }
+/* Body text of a note: reading font, keeps the author's line breaks. */
+.note-card .note-body {
+  font-family: var(--font-serif);
+  font-size: var(--font-size-reading);
+  line-height: var(--lh-relaxed);
+  color: var(--color-text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.note-card .note-body:empty { display: none; }
+/* No body → the header is the whole card: drop its rule, no dangling line. */
+.note-card .card-header:has(+ .note-body:empty) {
+  border-bottom: 0;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
 
-  .note-card .note-body {
-    white-space: pre-wrap;
-    color: var(--c-text);
-    margin: var(--sp-2) 0;
-  }
+/* Job result under the body (badge-ok carries the look). */
+.note-card .note-stats {
+  margin-top: var(--card-gap-tight);
+}
 
-  .note-card .note-meta {
-    font-size: var(--fs-sm);
-    color: var(--c-text-muted);
-  }
-
-  .note-card .note-stats {
-    font-size: var(--fs-sm);
-    color: var(--c-ok);
-    margin-top: var(--sp-2);
-  }
-
-  .note-actions { gap: var(--sp-2); margin-top: var(--sp-3); }
+/* Edit mode: action buttons right-aligned under the fields. */
+.note-edit-actions { justify-content: flex-end; }
 }

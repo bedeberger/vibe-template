@@ -1,7 +1,7 @@
 # vibe-template
 
 Self-hosted SPA template: **Node + Express**, **better-sqlite3** (local-first),
-**Alpine.js** frontend with **no build step** (native ESM), PWA. The example
+**Alpine.js** frontend with **no build step** (native ESM). The example
 domain entity is **`note`** (owned by a **`notebook`**) — replace it with your
 real entity, keeping the patterns below.
 
@@ -14,8 +14,9 @@ linked from here.
 - **Server:** Express, one fixed port. All HTTP wiring (setup, auth guard, route
   mounting, cron hook) lives in [server.js](server.js).
 - **DB:** SQLite via better-sqlite3, `PRAGMA foreign_keys = ON`. Code in
-  [db/](db/), split by theme (connection, now, migrations, schema, squashed
-  schema, + one file per domain).
+  [db/](db/), split by theme (connection, now, migrations, schema,
+  `squashed-schema/` segments, + one file per domain). Migration mechanism:
+  [docs/migrations.md](docs/migrations.md).
 - **Frontend:** Vanilla SPA + Alpine.js, no bundler. Alpine is vendored from
   node_modules at boot ([lib/vendor.js](lib/vendor.js)) and imported as ESM.
 - **Styling:** plain CSS in [public/css/](public/css/), token system in
@@ -24,7 +25,11 @@ linked from here.
   (provider-agnostic) + `LOCAL_DEV_MODE` bypass with seed data.
 - **Logging:** Winston with a per-request/job context tag.
 - **i18n:** all UI strings in `public/js/i18n/{de,en}.json`, via `t('area.field')`.
-- **Tests:** Node built-in runner (unit + integration), Playwright (e2e + smoke).
+- **Tests:** Node built-in runner (unit + integration, under `NODE_ENV=test`),
+  Playwright (e2e + smoke). CI: [.github/workflows/ci.yml](.github/workflows/ci.yml).
+- **Deploy:** one LXC behind Nginx Proxy Manager, hardened systemd unit,
+  self-hosted runner deploys after green CI on `main` (backup → migration dry
+  run → restart → `/healthz` → rollback). [docs/deployment.md](docs/deployment.md).
 - **No AI** in this template. The job queue is generic — that is where AI calls
   would live if you add them (never synchronously in a request).
 
@@ -54,10 +59,12 @@ linked from here.
 - **Relationale Integrität.** Every `*_id` is a real FOREIGN KEY (no loose ids);
   every FK column is indexed; `ON DELETE` is deliberate (CASCADE for owned/derived
   rows, SET NULL for curated data); no snapshot columns (derive display values via
-  JOIN). Migrations are numbered and forward-only; each ends with
-  `foreign_key_check`. [tests/unit/squash-drift.test.mjs](tests/unit/squash-drift.test.mjs)
-  gates that the squashed schema equals the migration chain. **Why:** integrity
-  cannot be retrofitted.
+  JOIN). Migrations are numbered files and forward-only; the runner follows each
+  with `foreign_key_check`. A released migration is **never** renumbered or
+  edited — [db/migrations.lock.json](db/migrations.lock.json) freezes them and
+  `migration-lock.test` gates it; `squash-drift.test` gates squash == chain.
+  **Why:** integrity cannot be retrofitted, and a reused number crash-loops a
+  prod DB that already applied the old meaning.
 - **DB-Timestamps: ISO+Z via `NOW_ISO_SQL`.** All `*_at` columns store ISO-8601
   with Z. In INSERT/UPDATE interpolate `${NOW_ISO_SQL}` ([db/now.js](db/now.js)),
   never inline `datetime('now')`. Frontend display only via `tzOpts()`
@@ -77,9 +84,6 @@ linked from here.
 - **File-Limits / Modularität.** JS > 600 LOC, HTML partials > 250 LOC, CSS > 600
   LOC get split into a `<name>/` subfolder with a facade re-export. Prefer many
   small thematic files. **Why:** keeps modules navigable.
-- **`SHELL_CACHE` bumpen.** On any JS/CSS/HTML change, bump the constant in
-  [public/sw.js](public/sw.js) (and add new shell assets there). **Why:** PWA
-  clients otherwise hold a stale bundle.
 - **Logging-Kontext.** Every route/job fills the context tag
   `[scope|user|entity|jobId]` via [lib/log-context.js](lib/log-context.js)
   (`setContext`). **Why:** an end-to-end searchable trace per request and the job
@@ -94,8 +98,10 @@ linked from here.
    **facade** in `lib/`; routes import the facade only.
 4. **Backend (long op):** register a runner in `lib/jobs/` and enqueue via
    `queue.createJob(type, entityId)` (dedup is built in).
-5. **Migration:** add `db/migrations/000N_*.js`, fold its DDL into
-   `db/squashed-schema.js`, bump `SQUASHED_VERSION`. Run `npm run squash:check`.
+5. **Migration:** `/migration` — add `db/migrations/000N_*.js`, fold its DDL
+   into the matching segment in `db/squashed-schema/`, bump `SQUASHED_VERSION`,
+   `npm run squash:check`, then `npm run migrations:lock` (commit the lock in
+   the same commit). Colliding number after a rebase: `npm run migration:renumber`.
 6. **Frontend:** new view as a partial in `public/partials/`, cards as
    `Alpine.data` sub-components in `public/js/cards/`.
 7. **Tests:** unit (facade), integration (API), e2e/smoke if it has UI.
@@ -103,9 +109,17 @@ linked from here.
 ## Commands
 
 ```bash
-npm start            # run the server (LOCAL_DEV_MODE=1 → zero-config local start)
-npm test             # unit + integration + e2e + smoke
+npm start                   # run the server (LOCAL_DEV_MODE=1 → zero-config local start)
+npm run dev                 # LOCAL_DEV_MODE=1 + node --watch
+npm test                    # unit + integration + e2e + smoke
 npm run test:unit
 npm run test:integration
-npm run squash:check # schema-drift gate only
+npm run db:migrate          # apply pending migrations standalone
+npm run squash:check        # schema-drift gate only
+npm run migrations:lock     # freeze the migration chain (commit the lock)
+npm run migration:renumber  # own unpushed migration → max(origin/main)+1
 ```
+
+Claude commands: `/feature`, `/migration`, `/release`
+([.claude/commands/](.claude/commands/)). VS Code: tasks (`gate` is the
+default build task), debug profiles and test explorer in [.vscode/](.vscode/).

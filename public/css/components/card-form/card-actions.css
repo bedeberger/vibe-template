@@ -1,0 +1,74 @@
+/* Header action cluster + standalone header close button.
+ * Source: schreibwerkstatt components/card-form/card-actions.css. */
+
+@layer components {
+/* === Card actions (button group in .card-header) === */
+.card-actions {
+  display: flex;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+  align-items: center;
+  margin-left: auto;
+}
+.card-actions button { white-space: nowrap; }
+/* Icon-only buttons keep their square size — never stretched. */
+.card-actions .icon-btn { flex: 0 0 auto; }
+
+/* Semantic bundles with a divider. .action-group is display:contents — no
+   layout break in the flex parent; .action-sep is the ONLY bundle divider. */
+.action-group { display: contents; }
+.action-sep {
+  display: inline-block;
+  width: 1px;
+  align-self: stretch;
+  background: var(--color-border);
+  margin: var(--space-xs) var(--space-2xs);
+}
+
+@media (max-width: 700px) {
+  /* Right-aligned like desktop; tighter gaps because touch targets grow. */
+  .card-actions { width: 100%; gap: var(--space-xs); justify-content: flex-end; }
+  .card-actions button { flex: 1 1 auto; min-width: 0; }
+  /* Many buttons (grouped toolbar): natural width + compact padding. */
+  .card-actions--grouped button {
+    flex: 0 1 auto;
+    padding: var(--size-default-padding-y) var(--space-10);
+    font-size: var(--font-size-sm);
+  }
+  .card-actions--grouped .action-sep { display: none; }
+  .card-actions .icon-btn {
+    align-self: stretch;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Text buttons keep a tappable minimum width; icon-only ones are exempt. */
+  .card-actions button:not(.icon-btn) { min-width: 80px; }
+}
+
+/* === Standalone close button in the card header ===
+   Only for a close button that stands ALONE in the header. Inside a
+   .card-actions cluster the close is an .icon-btn--ghost with the x icon. */
+.btn-card-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--color-muted);
+  font-size: var(--font-size-lg);
+  line-height: 1;
+  padding: var(--space-2xs) var(--space-6);
+  cursor: pointer;
+  border-radius: 0;
+  margin-left: var(--space-xs);
+  flex-shrink: 0;
+}
+.btn-card-close:hover {
+  background: var(--color-border);
+  color: var(--color-text);
+}
+}

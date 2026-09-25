@@ -23,7 +23,9 @@ const logger = winston.createLogger({
   format: fmt,
   transports: [
     new winston.transports.Console(),
-    new winston.transports.File({ filename: LOG_FILE }),
+    // Self-rotating: 5 MB × 5 files, `tailable` keeps the newest lines in the
+    // base file (app.log → app1.log → …). No logrotate needed on the LXC.
+    new winston.transports.File({ filename: LOG_FILE, maxsize: 5 * 1024 * 1024, maxFiles: 5, tailable: true }),
   ],
 });
 

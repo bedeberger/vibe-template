@@ -12,6 +12,18 @@ const compression = require('compression');
 const session = require('express-session');
 const SqliteStore = require('better-sqlite3-session-store')(session);
 
+// ── Production guard ──────────────────────────────────────────────────────
+// NODE_ENV=production (set by the systemd unit, docs/deployment.md) must never
+// come up with the dev bypass or the fallback session secret — fail the boot
+// loudly instead of serving a login-free app with forgeable cookies.
+const IS_PROD = process.env.NODE_ENV === 'production';
+if (IS_PROD) {
+  if (process.env.LOCAL_DEV_MODE === '1') throw new Error('LOCAL_DEV_MODE=1 ist in Produktion verboten.');
+  if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
+    throw new Error('SESSION_SECRET fehlt oder ist kürzer als 32 Zeichen (openssl rand -hex 32).');
+  }
+}
+
 const logger = require('./logger');
 const { runWithContext, setContext } = require('./lib/log-context');
 
@@ -38,6 +50,10 @@ try { runDevSeedIfNeeded(); } catch (e) { logger.warn(`dev seed: ${e.message}`);
 const app = express();
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
+// Behind exactly one reverse proxy (Nginx Proxy Manager terminates TLS): trust
+// its X-Forwarded-* so req.secure/req.ip are right and the Secure cookie is set.
+if (IS_PROD) app.set('trust proxy', 1);
+
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -61,7 +77,7 @@ app.use(
     secret: process.env.SESSION_SECRET || 'dev-secret-change-me',
     resave: false,
     saveUninitialized: false,
-    cookie: { httpOnly: true, sameSite: 'lax', maxAge: 7 * 24 * 3600 * 1000 },
+    cookie: { httpOnly: true, sameSite: 'lax', secure: IS_PROD, maxAge: 7 * 24 * 3600 * 1000 },
   })
 );
 
@@ -71,6 +87,17 @@ app.use((req, res, next) => {
     setContext({ entity: req.method + ' ' + req.path });
     next();
   });
+});
+
+// Health check for the deploy workflow and the proxy — before the auth guard,
+// touches the DB so a broken schema/volume shows up as unhealthy.
+app.get('/healthz', (req, res) => {
+  try {
+    db.prepare('SELECT 1').get();
+    res.json({ status: 'ok' });
+  } catch (e) {
+    res.status(503).json({ status: 'error', error: e.message });
+  }
 });
 
 // Auth guard on everything except public paths (handled inside requireAuth).

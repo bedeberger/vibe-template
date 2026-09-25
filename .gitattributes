@@ -1,0 +1,15 @@
+# One line-ending format in the repo, regardless of the clone's OS. Git for
+# Windows defaults to core.autocrlf=true; a shebang with a trailing CR
+# (scripts/prepare-lxc.sh, scripts/with-env.js) then fails with
+# "bad interpreter".
+* text=auto eol=lf
+
+# Binaries: never touch, never diff as text.
+*.png   binary
+*.ico   binary
+*.woff2 binary
+*.pdf   binary
+*.db    binary
+
+# Generated: collapsed in diffs.
+db/migrations.lock.json  linguist-generated=true

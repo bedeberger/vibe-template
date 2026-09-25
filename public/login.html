@@ -3,22 +3,37 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
   <title>Login — vibe-template</title>
+  <meta name="theme-color" content="#faf7f2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1a1816" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <!-- Public page: only the files it needs, same cascade order as index.html. -->
   <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/card-accents.css">
   <link rel="stylesheet" href="/css/layout/base.css">
-  <link rel="stylesheet" href="/css/components/card.css">
+  <link rel="stylesheet" href="/css/layout/layout-base.css">
+  <link rel="stylesheet" href="/css/components/card-form/card-shell.css">
+  <link rel="stylesheet" href="/css/components/card-form/card-blocks.css">
+  <link rel="stylesheet" href="/css/components/buttons-badges.css">
 </head>
 <body>
-  <main class="app-main">
-    <div class="card">
-      <h1>vibe-template</h1>
+  <main class="login-shell">
+    <div class="card card--nav">
+      <div class="card-header">
+        <h1 class="site-title">
+          <img src="/icon.svg" alt="" class="site-logo" width="40" height="40">
+          <span>vibe-template</span>
+        </h1>
+      </div>
       <!-- Dev bypass: only works when LOCAL_DEV_MODE=1 on the server. -->
-      <form method="POST" action="/auth/dev-login">
-        <button class="btn btn--primary" type="submit">Continue as Dev</button>
+      <form class="card-section" method="POST" action="/auth/dev-login">
+        <button class="primary login-btn" type="submit">Continue as Dev</button>
       </form>
-      <p class="note-meta">oder</p>
-      <a class="btn" href="/auth/login">Sign in with OIDC</a>
+      <p class="card-section card-section--tight card-hint">oder</p>
+      <form class="card-section card-section--tight" method="GET" action="/auth/login">
+        <button class="login-btn" type="submit">Sign in with OIDC</button>
+      </form>
     </div>
   </main>
 </body>

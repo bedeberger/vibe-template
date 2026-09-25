@@ -1,0 +1,22 @@
+/* Close button primitive — centres the `x` sprite icon in a borderless area.
+ * Variance via two variables instead of copies:
+ *   --close-size  icon/font size  (default --font-size-md)
+ *   --close-pad   padding         (default 0 var(--space-xs))
+ * Destructive removal (delete a chip/row) is NOT closing — use trash / an
+ * icon-btn instead. Source: schreibwerkstatt components/btn-close.css. */
+
+@layer components {
+  .btn-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    line-height: 1;
+    font-size: var(--close-size, var(--font-size-md));
+    padding: var(--close-pad, 0 var(--space-xs));
+    color: var(--color-muted);
+  }
+  .btn-close:hover { color: var(--color-text); background: transparent; }
+}

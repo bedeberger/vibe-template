@@ -1,0 +1,50 @@
+/* Sidebar navigation rendered from the feature registry
+ * (public/js/app/features.js — SSoT, never hand-written entries).
+ * Template-specific; styled after schreibwerkstatt's tree items
+ * (page/page-list.css .page-item): muted row, accent-bordered selection. */
+
+@layer components {
+.app-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-6) var(--space-sm);
+  border: var(--border-thin) solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  text-align: left;
+  cursor: pointer;
+}
+.nav-item:hover { background: var(--color-hover-light); color: var(--color-text); }
+.nav-item:active { transform: none; }
+.nav-item[aria-current="page"] {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-text);
+  font-weight: var(--fw-medium);
+}
+.nav-item:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+.nav-item > .icon { font-size: var(--font-size-md); }
+
+/* Mobile: the stacked sidebar turns into a horizontal, scrollable strip. */
+@media (max-width: 959.98px) {
+  .app-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: var(--space-xs);
+  }
+  .nav-item { width: auto; flex: 0 0 auto; }
+}
+}

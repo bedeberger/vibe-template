@@ -1,0 +1,42 @@
+/* Loading states: skeleton shimmer lines + inline spinner.
+ * Source: schreibwerkstatt chat.css (.chat-skeleton-*), page/page-content-
+ * skeleton.css and page/page-list.css (.spinner), merged into one generic
+ * owner. No skeleton without shimmer; reduced motion stops both animations
+ * (tokens/motion.css). */
+
+@layer components {
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-xs) 0 var(--space-2xs);
+}
+.skeleton-line {
+  height: 13px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--color-shimmer-from) 25%, var(--color-neutral-bg) 50%, var(--color-shimmer-from) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+.skeleton-line--title { height: 18px; width: 40%; }
+.skeleton-line--wide { width: 72%; }
+.skeleton-line--narrow { width: 48%; }
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Inline spinner next to a button label / status text. */
+.spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-text);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+}

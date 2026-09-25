@@ -1,30 +1,104 @@
-/* Color tokens. Light defaults + dark override via prefers-color-scheme.
- * Components consume these custom properties — never raw hex values. */
+/* Color tokens — light + dark in ONE declaration per token via `light-dark()`.
+ * Unlayered (custom properties are global).
+ *
+ * Theme switch: `color-scheme` decides which half of every `light-dark()`
+ * applies. Default follows the OS (`light dark`); forcing a theme is one
+ * attribute on <html>: `data-theme="light"` / `data-theme="dark"` (hook for a
+ * future theme toggle — nothing else needs to change).
+ *
+ * Palette: paper/ink. Warm paper as the desk, white cards on top, ink-black
+ * instead of pure black. Brand blue = primary, feather gold = accent.
+ * Rule: components consume these tokens, never raw hex/rgb. */
 
 :root {
-  --c-bg:          #f7f7f8;
-  --c-surface:     #ffffff;
-  --c-surface-2:   #f0f0f3;
-  --c-border:      #d9d9e0;
-  --c-text:        #1a1a1f;
-  --c-text-muted:  #6b6b76;
-  --c-accent:      #4f46e5;
-  --c-accent-text: #ffffff;
-  --c-danger:      #c0392b;
-  --c-ok:          #2e7d52;
+  color-scheme: light dark;
+
+  /* === Surfaces + text === */
+  --color-bg:       light-dark(#faf7f2, #1a1816);
+  --color-surface:  light-dark(#ffffff, #2a2722);
+  --color-card-bg:  var(--color-surface);
+  --color-vignette: light-dark(rgba(0, 0, 0, 0.045), rgba(0, 0, 0, 0.35));
+  --color-text:     light-dark(#1f1c18, #e6e2d9);
+  --color-muted:    light-dark(#6b6258, #9a948a);
+  /* subtle: tertiary text, WCAG AA (≥4.5:1) on surface + bg, below muted.
+     faint is decorative only (skeleton, dimming) — never for readable text. */
+  --color-subtle:   light-dark(#787068, #989083);
+  --color-faint:    light-dark(#b8aea2, #524d46);
+  --color-text-inverse: #eee; /* text on permanently dark fills */
+
+  /* === Lines + washes === */
+  --color-border:       light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.12));
+  --color-border-input: light-dark(rgba(0, 0, 0, 0.16), rgba(255, 255, 255, 0.18));
+  --color-border-focus: light-dark(rgba(0, 0, 0, 0.4),  rgba(255, 255, 255, 0.45));
+  --color-hover:        light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.06));
+  --color-hover-light:  light-dark(rgba(0, 0, 0, 0.03), rgba(255, 255, 255, 0.04));
+  --color-hover-strong: light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.1));
+  --color-tag-bg:       light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.08));
+  --color-neutral-bg:   light-dark(#e8e8e8, #2d2a25);
+  /* Ghost icon-chip fill. Lighter in light mode — a dark overlay on a light
+     ground reads stronger than the reverse at the same alpha. */
+  --icon-ghost-fill:       light-dark(color-mix(in srgb, var(--color-text) 3.5%, transparent),
+                                      color-mix(in srgb, var(--color-text) 6%, transparent));
+  --icon-ghost-fill-hover: light-dark(color-mix(in srgb, var(--color-text) 8%, transparent),
+                                      color-mix(in srgb, var(--color-text) 12%, transparent));
+
+  /* === Brand === */
+  --color-primary:       light-dark(#1d4b73, #7aa3ca);
+  --color-primary-hover: light-dark(#143855, #a8c4e0);
+  --color-primary-light: light-dark(#2d6a9f, #5a7a99);
+  --color-on-primary:    light-dark(#ffffff, #1a1816);
+  --color-accent:        light-dark(#c4a55a, #c9a961);
+  --color-accent-bg:     light-dark(rgba(196, 165, 90, 0.16), rgba(201, 169, 97, 0.18));
+  --color-accent-text:   light-dark(#8a6a20, #e0c070);
+  --color-accent-hover:  light-dark(rgba(196, 165, 90, 0.10), rgba(201, 169, 97, 0.12));
+  --color-accent-soft:   light-dark(rgba(196, 165, 90, 0.06), rgba(201, 169, 97, 0.07));
+  --color-on-accent:     #1a1a1a;
+  --color-running:       light-dark(var(--color-primary-light), #6aa3d4);
+
+  /* === Operational status (banners, validation, jobs) === */
+  --color-ok-bg:      light-dark(#EAF3DE, rgba(99, 153, 34, 0.18));
+  --color-ok-text:    light-dark(#3B6D11, #a5d06b);
+  --color-ok-border:  light-dark(#639922, #7fbc36);
+  --color-warn-bg:    light-dark(#FAEEDA, rgba(184, 134, 11, 0.18));
+  --color-warn-text:  light-dark(#854F0B, #e5b960);
+  --color-pending:    light-dark(#f59e0b, #fbbf24);
+  --color-err-bg:     light-dark(#FCEBEB, rgba(226, 75, 74, 0.18));
+  --color-err-text:   light-dark(#A32D2D, #ff9090);
+  --color-err-border: light-dark(#E24B4A, #e85a58);
+  --color-err-light:  #fc8181;
+  --color-err-hover:  light-dark(#7a1f1f, #c44040); /* filled danger button hover */
+  --color-success:       light-dark(#34d399, #4fd9aa);
+  --color-success-hover: light-dark(#1D9E75, #6eead0);
+
+  /* === Shadows (alpha; consumed by --shadow-* in motion.css) + scrim === */
+  --color-shadow-soft:   light-dark(rgba(0, 0, 0, 0.1),  rgba(0, 0, 0, 0.45));
+  --color-shadow:        light-dark(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.5));
+  --color-shadow-med:    light-dark(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.6));
+  --color-shadow-strong: light-dark(rgba(0, 0, 0, 0.3),  rgba(0, 0, 0, 0.75));
+  --color-overlay:       rgba(0, 0, 0, 0.45); /* modal/dialog scrim */
+
+  /* === Misc === */
+  --color-tooltip-bg:   light-dark(#ffffff, #2d2a25);
+  --color-shimmer-from: light-dark(#ccc, #3a3a3a);
+
+  /* === Card accents ===
+     One light base hue per card key (`--card-accent-<key>-base`, the SSoT).
+     The dark value is DERIVED via OKLCH relative color syntax (lift lightness
+     with a readability floor, slightly desaturate) — never hand-maintained.
+     New key: add the -base hue + one mapped line following the pattern below,
+     then `.card--<key>` in css/card-accents.css. */
+  --accent-dark-lift:   0.19;
+  --accent-dark-chroma: 0.94;
+  --accent-dark-floor:  0.66;
+
+  --card-accent-nav-base: #3a5a8a;
+  --card-accent-nav: light-dark(var(--card-accent-nav-base),
+    oklch(from var(--card-accent-nav-base) max(var(--accent-dark-floor), calc(l + var(--accent-dark-lift))) calc(c * var(--accent-dark-chroma)) h));
+
+  --card-accent-notes-base: #b8862a;
+  --card-accent-notes: light-dark(var(--card-accent-notes-base),
+    oklch(from var(--card-accent-notes-base) max(var(--accent-dark-floor), calc(l + var(--accent-dark-lift))) calc(c * var(--accent-dark-chroma)) h));
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --c-bg:          #16161a;
-    --c-surface:     #1e1e24;
-    --c-surface-2:   #26262e;
-    --c-border:      #34343e;
-    --c-text:        #ececed;
-    --c-text-muted:  #9a9aa6;
-    --c-accent:      #8b86f5;
-    --c-accent-text: #16161a;
-    --c-danger:      #e57373;
-    --c-ok:          #6fcf97;
-  }
-}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }

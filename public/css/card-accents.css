@@ -1,0 +1,11 @@
+/* Card-accent mapping — SSoT for which hue a card key gets.
+ * Hues live in tokens/colors.css (`--card-accent-<key>-base` + derived dark).
+ * `.card` renders `--card-accent` automatically (2px top band, header wash,
+ * title tint — card-form/card-shell.css). Per-card CSS only CONSUMES
+ * var(--card-accent), it never declares it.
+ * New card: hue in colors.css, one line here, `card--<key>` on the root div. */
+
+@layer components {
+  .card--nav   { --card-accent: var(--card-accent-nav); }
+  .card--notes { --card-accent: var(--card-accent-notes); }
+}

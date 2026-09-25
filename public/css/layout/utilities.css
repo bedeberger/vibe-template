@@ -1,0 +1,63 @@
+/* Small layout utilities.
+ * Source: schreibwerkstatt layout/utilities.css (job-queue footer, palette
+ * badge and domain one-offs removed). */
+
+@layer utilities {
+/* Header line inside a card/section: title + actions; stacks on mobile. */
+.list-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.list-header--between { justify-content: space-between; }
+.list-header--wrap { flex-wrap: wrap; }
+@media (max-width: 600px) {
+  .list-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Numbers that update live must not wobble. */
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+.display-contents { display: contents; }
+
+/* Screen-reader-only text (visible label lives elsewhere, e.g. skeletons). */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+}
+
+@layer components {
+/* Row: flex wrapper for input + button rows. ≤480px stacks (inputs full
+   width, buttons share the row). */
+.row {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.row > * { flex: 1; }
+.row > button { flex: 0 0 auto; }
+
+@media (max-width: 480px) {
+  .row > select,
+  .row > input { flex: 1 0 100%; }
+  .row > button { flex: 1; }
+}
+
+/* Wide tables scroll horizontally instead of overflowing the card:
+   <div class="table-scroll"><table>…</table></div> */
+.table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+.table-scroll > table { min-width: 100%; }
+}

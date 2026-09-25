@@ -1,0 +1,198 @@
+/* Card interior — the shared vocabulary of the card BODY.
+ * Source: schreibwerkstatt components/card-form/card-blocks.css.
+ *
+ * card-shell.css owns the card itself (frame, accent, header). Everything a
+ * card body needs lives HERE, not in the feature file that happened to need
+ * it first (owner rule): a class name used by several cards needs one owner,
+ * otherwise its look depends on the load order of two unrelated files.
+ * Load position: right after card-shell.css, before any feature CSS. A card
+ * that deviates declares ONLY the deviation, next to the generic class.
+ * Pattern doc: DESIGN.md → "Card interior". */
+
+@layer components {
+/* === 1. Vertical rhythm ====================================================
+   Spacing between two blocks belongs to the FLOW, not to the blocks.
+   Adjacent-sibling selector instead of margin-bottom + :last-child: blocks
+   mostly hang on x-show, and a display:none element still counts for
+   :last-child. With `+` the FOLLOWING visible block carries the gap; a hidden
+   neighbour creates none. */
+.card-section + .card-section { margin-top: var(--card-gap-section); }
+/* Tight: the block still belongs to the previous one. Modifier sits on the
+   FOLLOWING block ("the gap before me is tight"). */
+.card-section + .card-section--tight { margin-top: var(--card-gap-tight); }
+
+/* === 2. Section head =======================================================
+   Title left, actions/counter right. */
+.card-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-bottom: var(--card-gap-tight);
+}
+.card-section-head--baseline { align-items: baseline; }
+.card-section-head--flush { margin-bottom: 0; }
+
+/* === 3. Section title ======================================================
+   Tracked caps line above a section — little sister of .card-eyebrow. */
+.card-section-title {
+  margin: 0 0 var(--card-gap-tight);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xs);
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: var(--lh-tight);
+  color: var(--color-muted);
+}
+/* Inside a section head the head carries the spacing — for ANY heading. */
+.card-section-head > :is(h1, h2, h3, h4, h5, h6, p),
+.card-section-head .card-section-title { margin-block: 0; }
+
+/* === 4. Hint text ==========================================================
+   The grey explanatory sentence. `margin: 0` is the point: the gap comes from
+   the flow (section 1), never from the hint. */
+.card-hint,
+.card-form-hint,
+.card-form-field-note,
+.card-empty-hint {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: var(--lh-base);
+  color: var(--color-muted);
+}
+.card-hint--sm,
+.card-form-hint,
+.card-form-field-note,
+.card-empty-hint { font-size: var(--font-size-mini); }
+.card-hint--right,
+.card-form-hint { text-align: right; }
+.card-hint--warn { color: var(--color-warn-text); }
+.card-hint--lead {
+  font-size: var(--font-size-base);
+  max-width: 60ch;
+}
+
+/* === 5. Card status ========================================================
+   Loading / empty / error line. */
+.card-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  margin-top: var(--card-gap-tight);
+  margin-bottom: var(--card-gap-tight);
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+}
+.card-status--error { color: var(--color-err-text); }
+
+/* === 6. Muted message ======================================================
+   Inline state report without a surface. vs .card-hint: the hint EXPLAINS
+   (stays under its element); the message REPORTS a state ("no entries") and
+   appears where the missing content would be. */
+.muted-msg {
+  color: var(--color-subtle);
+  font-size: var(--font-size-base);
+}
+.muted-msg--sm {
+  font-size: var(--font-size-sm);
+  padding: var(--card-gap-tight) 0;
+}
+.muted-msg--block {
+  display: block;
+  padding: var(--space-20);
+  text-align: center;
+}
+.muted-msg--spaced { margin-top: var(--space-14); }
+
+/* === 7. Progress bar =======================================================
+   Width comes from the custom property --progress, never a bound `width`:
+   :style="{ '--progress': pct + '%' }". */
+.progress-bar-wrap {
+  height: 4px;
+  margin-top: var(--card-gap-tight);
+  margin-bottom: var(--card-gap-tight);
+  background: var(--color-tag-bg);
+  border-radius: 0;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  width: var(--progress, 0%);
+  background: var(--color-text);
+  border-radius: 0;
+  transition: width var(--transition-emphasized);
+}
+/* Bar + status line are ONE block: the gap sits at the foot of the pair. */
+.progress-bar-wrap + .card-status { margin-top: 0; margin-bottom: var(--card-gap-section); }
+
+/* === 8. Filter bar =========================================================
+   List filter row: search field + compact controls + count. */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-10);
+  padding-bottom: var(--space-10);
+  border-bottom: 1px solid var(--color-border);
+}
+.card-hint + .filter-bar { margin-top: var(--card-gap-section); }
+.filter-count { font-size: var(--font-size-xs); color: var(--color-muted); margin-left: auto; }
+
+/* Embedded in a .card-toolbar next to action buttons: drop the standalone
+   chrome, it would tip the controls off the button centre line. */
+.filter-bar--inline {
+  flex: 1;
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.filter-search-input--wide { min-width: 12rem; flex: 1; }
+
+/* Checkbox switch in the filter bar — same compact typography as the rest. */
+.filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-mini);
+  line-height: 1.4;
+  color: var(--color-muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+/* Scoped to .filter-bar: the generic input[type=text] rule (0,1,1) would
+   otherwise beat a bare class (0,1,0) and render a default-size field. */
+.filter-bar .filter-search-input {
+  font-size: var(--font-size-mini);
+  line-height: 1.4;
+  padding: var(--space-xs) var(--space-sm);
+  border: var(--border-thin) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-text);
+  width: 120px;
+}
+.filter-bar .filter-search-input:focus { outline: none; border-color: var(--color-border-focus); }
+
+/* Same height for every filter-bar control (aligned to the search field). */
+.filter-bar .tabs { border-radius: var(--radius-md); }
+.filter-bar .tabs-btn {
+  font-size: var(--font-size-mini);
+  padding: var(--space-xs) var(--space-md);
+  line-height: 1.4;
+}
+
+@media (max-width: 600px) {
+  .filter-bar .filter-search-input { width: 100%; }
+  .filter-count { width: 100%; text-align: right; }
+}
+
+/* Timestamp in the card subline ("Updated: …"). Card-header vocabulary. */
+.card-timestamp {
+  font-size: var(--font-size-mini);
+  color: var(--color-muted);
+}
+}

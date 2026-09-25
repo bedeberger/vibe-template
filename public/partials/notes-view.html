@@ -1,53 +1,100 @@
 <!-- Notes feature view. Loaded into the [data-partial="notes-view"] placeholder
      in index.html. Runs inside the root `app` scope; cards are noteCard
      sub-components. Keeping the markup here (one file) is the partial pattern;
-     extract further into smaller partials once it grows past the size limit. -->
+     extract further into smaller partials once it grows past the size limit.
+     Patterns: DESIGN.md → Card, Card interior, Form patterns, Icon button. -->
 
-<div class="card">
-  <label class="note-meta" x-text="t('notebook.label')"></label>
-  <select class="field" x-model.number="currentNotebookId" @change="selectNotebook(currentNotebookId)">
-    <template x-for="nb in notebooks" :key="nb.id">
-      <option :value="nb.id" x-text="nb.name"></option>
-    </template>
-  </select>
+<div class="card card--notes">
+  <div class="card-header card-header--subline">
+    <div class="card-header-titlebar">
+      <h2 class="card-title" x-text="t('nav.notes')"></h2>
+    </div>
+    <div class="card-header-aside">
+      <span class="badge badge-neutral tabular-nums" x-text="notes.length"></span>
+    </div>
+  </div>
 
-  <div class="row">
-    <input class="field" type="text" x-model="newNoteTitle"
-           :placeholder="t('notes.newPlaceholder')" @keydown.enter="addNote()">
-    <button class="btn btn--primary" @click="addNote()" x-text="t('notes.add')"></button>
+  <div class="card-form-grid">
+    <div class="card-form-row">
+      <label class="card-form-label" for="notebook-select" x-text="t('notebook.label')"></label>
+      <select id="notebook-select" x-model.number="currentNotebookId" @change="selectNotebook(currentNotebookId)">
+        <template x-for="nb in notebooks" :key="nb.id">
+          <option :value="nb.id" x-text="nb.name"></option>
+        </template>
+      </select>
+    </div>
+    <div class="card-form-row">
+      <label class="card-form-label" for="new-note-title" x-text="t('notes.newLabel')"></label>
+      <div class="row">
+        <input id="new-note-title" type="text" x-model="newNoteTitle"
+               :placeholder="t('notes.newPlaceholder')" @keydown.enter="addNote()">
+        <button type="button" class="primary" @click="addNote()">
+          <svg class="icon" aria-hidden="true"><use href="/icons.svg#plus"/></svg>
+          <span x-text="t('notes.add')"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-empty" x-show="!notes.length">
+    <p class="card-empty-text" x-text="t('notes.empty')"></p>
   </div>
 </div>
 
-<p class="note-meta" x-show="!notes.length" x-text="t('notes.empty')"></p>
-
 <template x-for="note in notes" :key="note.id">
-  <div class="card note-card" x-data="noteCard(note)">
+  <article class="card card--notes note-card" x-data="noteCard(note)">
     <template x-if="!editing">
       <div>
-        <div class="note-title" x-text="note.title"></div>
+        <div class="card-header card-header--subline">
+          <div class="card-header-titlebar">
+            <h3 class="card-title" x-text="note.title"></h3>
+            <div class="card-subline">
+              <span class="card-timestamp">
+                <span x-text="t('notes.updated')"></span>: <span x-text="fmt(note.updated_at)"></span>
+              </span>
+              <span class="spinner" x-show="busy" aria-hidden="true"></span>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button type="button" class="icon-btn icon-btn--ghost" @click="startEdit()" :disabled="busy"
+                    :aria-label="t('notes.edit')" :data-tip="t('notes.edit')">
+              <svg class="icon" aria-hidden="true"><use href="/icons.svg#pencil"/></svg>
+            </button>
+            <button type="button" class="icon-btn icon-btn--ghost" @click="runStats()" :disabled="busy"
+                    :aria-label="t('notes.runStats')" :data-tip="t('notes.runStats')">
+              <svg class="icon" aria-hidden="true"><use href="/icons.svg#activity"/></svg>
+            </button>
+            <span class="action-sep" aria-hidden="true"></span>
+            <button type="button" class="icon-btn icon-btn--ghost icon-btn--danger tip--end" @click="remove()" :disabled="busy"
+                    :aria-label="t('notes.delete')" :data-tip="t('notes.delete')">
+              <svg class="icon" aria-hidden="true"><use href="/icons.svg#trash"/></svg>
+            </button>
+          </div>
+        </div>
         <!-- x-html sink: bodyHtml is escaped in note-card.js (escape invariant). -->
         <div class="note-body" x-html="bodyHtml"></div>
-        <div class="note-meta">
-          <span x-text="t('notes.updated')"></span>: <span x-text="fmt(note.updated_at)"></span>
-        </div>
-        <div class="note-stats" x-show="stats" x-text="stats ? t('notes.stats', stats) : ''"></div>
-        <div class="row note-actions">
-          <button class="btn" @click="startEdit()" :disabled="busy" x-text="t('notes.edit')"></button>
-          <button class="btn" @click="runStats()" :disabled="busy" x-text="t('notes.runStats')"></button>
-          <button class="btn btn--danger" @click="remove()" :disabled="busy" x-text="t('notes.delete')"></button>
-        </div>
+        <p class="note-stats" x-show="stats">
+          <span class="badge badge-ok tabular-nums" x-text="stats ? t('notes.stats', stats) : ''"></span>
+        </p>
       </div>
     </template>
 
     <template x-if="editing">
       <div>
-        <input class="field" type="text" x-model="draftTitle" :placeholder="t('notes.titlePlaceholder')">
-        <textarea class="field" x-model="draftBody" :placeholder="t('notes.bodyPlaceholder')"></textarea>
-        <div class="row note-actions">
-          <button class="btn btn--primary" @click="save()" :disabled="busy" x-text="t('notes.save')"></button>
-          <button class="btn" @click="editing = false" x-text="t('notes.cancel')"></button>
+        <div class="card-section form-stack">
+          <input type="text" x-model="draftTitle" :placeholder="t('notes.titlePlaceholder')"
+                 :aria-label="t('notes.titlePlaceholder')">
+          <textarea class="card-form-textarea" rows="6" x-model="draftBody"
+                    :placeholder="t('notes.bodyPlaceholder')" :aria-label="t('notes.bodyPlaceholder')"></textarea>
+        </div>
+        <div class="card-section row note-edit-actions">
+          <button type="button" @click="editing = false" x-text="t('notes.cancel')"></button>
+          <button type="button" class="primary" @click="save()" :disabled="busy">
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#check"/></svg>
+            <span x-text="t('notes.save')"></span>
+          </button>
         </div>
       </div>
     </template>
-  </div>
+  </article>
 </template>

@@ -1,0 +1,126 @@
+/* Generic icon button — SSoT for every icon-only button.
+ * Source: schreibwerkstatt components/icon-btn.css (feature-specific close
+ * buttons removed from the glyph/tap-target lists).
+ *   .icon-btn          outlined (frame + fill) — canvas/viewport toolbars
+ *   .icon-btn--ghost   soft chip until hover — header clusters (.card-actions)
+ * Context tweaks go through a scoping class (.<feature> .icon-btn), never a
+ * parallel base class. Works on <button> and <a>. */
+
+@layer components {
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  border: var(--border-thin) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-muted);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-md);
+  line-height: 1;
+  padding: var(--space-3) 9px;
+  min-width: 28px;
+  min-height: 28px;
+  text-decoration: none;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.icon-btn:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+.icon-btn[aria-pressed="true"] {
+  background: var(--color-surface);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* Ghost: soft fill at rest (half-transparent overlay over --color-text —
+   darkens any ground evenly, adapts to light/dark); border on hover/active. */
+.icon-btn--ghost {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: var(--icon-ghost-fill);
+  border-color: transparent;
+  color: var(--color-text);
+  font-size: var(--font-size-base);
+}
+.icon-btn--ghost:hover:not(:disabled) {
+  background: var(--icon-ghost-fill-hover);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+.icon-btn--ghost:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.icon-btn--ghost.is-active,
+.icon-btn--ghost[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* Confirming action (save) as icon-only. */
+.icon-btn--success { color: var(--color-success-hover); }
+.icon-btn--success:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-success) 14%, transparent);
+  border-color: var(--color-success);
+  color: var(--color-success-hover);
+}
+
+/* Destructive action (delete) as icon-only. */
+.icon-btn--danger:hover:not(:disabled) {
+  background: var(--color-err-bg);
+  border-color: var(--color-err-border);
+  color: var(--color-err-text);
+}
+
+/* Count badge on an icon button: the wrap is the positioning anchor. */
+.icon-btn-badge-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.icon-btn-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 var(--space-xs);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--fw-semibold);
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Glyph normalisation: every icon-only action/close button renders its icon
+   at --icon-size-action, independent of its own font-size. New icon-only
+   close/action button class → add it here AND to the coarse-pointer list. */
+.icon-btn > .icon,
+.btn-card-close > .icon,
+.btn-close > .icon,
+.job-toast-close > .icon {
+  width: var(--icon-size-action);
+  height: var(--icon-size-action);
+}
+
+/* Touch: ≥40px tap targets on coarse pointers (tooltips are hover-only). */
+@media (pointer: coarse) {
+  .icon-btn,
+  .btn-card-close,
+  .btn-close,
+  .job-toast-close {
+    min-width: 40px;
+    min-height: 40px;
+    justify-content: center;
+  }
+}
+}

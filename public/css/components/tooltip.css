@@ -1,0 +1,56 @@
+/* Instant tooltip `data-tip` — CSS-only variant.
+ * Template-original: schreibwerkstatt renders data-tip through a shared JS
+ * layer (tooltip.js); this template has no such script, so the bubble is the
+ * target's own ::after, shown instantly on hover/keyboard focus (native
+ * `title` has an unskippable ~500ms delay).
+ *   <button class="icon-btn" :data-tip="t('x.y')" :aria-label="t('x.y')">…
+ * Modifiers (class on the target): .tip--below (target near the top edge),
+ * .tip--end (right-aligned bubble for targets near the right edge).
+ * Limits: the target's ::after belongs to the tooltip — never put data-tip on
+ * an element that uses its own ::after (.tabs-btn). Clipped by ancestors with
+ * overflow:hidden/auto. Hidden on touch (no hover) — aria-label stays. */
+
+@layer base {
+  /* Base layer on purpose: any component that positions the target
+     (absolute/fixed/sticky) wins over this default. */
+  [data-tip] { position: relative; }
+}
+
+@layer components {
+@media (hover: hover) {
+  [data-tip]:is(:hover, :focus-visible)::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + var(--space-6));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: var(--z-popover);
+    width: max-content;
+    max-width: min(280px, 80vw);
+    padding: var(--pad-badge);
+    background: var(--color-tooltip-bg);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-mini);
+    font-weight: var(--fw-regular);
+    line-height: 1.3;
+    letter-spacing: normal;
+    text-transform: none;
+    text-align: left;
+    white-space: pre-wrap;
+    pointer-events: none;
+  }
+  .tip--below[data-tip]:is(:hover, :focus-visible)::after {
+    bottom: auto;
+    top: calc(100% + var(--space-6));
+  }
+  .tip--end[data-tip]:is(:hover, :focus-visible)::after {
+    left: auto;
+    right: 0;
+    transform: none;
+  }
+}
+}

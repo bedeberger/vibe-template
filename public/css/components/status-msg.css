@@ -1,0 +1,25 @@
+/* App-wide status messages: .success-msg / .error-msg (inline text) and the
+ * --banner variant (tinted surface above a form). Colours come from the
+ * status tokens, not the card accent: the meaning is "worked" / "failed".
+ * Source: schreibwerkstatt components/status-msg.css. */
+
+@layer components {
+  .success-msg {
+    color: var(--color-ok-text);
+    font-size: var(--font-size-base);
+  }
+  .error-msg {
+    color: var(--color-err-text);
+    font-size: var(--font-size-base);
+  }
+
+  .success-msg--banner,
+  .error-msg--banner {
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-lg);
+  }
+  .success-msg--banner { background: var(--color-ok-bg); }
+  .error-msg--banner { background: var(--color-err-bg); }
+}

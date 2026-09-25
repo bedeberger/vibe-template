@@ -1,0 +1,51 @@
+/* Typography tokens — families, sizes, weights, line-heights.
+ * Self-hosted Inter (sans, UI) + Source Serif 4 (headings, reading frame);
+ * @font-face lives in the facade css/tokens.css. */
+
+:root {
+  /* === Font family === */
+  --font-sans:  'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-serif: 'Source Serif 4', 'Iowan Old Style', 'Palatino', Georgia, serif;
+  --font-mono:  ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* === Font-size scale ===
+     xs/sm/base/md = UI steps; lg/xl/2xl = sub-heading, card title, hero.
+     micro/mini/reading = semantic in-between steps (dense UI, long-form). */
+  --font-size-micro:   10px;
+  --font-size-xs:      11px;
+  --font-size-mini:    12px;
+  --font-size-sm:      13px;
+  --font-size-base:    14px;
+  --font-size-md:      15px;
+  --font-size-reading: 16px;  /* long-form reading; also ≥16px stops iOS focus zoom */
+  --font-size-lg:      18px;
+  --font-size-xl:      22px;
+  --font-size-2xl:     26px;
+  --font-size-3xl:     30px;
+
+  /* === Em scale (relative to parent — inline markup, headings in prose) === */
+  --font-em-80:  0.8em;
+  --font-em-85:  0.85em;
+  --font-em-90:  0.9em;
+
+  /* === Icon glyph size ===
+     Fixed render size of the sprite icon in icon-only action/close buttons —
+     decouples the glyph from the button's font-size (consumer: icon-btn.css). */
+  --icon-size-action: 16px;
+
+  /* === Font weight === */
+  --fw-regular:  400;
+  --fw-medium:   500;
+  --fw-semibold: 600;
+  --fw-bold:     700;
+
+  /* === Line height === */
+  --lh-tight:   1.2;   /* headings, buttons, compact UI */
+  --lh-base:    1.45;  /* default text */
+  --lh-relaxed: 1.6;   /* reading frame, long paragraphs */
+
+  /* === Control sizes (inputs, selects, buttons side by side share height) === */
+  --size-compact-font-size: 12px;
+  --size-compact-padding:   4px 10px;
+  --size-default-padding-y: 8px;
+}

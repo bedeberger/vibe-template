@@ -1,0 +1,326 @@
+/* Form elements + form patterns (label/value grid, stacks, checks, radios,
+ * hint/error/saved/warn lines, empty state).
+ * Source: schreibwerkstatt components/card-form/form-elements.css (domain
+ * rows — dictionary, devices, goal input, stats — removed). */
+
+@layer components {
+/* Labels carry NO margin: spacing between label and field comes from the gap
+   of the container (.form-stack, .card-form-row, .form-inline). A one-sided
+   margin in an align-items:center row mis-centres the visible box. */
+label {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  display: block;
+}
+
+input[type=text],
+input[type=email],
+input[type=password],
+input[type=url],
+input[type=search],
+input[type=tel],
+input[type=number],
+input[type=date],
+input[type=month],
+input[type=datetime-local],
+select,
+.card-form-input {
+  width: 100%;
+  padding: var(--size-default-padding-y) var(--space-10);
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-family: inherit;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+/* iOS: font-size ≥16px prevents the automatic zoom on focus. */
+@media (max-width: 768px) {
+  input[type=text],
+  input[type=email],
+  input[type=password],
+  input[type=url],
+  input[type=search],
+  input[type=tel],
+  input[type=number],
+  input[type=date],
+  input[type=month],
+  input[type=datetime-local],
+  textarea,
+  select {
+    font-size: var(--font-size-reading);
+  }
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.card-form-input:focus,
+.card-form-textarea:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled,
+.card-form-input:disabled,
+.card-form-textarea:disabled {
+  opacity: var(--opacity-hint);
+  cursor: not-allowed;
+}
+
+.card-form-textarea {
+  width: 100%;
+  font-size: var(--font-size-sm);
+  font-family: inherit;
+  padding: var(--space-6) var(--space-sm);
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  resize: vertical;
+  line-height: 1.5;
+}
+@media (max-width: 768px) {
+  .card-form-textarea { font-size: var(--font-size-reading); }
+}
+
+/* Validation: aria-invalid="true" is the state — no parallel class. */
+input[aria-invalid="true"],
+textarea[aria-invalid="true"],
+select[aria-invalid="true"] {
+  border-color: var(--color-err-border);
+  outline-color: var(--color-err-border);
+}
+
+/* === Label/value grid (settings-style cards) === */
+.card-form-grid {
+  padding: var(--space-xs) 0 var(--space-sm);
+}
+.card-form-row {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  align-items: start;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-14);
+}
+.card-form-row--top { align-items: flex-start; }
+/* Label-less full-width content in the grid (danger zone, footnote). */
+.card-form-row--full { display: block; }
+.card-form-label {
+  font-weight: var(--fw-bold);
+  font-size: var(--font-size-sm);
+  padding-top: var(--space-6);
+  color: var(--color-text);
+}
+.card-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+.card-form-row > .card-form-hint {
+  grid-column: 2;
+  text-align: left;
+}
+.card-form-section-divider {
+  font-size: var(--font-size-mini);
+  color: var(--color-muted);
+  line-height: 1.4;
+  margin: 22px 0 var(--space-14);
+  padding-top: var(--space-14);
+  border-top: var(--border-thin) solid var(--color-border);
+}
+
+/* === Result lines under a form: saved / error / warn === */
+.card-form-saved {
+  margin: var(--space-sm) 0 0;
+  font-size: var(--font-size-mini);
+  color: var(--color-ok-text);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+.card-form-saved::before {
+  content: "";
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  background-color: currentColor;
+  -webkit-mask: var(--icon-check) center / contain no-repeat;
+          mask: var(--icon-check) center / contain no-repeat;
+}
+.card-form-error {
+  margin: var(--space-sm) 0 0;
+  font-size: var(--font-size-mini);
+  color: var(--color-err-text);
+}
+/* Non-fatal consequence: the action went through, but the user must know. */
+.card-form-warn {
+  margin: var(--space-sm) 0 0;
+  padding: var(--space-6) var(--space-sm);
+  border-left: 3px solid var(--color-warn-text);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--color-warn-bg);
+  font-size: var(--font-size-mini);
+  color: var(--color-warn-text);
+}
+/* Inline next to a button: vertically centred despite .row's flex-end. */
+.row > .card-form-saved,
+.card-actions > .card-form-saved,
+.card-actions > .card-form-error {
+  align-self: center;
+  margin: 0;
+}
+
+/* === Empty state with CTA === */
+.card-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-2xl) var(--space-lg);
+  text-align: center;
+}
+.card-empty-text {
+  margin: 0;
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+  font-weight: var(--fw-medium);
+}
+/* Look comes from .card-hint--sm (card-blocks.css); only the reading width. */
+.card-empty-hint { max-width: 32em; }
+.card-empty-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+/* === Value-column building blocks === */
+.form-lead {
+  margin: var(--space-xs) 0 var(--space-14);
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+.form-inline {
+  display: flex;
+  gap: var(--space-20);
+  flex-wrap: wrap;
+  align-items: center;
+}
+.form-inline-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+.form-num {
+  font-size: var(--font-size-sm);
+  padding: var(--pad-badge);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  width: 90px;
+}
+
+/* Radio group: wrapping row of options; --card variant = bordered option
+   cards tinted with the surrounding --card-accent when checked. */
+.form-radio-group {
+  display: flex;
+  gap: var(--space-20);
+  flex-wrap: wrap;
+}
+.form-radio-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  cursor: pointer;
+}
+.form-radio-option input[type="radio"] {
+  accent-color: var(--color-primary);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+.form-radio-group--card { gap: var(--space-lg); }
+.form-radio-group--card .form-radio-option {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  transition: border-color var(--transition-base), background var(--transition-base);
+}
+.form-radio-group--card .form-radio-option:has(input:checked) {
+  border-color: var(--card-accent, var(--color-primary));
+  background: color-mix(in srgb, var(--card-accent, var(--color-primary)) 8%, var(--color-bg));
+}
+.form-radio-group--card .form-radio-option input[type="radio"] {
+  accent-color: var(--card-accent, var(--color-primary));
+}
+
+/* Checkbox with title + description. */
+.form-check {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: var(--space-10);
+  align-items: start;
+  cursor: pointer;
+  line-height: 1.4;
+}
+.form-check input[type="checkbox"] {
+  margin-top: var(--space-3);
+  accent-color: var(--color-primary);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+.form-check-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+  display: block;
+}
+.form-check-desc {
+  font-size: var(--font-size-mini);
+  color: var(--color-muted);
+  display: block;
+  margin-top: var(--space-2xs);
+}
+
+.form-section {
+  margin-top: var(--space-14);
+  padding-top: var(--space-14);
+  border-top: var(--border-thin) solid var(--color-border);
+}
+
+/* Mobile: the 170px/1fr grid collapses to one column. */
+@media (max-width: 600px) {
+  .card-form-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+  }
+  .card-form-label { padding-top: 0; }
+  .card-form-field { gap: var(--space-sm); }
+  .card-form-row > .card-form-hint { grid-column: 1; }
+  .card-empty { padding: var(--space-xl) var(--space-md); }
+  .form-inline { gap: var(--space-10) var(--space-lg); }
+  .form-inline-field { flex: 1 1 calc(50% - 16px); min-width: 0; }
+  .form-num { flex: 1; width: auto; min-width: 0; }
+  .form-radio-group { gap: var(--space-md); }
+  .form-radio-group--card { flex-direction: column; }
+  .form-radio-group--card .form-radio-option { width: 100%; }
+}
+}

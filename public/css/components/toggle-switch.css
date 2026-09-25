@@ -1,0 +1,64 @@
+/* Toggle switch — boolean on/off control. Round pill + sliding thumb (the
+ * universal switch affordance; the square-badge rule is for badges, not this
+ * control). Plain Alpine markup, no JS component:
+ *   <button type="button" class="toggle-switch__btn" role="switch"
+ *           :aria-checked="on" @click="on = !on">
+ *     <span class="toggle-switch__track" :class="{ 'is-on': on }">
+ *       <span class="toggle-switch__thumb"></span></span>
+ *     <span class="toggle-switch__label" x-text="t('…')"></span>
+ *   </button>
+ * Source: schreibwerkstatt components/toggle-switch.css. */
+
+@layer components {
+.toggle-switch__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+}
+.toggle-switch__btn:hover { background: none; }
+.toggle-switch__btn:active { transform: none; }
+.toggle-switch__btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.toggle-switch__track {
+  position: relative;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-input);
+  background: var(--color-surface);
+  transition: background var(--transition-slow), border-color var(--transition-slow);
+}
+.toggle-switch__track.is-on {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.toggle-switch__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-muted);
+  transition: transform var(--transition-slow), background var(--transition-slow);
+}
+.toggle-switch__track.is-on .toggle-switch__thumb {
+  transform: translateX(16px);
+  background: var(--color-on-primary);
+}
+.toggle-switch__label {
+  font-size: var(--font-size-base);
+  line-height: 1.3;
+}
+}

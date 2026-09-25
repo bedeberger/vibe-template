@@ -1,0 +1,45 @@
+/* Lucide icons via the SVG sprite (public/icons.svg).
+ * Markup: <svg class="icon" aria-hidden="true"><use href="/icons.svg#NAME"/></svg>
+ * Stroke/fill are declared on the consuming <svg>; the <use> shadow tree
+ * inherits them. Source: schreibwerkstatt components/icons.css. */
+
+/* In @layer components like every component file — unlayered, the
+   `button:has(> .icon)` rule would beat every layered display override. */
+@layer components {
+  .icon {
+    width: 1em;
+    height: 1em;
+    display: inline-block;
+    vertical-align: -0.125em;
+    flex-shrink: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+  }
+
+  /* Size follows the parent's font-size (1em). The only variant: --sm also
+     carries its own stroke width, which a parent cannot express. */
+  .icon--sm { font-size: 14px; stroke-width: 2.25; }
+
+  /* Button with icon + text: consistent gap and vertical axis. */
+  button:has(> .icon) {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-6);
+  }
+}
+
+/* Reusable mask data URLs (Lucide paths, ISC) for CSS pseudo-icons — a masked
+   fill instead of <svg>, so currentColor applies and the element can rotate:
+     .x::before { content: ""; width: 1em; height: 1em;
+                  background-color: currentColor;
+                  -webkit-mask: var(--icon-check) center / contain no-repeat;
+                          mask: var(--icon-check) center / contain no-repeat; }
+   Consumer: card-form/form-elements.css (.card-form-saved). */
+:root {
+  --icon-chevron-right: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m9 18 6-6-6-6'/></svg>");
+  --icon-check:         url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6 9 17l-5-5'/></svg>");
+}

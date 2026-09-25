@@ -1,0 +1,169 @@
+/* Card shell: frame, accent band, header, title, eyebrow, subline, toolbar.
+ * Source: schreibwerkstatt components/card-form/card-shell.css (editor sync
+ * status and inline-editable title removed). What goes INSIDE the card body
+ * lives in card-blocks.css. */
+
+@layer components {
+/* === Card ===
+   Top border is the accent band: 2px in `--card-accent` (card-accents.css).
+   Flat model: no baseline/hover shadow — border + band + a faint accent wash
+   from the header into the surface carry the edge; hover pulls the side and
+   bottom borders towards the accent. Cards without `card--<key>` stay
+   neutral via the fallbacks. */
+.card {
+  background:
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--card-accent, var(--color-surface)) 4%, var(--color-surface)),
+      var(--color-surface) 110px
+    );
+  border-radius: var(--radius-lg);
+  border: var(--border-thin) solid var(--color-border);
+  border-top: var(--border-thick) solid var(--card-accent, var(--color-border));
+  padding: var(--space-20);
+  margin-bottom: var(--space-lg);
+  /* `backwards` (not `both`): applies the from-state before start (no flash)
+     but leaves no transform behind — a lingering transform would create a
+     containing block for position:fixed descendants. */
+  animation: cardFadeIn var(--transition-emphasized) backwards;
+  transition: border-color var(--transition-base);
+}
+/* Explicit sides instead of the border-color shorthand, which would also
+   recolour the accent band. */
+.card:hover {
+  border-inline-color: color-mix(in oklab, var(--card-accent, var(--color-border)) 22%, var(--color-border));
+  border-bottom-color: color-mix(in oklab, var(--card-accent, var(--color-border)) 22%, var(--color-border));
+}
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-10);
+  padding-bottom: var(--space-md);
+  margin-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+  flex-wrap: wrap;
+  position: relative;
+}
+
+@media (max-width: 700px) {
+  .card-header { flex-direction: column; align-items: flex-start; }
+  /* Anchor a direct-child close button top-right in the column stack. */
+  .card-header:has(> .btn-card-close) { padding-right: var(--space-xl); }
+  .card-header > .btn-card-close { position: absolute; top: 0; right: 0; margin-left: 0; }
+}
+
+.card-title {
+  font-family: var(--font-serif);
+  font-weight: var(--fw-medium);
+  font-size: var(--font-size-lg);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  font-optical-sizing: auto;
+  text-wrap: balance;
+  /* Title leans 30% towards the card accent — ink stays dominant; the
+     currentColor fallback keeps accent-less cards neutral. */
+  color: color-mix(in oklab, var(--card-accent, currentColor) 30%, var(--color-text));
+}
+
+/* Eyebrow: small tracked caps line ABOVE the .card-title (context label:
+   section, parent entity) when the title itself names the function. */
+.card-eyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-subtle);
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+/* Header with subline: title on top, meta line (timestamp, links) below,
+   aside (badges + buttons) on the right. */
+.card-header--subline { align-items: flex-start; }
+.card-header-titlebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+  /* basis 0 (not auto): a max-content subline would otherwise push the
+     actions out of the wrapped row. */
+  flex: 1 1 0;
+}
+.card-subline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-muted);
+  line-height: 1.4;
+}
+.card-header-aside {
+  display: flex;
+  align-items: center;
+  gap: var(--space-14);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+  margin-left: auto;
+}
+
+/* === Card toolbar ===
+   Action row in the card BODY (not the header): create/import buttons left,
+   optionally an inline filter bar. Vertical spacing is the card rhythm:
+   --card-gap-section below, nothing above (the header provides it).
+   `.card-actions` is the icon cluster IN the header — different thing. */
+.card-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--card-gap-section);
+}
+.card-toolbar .btn-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+/* Mobile: a header WITH a titlebar stays one line — the actions stay anchored
+   top-right, the title column shrinks and wraps. Plain text-button bars
+   without a titlebar keep the full-width stack from the base rule. */
+@media (max-width: 700px) {
+  .card-header:has(.card-header-titlebar) {
+    flex-direction: row;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+  }
+  /* Floor for the title column so a wide aside cannot squeeze it to 1 char. */
+  .card-header:has(.card-header-titlebar) > .card-header-titlebar { min-width: 55%; }
+  .card-header:has(.card-header-titlebar) > .card-actions,
+  .card-header:has(.card-header-titlebar) > .card-header-aside {
+    width: auto;
+    flex: 0 1 auto;
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-left: var(--space-md);
+  }
+  /* Exception: a tab row in the action bar gets its own full line (a scroll
+     container next to the 55% floor would leave a ~120px sliver). */
+  .card-header:has(.card-header-titlebar):has(> .card-actions > .tabs) {
+    flex-wrap: wrap;
+  }
+  .card-header:has(.card-header-titlebar) > .card-actions:has(> .tabs) {
+    flex-basis: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+  }
+}
+}

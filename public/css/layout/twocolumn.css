@@ -1,0 +1,56 @@
+/* Two-column layout: sidebar + main (single column below 960px).
+ * Source: schreibwerkstatt layout/twocolumn.css (JS resize handle, editor/chat
+ * splits and history panels removed). */
+
+@layer components {
+.layout {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 960px) {
+  .layout {
+    display: grid;
+    grid-template-columns: var(--sidebar-w, 240px) 1fr;
+    gap: 0 var(--space-20);
+    align-items: start;
+  }
+  .layout.layout--no-sidebar {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+
+/* Grid items default to `min-width: auto` → nowrap content would blow the 1fr
+   column. `min-width: 0` lets children's overflow-x:auto take effect. */
+.layout-main {
+  min-width: 0;
+}
+
+/* Sticky sidebar with its own scroll (desktop only — on mobile the sidebar
+   stacks above the content and must not be height-capped). The scroll sits on
+   the sidebar .card so the scrollbar gutter stays inside the card border. */
+@media (min-width: 960px) {
+  .layout-sidebar {
+    position: sticky;
+    top: var(--space-xl);
+    z-index: var(--z-sticky);
+    max-height: calc(100dvh - 3rem);
+    display: flex;
+    flex-direction: column;
+  }
+  .layout-sidebar > .card {
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+  }
+}
+
+/* The sidebar is a dense navigation list, not prose: narrower inline padding
+   than a content card. Inline only, so the vertical card rhythm stays. */
+.layout-sidebar > .card {
+  padding-inline: var(--space-14);
+}
+}

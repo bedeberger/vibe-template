@@ -1,0 +1,211 @@
+name: Deploy (prod)
+
+# Deploys main to the production LXC — but only AFTER CI is green on that exact
+# commit. The deploy job runs on the self-hosted runner INSIDE the LXC (see
+# docs/deployment.md), so it touches local paths and restarts a local unit; no
+# SSH, no secrets in GitHub.
+#
+# Off by default: a fresh project made from this template has no runner yet,
+# and a job targeting `self-hosted` would sit in the queue forever. Enable with
+# the repository variable DEPLOY_ENABLED=true (Settings → Secrets and variables
+# → Actions → Variables) once the runner is registered. APP_NAME (default
+# vibe-template) selects service name, paths and runner label; PORT (default
+# 3000) the health-check port — both must match scripts/prepare-lxc.sh.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  # Manual re-deploy of the current main (e.g. after fixing the LXC).
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy → PROD
+    if: >-
+      vars.DEPLOY_ENABLED == 'true' && (
+        github.event_name == 'workflow_dispatch' ||
+        (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+      )
+    # The app-name label keeps this job off runners of OTHER apps' LXCs that
+    # are registered to the same account/org.
+    runs-on: [self-hosted, linux, "${{ vars.APP_NAME || 'vibe-template' }}"]
+    timeout-minutes: 15
+    # Never cut a running deploy off mid-rsync; later pushes coalesce.
+    concurrency:
+      group: deploy-prod
+      cancel-in-progress: false
+    env:
+      APP_NAME: ${{ vars.APP_NAME || 'vibe-template' }}
+      PORT: ${{ vars.PORT || '3000' }}
+    steps:
+      # The commit CI tested — not whatever main points to now. fetch-depth 0:
+      # the rollback needs the previously deployed commit locally.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+
+      # Paths and names in ONE place; the steps below are instance-independent.
+      - name: Resolve target
+        run: |
+          set -euo pipefail
+          {
+            echo "SERVICE=${APP_NAME}"
+            echo "APP_DIR=/opt/${APP_NAME}"
+            echo "DATA_DIR=/var/lib/${APP_NAME}"
+            echo "DEPLOY_SHA=$(git rev-parse HEAD)"
+          } >> "$GITHUB_ENV"
+
+      # Uses the LXC's system node (/usr/bin/node, same binary as the unit), so
+      # better-sqlite3 is compiled for exactly the ABI that will load it.
+      - name: Install production dependencies
+        run: npm ci --omit=dev --no-audit --no-fund
+
+      # The last SUCCESSFULLY deployed commit — the rollback base. Not
+      # github.event.before: that describes the branch, not the instance (after
+      # a skipped or coalesced deploy the two differ).
+      - name: Read previously deployed commit
+        run: |
+          set -euo pipefail
+          state_dir="${HOME}/.${APP_NAME}-deploy"
+          mkdir -p "$state_dir"
+          echo "STATE_FILE=${state_dir}/prod.sha" >> "$GITHUB_ENV"
+          prev="$(cat "${state_dir}/prod.sha" 2>/dev/null || true)"
+          if printf '%s' "$prev" | grep -Eq '^[0-9a-f]{40}$' && git cat-file -e "${prev}^{commit}" 2>/dev/null; then
+            echo "PREV_SHA=${prev}" >> "$GITHUB_ENV"
+            echo "Rollback base: ${prev}"
+          else
+            echo "::warning::No usable previous commit — a rollback could not roll the code back."
+          fi
+
+      # Consistent SQLite snapshot (.backup captures the WAL) as the service
+      # user. If backing up an EXISTING DB fails, the deploy stops here — no
+      # deploy without a backup. First deploy: no DB yet, it is created at boot.
+      - name: Back up the DB
+        run: |
+          set -euo pipefail
+          DB="${DATA_DIR}/app.db"
+          backup_dir="${DATA_DIR}/backups/$(date +%Y%m%d-%H%M%S)"
+          if sudo -u "${APP_NAME}" env test -f "$DB"; then
+            sudo -u "${APP_NAME}" env mkdir -p "$backup_dir"
+            sudo -u "${APP_NAME}" sqlite3 "$DB" ".backup ${backup_dir}/app.db"
+            echo "BACKUP_PATH=${backup_dir}/app.db" >> "$GITHUB_ENV"
+            echo "DB_EXISTED=1" >> "$GITHUB_ENV"
+            echo "Backup: ${backup_dir}/app.db"
+          else
+            echo "No DB yet — backup skipped (first deploy)."
+            echo "DB_EXISTED=0" >> "$GITHUB_ENV"
+          fi
+          # Keep the newest 10 backups.
+          sudo -u "${APP_NAME}" env sh -c \
+            'cd "$1"/backups 2>/dev/null && ls -1dt */ 2>/dev/null | tail -n +11 | xargs -r rm -rf --' \
+            sh "${DATA_DIR}" || true
+
+      # Run the NEW chain against a COPY of the live DB before anything is
+      # touched. A migration that throws stops the deploy here; the running
+      # instance keeps serving the old code. The pending count decides later
+      # whether a rollback must restore the DB (scripts/pending-migrations.js).
+      - name: Migration dry run against a DB copy
+        if: env.DB_EXISTED == '1'
+        run: |
+          set -euo pipefail
+          copy="${RUNNER_TEMP}/migrate-check.db"
+          sudo -u "${APP_NAME}" env cat "$BACKUP_PATH" > "$copy"
+          pending="$(node scripts/pending-migrations.js "$copy")"
+          echo "PENDING_MIGRATIONS=${pending}" >> "$GITHUB_ENV"
+          echo "Pending migrations: ${pending} (-1 = unknown)"
+          DB_PATH="$copy" LOG_PATH="${RUNNER_TEMP}/migrate-check.log" \
+            node -e "require('./db/schema.js'); console.log('Migration dry run OK')"
+          rm -f "$copy" "$copy-wal" "$copy-shm"
+
+      # Clean deploy: empty the app dir, sync fresh. Runtime data lives in
+      # /var/lib (DB, backups, logs) and /etc (app.env) and is not affected.
+      - name: Sync code
+        run: |
+          set -euo pipefail
+          echo "TOUCHED_TARGET=1" >> "$GITHUB_ENV"
+          find "${APP_DIR}" -mindepth 1 -delete
+          rsync -rltD --omit-dir-times --no-perms \
+            --exclude='.git' --exclude='tests' --exclude='test-results' --exclude='playwright-report' \
+            ./ "${APP_DIR}/"
+          # public/vendor is generated at boot (lib/vendor.js) by the SERVICE
+          # user, and the hardened unit bind-mounts it writable — it must exist
+          # before the start (else 226/NAMESPACE) and be writable for that user.
+          mkdir -p "${APP_DIR}/public/vendor"
+          setfacl -R -m "u:${APP_NAME}:rwX" "${APP_DIR}/public/vendor"
+          setfacl -d -m "u:${APP_NAME}:rwX" "${APP_DIR}/public/vendor"
+
+      # server.js imports db/schema at boot → pending migrations run now, as the
+      # service user. No separate migrate step.
+      - name: Restart service
+        run: sudo /usr/bin/systemctl restart "${SERVICE}.service"
+
+      - name: Health check
+        run: |
+          set -uo pipefail
+          for i in $(seq 1 30); do
+            if curl -fsS "http://127.0.0.1:${PORT}/healthz" 2>/dev/null | jq -e '.status == "ok"' >/dev/null; then
+              echo "Healthy."
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Health check failed"
+          sudo /usr/bin/systemctl status "${SERVICE}.service" --no-pager -l -n 50 || true
+          exit 1
+
+      # Only now is this commit the rollback base of the NEXT deploy.
+      - name: Record deployed commit
+        run: printf '%s\n' "${DEPLOY_SHA}" > "${STATE_FILE}"
+
+      # Runs only if restart or health check failed AFTER the code was replaced.
+      # The DB is restored ONLY if this deploy actually advanced the schema
+      # (PENDING_MIGRATIONS != 0; -1 = unknown counts as "ran"): after a
+      # migration the old code no longer fits the schema, so the snapshot MUST
+      # come back. Without one, restoring would be pure data loss. The job
+      # stays red even when the rollback succeeds.
+      - name: Roll back on failure
+        if: failure() && env.TOUCHED_TARGET == '1'
+        run: |
+          set -uo pipefail
+          echo "::warning::Deploy failed — rolling back."
+          sudo /usr/bin/systemctl stop "${SERVICE}.service" || true
+
+          if [ "${DB_EXISTED:-0}" = "1" ] && [ -n "${BACKUP_PATH:-}" ] && [ "${PENDING_MIGRATIONS:-1}" != "0" ]; then
+            sudo -u "${APP_NAME}" env cp "$BACKUP_PATH" "${DATA_DIR}/app.db"
+            sudo -u "${APP_NAME}" env rm -f "${DATA_DIR}/app.db-wal" "${DATA_DIR}/app.db-shm"
+            echo "DB restored from ${BACKUP_PATH} (${PENDING_MIGRATIONS:-?} pending migration(s))."
+          else
+            echo "No migration in this deploy — DB left untouched, no user data lost."
+          fi
+
+          if [ -n "${PREV_SHA:-}" ]; then
+            git checkout --force "$PREV_SHA"
+            npm ci --omit=dev --no-audit --no-fund
+            find "${APP_DIR}" -mindepth 1 -delete
+            rsync -rltD --omit-dir-times --no-perms \
+              --exclude='.git' --exclude='tests' --exclude='test-results' --exclude='playwright-report' \
+              ./ "${APP_DIR}/"
+            mkdir -p "${APP_DIR}/public/vendor"
+            setfacl -R -m "u:${APP_NAME}:rwX" "${APP_DIR}/public/vendor"
+            setfacl -d -m "u:${APP_NAME}:rwX" "${APP_DIR}/public/vendor"
+            echo "Code rolled back to ${PREV_SHA}."
+          else
+            echo "::warning::No previous commit — code left as is."
+          fi
+
+          sudo /usr/bin/systemctl restart "${SERVICE}.service"
+          for i in $(seq 1 30); do
+            if curl -fsS "http://127.0.0.1:${PORT}/healthz" 2>/dev/null | jq -e '.status == "ok"' >/dev/null; then
+              echo "Rollback succeeded — service healthy again."
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::Rollback failed — service still unhealthy. Manual intervention required."
+          sudo /usr/bin/systemctl status "${SERVICE}.service" --no-pager -l -n 50 || true
+          exit 1

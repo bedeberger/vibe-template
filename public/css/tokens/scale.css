@@ -1,0 +1,14 @@
+/* Z-index stack — floor to ceiling. `position: fixed` without a token is a bug:
+ * a new layer gets a token here, never an ad-hoc number. */
+
+:root {
+  --z-base:        1;     /* in-flow default, position:relative anchors */
+  --z-sticky:      100;   /* sticky content headers, sticky sidebar */
+  --z-header:      200;   /* sticky card/toolbar headers */
+  --z-popover:     1000;  /* tooltip, dropdowns */
+  --z-overlay:     2000;  /* non-modal fullscreen overlays */
+  --z-modal:       9500;  /* modal backdrop (non-<dialog> overlays) */
+  --z-banner:      10000; /* session banner (fixed top) */
+  --z-modal-front: 11000; /* modal panel above banners */
+  --z-toast:       12000; /* highest regular layer; skip link */
+}

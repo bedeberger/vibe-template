@@ -1,13 +1,17 @@
 {
   "app": {
     "title": "vibe-template",
-    "subtitle": "Notes"
+    "subtitle": "Notes",
+    "logout": "Sign out",
+    "loading": "Loading …"
   },
   "nav": {
-    "notes": "Notes"
+    "notes": "Notes",
+    "label": "Main navigation"
   },
   "session": {
-    "expired": "Session expired. Please sign in again — your input is kept."
+    "expired": "Session expired. Please sign in again — your input is kept.",
+    "relogin": "Sign in again"
   },
   "notebook": {
     "label": "Notebook"
@@ -25,6 +29,10 @@
     "created": "Created",
     "updated": "Updated",
     "titlePlaceholder": "Title",
-    "bodyPlaceholder": "Text …"
+    "bodyPlaceholder": "Text …",
+    "newLabel": "New note"
+  },
+  "a11y": {
+    "skipToMain": "Skip to content"
   }
 }

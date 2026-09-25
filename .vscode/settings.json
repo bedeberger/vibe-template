@@ -1,0 +1,52 @@
+// Workspace settings, committed: the team setup. Personal deviations belong in
+// your user settings, not here.
+{
+  // LOCAL_DEV_MODE=1 in the integrated terminal: a hand-typed `node server.js`
+  // counts as a local run (login bypassed, seed data). VS Code doesn't merge the
+  // platform keys, hence all three.
+  "terminal.integrated.env.linux": { "LOCAL_DEV_MODE": "1" },
+  "terminal.integrated.env.osx": { "LOCAL_DEV_MODE": "1" },
+  "terminal.integrated.env.windows": { "LOCAL_DEV_MODE": "1" },
+
+  // LF everywhere (.gitattributes keeps the clone clean, this the editor).
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "[markdown]": {
+    // Two trailing spaces are a hard line break in Markdown.
+    "files.trimTrailingWhitespace": false
+  },
+  "editor.formatOnSave": false,
+
+  // Test Explorer: node --test for unit + integration, Playwright for e2e/smoke.
+  "nodejsTesting.include": [
+    "tests/unit/**/*.test.{js,mjs}",
+    "tests/integration/**/*.test.js"
+  ],
+  "nodejsTesting.extensions": [
+    { "extensions": ["js", "mjs"], "parameters": ["--test"] }
+  ],
+  "playwright.reuseBrowser": true,
+
+  // Generated/vendored stuff is rarely what you search for.
+  "search.exclude": {
+    "**/node_modules": true,
+    "public/vendor": true,
+    "test-results": true,
+    "playwright-report": true,
+    "tests/.tmp": true,
+    "**/*.db": true,
+    "**/*.log": true
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "app.db-shm": true,
+    "app.db-wal": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/test-results/**": true,
+    "**/tests/.tmp/**": true,
+    "**/.git/objects/**": true
+  }
+}

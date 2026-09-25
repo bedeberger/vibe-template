@@ -1,0 +1,14 @@
+// Offered when the folder is first opened. Short on purpose: only what serves a
+// gate or a hard rule of this repo.
+{
+  "recommendations": [
+    "ms-playwright.playwright",        // e2e + smoke specs: run/debug in the Test Explorer
+    "connor4312.nodejs-testing",       // unit + integration (node --test) in the Test Explorer
+    "EditorConfig.EditorConfig",       // .editorconfig: LF, 2 spaces, final newline
+    "anthropic.claude-code",
+    "qwtel.sqlite-viewer"              // look into app.db without a CLI
+  ],
+  // Prettier would reformat the whole codebase on save. There is deliberately
+  // no formatter config here — a format commit turns every rebase into manual work.
+  "unwantedRecommendations": ["esbenp.prettier-vscode"]
+}

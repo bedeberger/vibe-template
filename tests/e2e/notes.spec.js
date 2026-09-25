@@ -5,7 +5,7 @@ test('create, run stats, and delete a note', async ({ page }) => {
   await page.goto('/');
 
   // App becomes ready (i18n + data loaded). Seed note is visible.
-  await expect(page.locator('.app-nav h1')).toHaveText('vibe-template');
+  await expect(page.locator('.site-title')).toHaveText('vibe-template');
   await expect(page.locator('.note-card').first()).toBeVisible();
 
   // Create a note.

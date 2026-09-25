@@ -1,0 +1,173 @@
+/* Tabs / segmented toggle — one pattern for tab rows with panels AND 2–3
+ * option mode toggles. `.tabs` + `.tabs-btn` + `--active` (or
+ * aria-selected="true" as the parallel a11y hook).
+ * Modifiers: `.tabs--scrollable` (row fills the container width),
+ * `.tabs--fullwidth` (buttons share the width equally).
+ * Horizontal scroll is BASE behaviour on every width (no viewport gate);
+ * a local-attachment edge shadow signals scrollability.
+ * Markup (tab set):
+ *   <div class="tabs" role="tablist">
+ *     <button class="tabs-btn" role="tab" :aria-selected="tab === 'a'" @click="tab = 'a'">A</button>
+ *   </div>
+ * Source: schreibwerkstatt components/tabs.css. */
+@layer components {
+  .tabs {
+    --tabs-edge-shadow: color-mix(in oklab, var(--color-text) 15%, transparent);
+    display: inline-flex;
+    max-width: 100%;
+    border: 0.5px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-surface);
+    /* Scrollen statt Clippen. overflow-y bleibt hidden, damit der Radius die
+       Buttons weiter beschneidet. */
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    /* Kein Scrollbar-Gutter: in einer ~27–34px hohen Reihe frisst er ein
+       Drittel der Höhe und bricht die Höhen-Invariante der .filter-bar
+       (DESIGN.md). Die Scrollbarkeit signalisiert stattdessen der
+       Rand-Schatten unten — er ist auf Touch ohnehin die einzige Anzeige,
+       weil mobile Overlay-Scrollbars nur während des Wischens erscheinen. */
+    scrollbar-width: none;
+    /* Rand-Schatten nur wenn wirklich scrollbar: die beiden `local`-Ebenen
+       (deckend, in Flächenfarbe) liegen über den beiden `scroll`-Ebenen
+       (Schatten) und wandern mit dem Inhalt. Am jeweiligen Anschlag deckt die
+       local-Ebene ihren Schatten ab, weggescrollt gibt sie ihn frei. */
+    background-image:
+      linear-gradient(to right,  var(--color-surface) 55%, transparent),
+      linear-gradient(to left,   var(--color-surface) 55%, transparent),
+      linear-gradient(to right,  var(--tabs-edge-shadow), transparent),
+      linear-gradient(to left,   var(--tabs-edge-shadow), transparent);
+    background-position: left center, right center, left center, right center;
+    background-size: 26px 100%, 26px 100%, 13px 100%, 13px 100%;
+    background-repeat: no-repeat;
+    background-attachment: local, local, scroll, scroll;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tabs-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    /* Nicht zusammenquetschen — die Reihe scrollt stattdessen. */
+    flex-shrink: 0;
+    padding: var(--space-sm) var(--space-14);
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-medium);
+    background: transparent;
+    color: var(--color-muted);
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color var(--transition-slow), color var(--transition-slow);
+  }
+
+  .tabs-btn:not(:last-child) {
+    border-right: 0.5px solid var(--color-border);
+  }
+
+  .tabs-btn:hover {
+    color: var(--color-text);
+  }
+
+  /* Underline-Indicator: ::after immer im DOM, default scaleX(0). Active und
+     Hover schalten auf scaleX(1) — Browser animiert die Skalierung weich. */
+  .tabs-btn::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--color-primary);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform var(--transition-emphasized), background-color var(--transition-slow), height var(--transition-slow);
+    pointer-events: none;
+  }
+
+  /* Hover-Vorschau (nur auf inaktiven Tabs): 1px Underline in muted. */
+  .tabs-btn:not(.tabs-btn--active):not([aria-selected="true"]):hover::after {
+    transform: scaleX(1);
+    background: var(--color-muted);
+    height: 1px;
+  }
+
+  /* Active: Akzentfarbe + 2px scaleX(1) Underline. Doppel-Selektor erlaubt
+     parallelen a11y-Hook via aria-selected (CSS-Hook ist additiv zur Klasse). */
+  .tabs-btn--active,
+  .tabs-btn[aria-selected="true"] {
+    color: var(--color-primary);
+    font-weight: var(--fw-semibold);
+  }
+  .tabs-btn--active::after,
+  .tabs-btn[aria-selected="true"]::after {
+    transform: scaleX(1);
+    background: var(--color-primary);
+  }
+
+  .tabs-btn:focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: -2px;
+  }
+
+  /* Disabled (z.B. leerer Filter-Bucket): ausgegraut, kein Hover, kein Active. */
+  .tabs-btn:disabled,
+  .tabs-btn[aria-disabled="true"] {
+    color: var(--color-muted);
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+  .tabs-btn:disabled:hover,
+  .tabs-btn[aria-disabled="true"]:hover {
+    color: var(--color-muted);
+  }
+  .tabs-btn:disabled:hover::after,
+  .tabs-btn[aria-disabled="true"]:hover::after {
+    transform: scaleX(0);
+  }
+
+  /* Count-Badge im Tab (rechts vom Label). Reuse Stil von .btn-count. */
+  .tabs-btn-count {
+    display: inline-block;
+    margin-left: var(--space-6);
+    padding: 0 var(--space-6);
+    font-size: var(--font-size-xs);
+    font-weight: var(--fw-semibold);
+    line-height: 1.4;
+    background: var(--color-border);
+    color: var(--color-text);
+    border-radius: var(--radius-sm);
+    vertical-align: middle;
+  }
+  .tabs-btn--active .tabs-btn-count,
+  .tabs-btn[aria-selected="true"] .tabs-btn-count {
+    background: color-mix(in oklab, var(--color-primary) 22%, transparent);
+    color: var(--color-primary);
+  }
+  .tabs-btn:disabled .tabs-btn-count,
+  .tabs-btn[aria-disabled="true"] .tabs-btn-count {
+    opacity: 0.7;
+  }
+
+  /* Scrollable-Variante: die Reihe füllt die Container-Breite statt auf
+     Content-Breite zu schrumpfen (Block-Level statt inline). Das Scrollen
+     selbst kommt aus der Basis — der Modifier entscheidet nur die Breite. */
+  .tabs--scrollable {
+    display: flex;
+  }
+
+  /* Fullwidth-Variante: Tabs füllen Container, jeder Button gleich breit.
+     Verwendung: Modus-Toggle in Karten mit fester schmaler Spalte (Figuren-Graph,
+     wo 3 Modi gleichberechtigt sind). */
+  .tabs--fullwidth {
+    display: flex;
+    width: 100%;
+  }
+  .tabs--fullwidth .tabs-btn {
+    flex: 1;
+    text-align: center;
+  }
+
+}

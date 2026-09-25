@@ -1,0 +1,57 @@
+// Recurring commands as tasks (Ctrl/Cmd+Shift+B runs the default: the gate).
+//
+// The POSIX branch sources nvm so a VS Code started from the dock/start menu
+// has a `node` on the PATH (GUI processes don't inherit the login shell). That
+// line is bash syntax — hence a plain `windows` branch per task.
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "gate",
+      "detail": "Fast gates: migration lock + unit + integration. Before every push.",
+      "type": "shell",
+      "command": "[ -s \"$HOME/.nvm/nvm.sh\" ] && . \"$HOME/.nvm/nvm.sh\" >/dev/null 2>&1; node scripts/migrations-lock.js && npm run test:unit && npm run test:integration",
+      "windows": { "command": "node scripts/migrations-lock.js && npm run test:unit && npm run test:integration" },
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "db:migrate",
+      "detail": "Apply pending migrations (also happens at server start, here visibly)",
+      "type": "shell",
+      "command": "[ -s \"$HOME/.nvm/nvm.sh\" ] && . \"$HOME/.nvm/nvm.sh\" >/dev/null 2>&1; npm run db:migrate",
+      "windows": { "command": "npm run db:migrate" },
+      "problemMatcher": [],
+      // Stay open on failure — a closed terminal hides why F5 didn't start.
+      "presentation": { "reveal": "silent", "panel": "shared", "close": false }
+    },
+    {
+      "label": "squash:check",
+      "detail": "Schema drift gate: squashed schema == migration chain",
+      "type": "shell",
+      "command": "[ -s \"$HOME/.nvm/nvm.sh\" ] && . \"$HOME/.nvm/nvm.sh\" >/dev/null 2>&1; npm run squash:check",
+      "windows": { "command": "npm run squash:check" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "migrations:lock",
+      "detail": "Freeze the migration chain (after adding a migration; commit the lock)",
+      "type": "shell",
+      "command": "[ -s \"$HOME/.nvm/nvm.sh\" ] && . \"$HOME/.nvm/nvm.sh\" >/dev/null 2>&1; npm run migrations:lock",
+      "windows": { "command": "npm run migrations:lock" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "test:pw",
+      "detail": "Playwright e2e + smoke",
+      "type": "shell",
+      "command": "[ -s \"$HOME/.nvm/nvm.sh\" ] && . \"$HOME/.nvm/nvm.sh\" >/dev/null 2>&1; npm run test:e2e && npm run test:smoke",
+      "windows": { "command": "npm run test:e2e && npm run test:smoke" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    }
+  ]
+}

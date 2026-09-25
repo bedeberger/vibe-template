@@ -1,14 +1,48 @@
-/* Motion tokens. Respect reduced-motion by collapsing durations to 0. */
+/* Transition, shadow and opacity tokens + the global reduced-motion block. */
 
 :root {
-  --motion-fast: 120ms;
-  --motion-base: 200ms;
-  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* === Easing ===
+     `ease` for hover tints/state changes; `--ease-out` (quint) for entrances —
+     fast in, soft settle (card entrance, modal slide, popover fade). */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* === Transition — three speeds + emphasized ===
+     NEVER define as `--x: var(--x)` — a circular custom property is invalid
+     and the whole transition/animation silently falls back to 0s. */
+  --transition-fast:       0.1s ease;
+  --transition-base:       0.12s ease;
+  --transition-slow:       0.15s ease;
+  --transition-emphasized: 0.3s var(--ease-out);
+
+  /* === Shadow — three elevations (dark theme inherits darker alphas) === */
+  --shadow-sm:        0 2px 8px var(--color-shadow);          /* sheet lift */
+  --shadow-md:        0 4px 12px var(--color-shadow-med);     /* popover/dropdown/toast */
+  --shadow-lg:        0 12px 40px var(--color-shadow-strong); /* modal */
+  --shadow-inset-top: 0 -2px 10px var(--color-shadow-soft);   /* bottom bars */
+
+  /* === Opacity steps === */
+  --opacity-disabled: 0.6;
+  --opacity-muted:    0.5;
+  --opacity-hint:     0.4;
+  --opacity-faint:    0.35;
+  --opacity-strong:   0.75;
 }
 
+/* === Reduced motion ===
+   Transition tokens drop to 0s and every CSS animation (cardFadeIn, skeleton
+   shimmer, spinner) becomes instant. Works globally because everything
+   consumes the tokens via var(). */
 @media (prefers-reduced-motion: reduce) {
   :root {
-    --motion-fast: 0ms;
-    --motion-base: 0ms;
+    --transition-fast:       0s linear;
+    --transition-base:       0s linear;
+    --transition-slow:       0s linear;
+    --transition-emphasized: 0s linear;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.001s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0s !important;
+    scroll-behavior: auto !important;
   }
 }

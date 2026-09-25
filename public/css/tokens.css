@@ -1,15 +1,54 @@
-/* Token facade + cascade layer order. This is the single file index.html links
- * for tokens; it @imports the individual token modules. Add a new token to the
- * matching module in css/tokens/ — no extra <link> needed.
+/* Token facade + cascade layer order. The ONE stylesheet index.html links for
+ * tokens; it @imports the token modules. New token → the matching module in
+ * css/tokens/ (no extra <link> needed).
  *
- * Layer order is declared once here. Tokens themselves stay UNLAYERED so the
- * custom properties are globally available regardless of layer.
- * See CLAUDE.md → Harte Regeln: "Styles nur in public/css/". */
+ * Layer order is declared once, here: base < components < utilities
+ * (utilities win at equal specificity). Tokens and @font-face stay UNLAYERED
+ * so the custom properties are global. Every other CSS file wraps its rules in
+ * a layer — an unlayered rule would beat every layered rule regardless of
+ * specificity. See DESIGN.md → "Cascade layers". */
 
 @layer base, components, utilities;
 
-@import url('/css/tokens/colors.css');
-@import url('/css/tokens/spacing.css');
-@import url('/css/tokens/type.css');
-@import url('/css/tokens/motion.css');
-@import url('/css/tokens/z-index.css');
+/* colors first (motion consumes --color-shadow-*), then the rest. */
+@import url('./tokens/colors.css');
+@import url('./tokens/typography.css');
+@import url('./tokens/spacing.css');
+@import url('./tokens/motion.css');
+@import url('./tokens/scale.css');
+
+/* === Self-hosted fonts (SIL OFL 1.1, see /fonts/OFL.txt) ===
+   Variable fonts: one file covers the whole weight axis. index.html preloads
+   Inter.var.woff2 (the UI font) — keep the preload href in sync. */
+@font-face {
+  font-family: 'Inter';
+  src: url('../fonts/Inter.var.woff2') format('woff2-variations'),
+       url('../fonts/Inter.var.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('../fonts/Inter-Italic.var.woff2') format('woff2-variations'),
+       url('../fonts/Inter-Italic.var.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Source Serif 4';
+  src: url('../fonts/SourceSerif4.var.woff2') format('woff2-variations'),
+       url('../fonts/SourceSerif4.var.woff2') format('woff2');
+  font-weight: 200 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Source Serif 4';
+  src: url('../fonts/SourceSerif4-Italic.var.woff2') format('woff2-variations'),
+       url('../fonts/SourceSerif4-Italic.var.woff2') format('woff2');
+  font-weight: 200 900;
+  font-style: italic;
+  font-display: swap;
+}
