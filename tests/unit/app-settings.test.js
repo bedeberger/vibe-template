@@ -5,19 +5,11 @@
 
 const test = require('node:test');
 const assert = require('node:assert');
-const os = require('os');
-const fs = require('fs');
-const path = require('path');
 
-const DB = path.join(os.tmpdir(), `vt-unit-settings-${process.pid}.db`);
-for (const s of ['', '-wal', '-shm']) fs.rmSync(DB + s, { force: true });
-process.env.DB_PATH = DB;
-
+require('../_helpers/temp-db').useTempDb('settings');
 const settings = require('../../lib/app-settings');
 const authEnv = require('../../lib/auth-env');
 const { isDomainError } = require('../../lib/errors');
-
-test.after(() => { for (const s of ['', '-wal', '-shm']) fs.rmSync(DB + s, { force: true }); });
 
 const refused = (fn, message) => assert.throws(fn, (e) => isDomainError(e) && e.kind === 'invalid' && e.message === message);
 

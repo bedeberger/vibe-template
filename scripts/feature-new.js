@@ -22,6 +22,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { ID_RE } = require('./feature-anatomy');
 
 const flag = (argv, name) => argv.includes(name);
 const value = (argv, name) => (argv.includes(name) ? argv[argv.indexOf(name) + 1] : undefined);
@@ -34,8 +35,13 @@ function plan(root, id, opts) {
   const read = (rel) => fs.readFileSync(R(rel), 'utf8');
   const tpl = (name) => fs.readFileSync(path.join(__dirname, 'templates', 'feature', name), 'utf8');
 
-  if (!/^[a-z][a-z0-9-]*$/.test(id || '')) throw new Error(`id muss kebab-case sein: "${id}"`);
+  if (!ID_RE.test(id || '')) throw new Error(`id muss kebab-case sein: "${id}"`);
   const card = `${camel(id)}Card`;
+  for (const [flagName, label] of [['--label-de', opts.labelDe], ['--label-en', opts.labelEn]]) {
+    if (label !== undefined && (!String(label).trim() || /[\r\n]/.test(label))) {
+      throw new Error(`${flagName} muss einzeilig und nicht leer sein`);
+    }
+  }
   const vars = {
     __ID__: id,
     __CAMEL__: camel(id),
@@ -44,6 +50,10 @@ function plan(root, id, opts) {
     __LABEL_DE__: opts.labelDe || titleCase(id),
     __LABEL_EN__: opts.labelEn || titleCase(id),
   };
+  // Labels go into three syntaxes: a JS string (spec), a Markdown table cell
+  // (DESIGN.md) and JSON (i18n, via JSON.stringify below) — each escaped for its own.
+  vars.__LABEL_DE_JS__ = JSON.stringify(vars.__LABEL_DE__);
+  const mdCell = (s) => s.replace(/\|/g, '\\|');
   const fill = (s) => Object.entries(vars).reduce((out, [k, v]) => out.split(k).join(v), s);
 
   const icon = opts.icon || 'file-text';
@@ -107,7 +117,7 @@ function plan(root, id, opts) {
     if (!rows.length) throw new Error('DESIGN.md: keine css/entities-Zeile im CSS-Inventar gefunden');
     const last = rows.at(-1);
     const end = last.index + last[0].length;
-    return `${s.slice(0, end)}\n| \`css/entities/${id}.css\` | components | Abweichungen Feature ${vars.__LABEL_DE__} | template |${s.slice(end)}`;
+    return `${s.slice(0, end)}\n| \`css/entities/${id}.css\` | components | Abweichungen Feature ${mdCell(vars.__LABEL_DE__)} | template |${s.slice(end)}`;
   });
 
   // i18n: nav label + card title + empty state, in BOTH locales.

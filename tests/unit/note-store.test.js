@@ -3,21 +3,10 @@
 
 const test = require('node:test');
 const assert = require('node:assert');
-const os = require('os');
-const fs = require('fs');
-const path = require('path');
 
-// Point the connection at a fresh temp DB BEFORE anything requires it.
-const DB = path.join(os.tmpdir(), `vt-unit-${process.pid}.db`);
-for (const suffix of ['', '-wal', '-shm']) fs.rmSync(DB + suffix, { force: true });
-process.env.DB_PATH = DB;
-process.env.LOCAL_DEV_MODE = '0';
-
+// Fresh temp DB BEFORE anything requires db/ (tests/_helpers/temp-db.js).
+require('../_helpers/temp-db').useTempDb('notes');
 const noteStore = require('../../lib/note-store');
-
-test.after(() => {
-  for (const suffix of ['', '-wal', '-shm']) fs.rmSync(DB + suffix, { force: true });
-});
 
 test('createNotebook trims and persists', () => {
   const nb = noteStore.createNotebook('  My Notebook  ');

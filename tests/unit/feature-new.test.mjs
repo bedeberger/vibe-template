@@ -59,5 +59,23 @@ test('generator refuses duplicates, bad ids and unknown icons', () => {
   const tmp = copyTree();
   assert.throws(() => gen.plan(tmp, 'notes', {}), /existiert bereits/);
   assert.throws(() => gen.plan(tmp, 'Bad_Id', {}), /kebab-case/);
+  for (const bad of ['foo--bar', 'foo-', '-foo', '1foo']) {
+    assert.throws(() => gen.plan(tmp, bad, {}), /kebab-case/, `id "${bad}" must be refused`);
+    assert.ok(anatomy.check(tmp, [{ id: bad }]).some((v) => v.includes('kebab-case')), `gate must refuse "${bad}"`);
+  }
+  assert.throws(() => gen.plan(tmp, 'ok-id', { labelDe: 'zwei\nZeilen' }), /einzeilig/);
+  assert.throws(() => gen.plan(tmp, 'ok-id', { view: 'root' }), /--view/);
   assert.throws(() => gen.plan(tmp, 'ok-id', { icon: 'no-such-icon' }), /Sprite/);
+});
+
+test('labels with quote and pipe survive in spec (JS) and DESIGN.md (table)', () => {
+  const tmp = copyTree();
+  const label = "Kunden's | Aufträge";
+  const p = gen.plan(tmp, 'kunden', { labelDe: label, labelEn: 'Customers' });
+  const spec = p.files['tests/e2e/kunden-card.spec.js'];
+  assert.doesNotThrow(() => new Function(spec.replace(/^const .*require.*$/m, '')), 'generated spec must stay valid JS');
+  assert.ok(spec.includes(JSON.stringify(label)));
+  const row = p.edits['DESIGN.md'].split('\n').find((l) => l.includes('css/entities/kunden.css'));
+  assert.equal(row.split(/(?<!\\)\|/).length, 6, `table row must keep 4 cells: ${row}`);
+  assert.equal(JSON.parse(p.edits['public/js/i18n/de.json']).nav.kunden, label);
 });

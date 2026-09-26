@@ -6,14 +6,13 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const { bootstrap } = require('./_helpers/setup');
+const { waitForJob } = require('../_helpers/jobs');
 
 const ctx = bootstrap({ LOCAL_DEV_MODE: '1' });
 test.before(ctx.start);
 test.after(ctx.stop);
 
-const get = (p) => fetch(ctx.url(p));
-const send = (p, method, body) =>
-  fetch(ctx.url(p), { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+const { get, send } = ctx;
 
 test('GET /api/config returns timezone', async () => {
   const res = await get('/api/config');
@@ -41,11 +40,8 @@ test('note create → list → job → delete', async () => {
   // Background job: enqueue, then poll until done.
   const jobRes = await send('/api/jobs', 'POST', { note_id: note.id, type: 'note-stats' });
   assert.equal(jobRes.status, 202);
-  let job = await jobRes.json();
-  for (let i = 0; i < 50 && job.status !== 'done' && job.status !== 'error'; i++) {
-    await new Promise((r) => setTimeout(r, 50));
-    job = await (await get(`/api/jobs/${job.id}`)).json();
-  }
+  const { id } = await jobRes.json();
+  const job = await waitForJob(async () => (await get(`/api/jobs/${id}`)).json());
   assert.equal(job.status, 'done');
   assert.deepEqual(JSON.parse(job.result_json), { noteId: note.id, chars: 13, words: 3 });
 

@@ -15,8 +15,9 @@ explizites `DB_PATH` zu öffnen, also kann kein Test die Repo-`app.db` berühren
 
 ## Welche Suite wann?
 
-**Unit** — reine Funktionen, Validatoren, die Domänen-Facade (eigene Temp-DB,
-siehe [note-store.test.js](../tests/unit/note-store.test.js)) und die
+**Unit** — reine Funktionen, Validatoren, die Domänen-Facade (eigene Temp-DB
+via [tests/_helpers/temp-db.js](../tests/_helpers/temp-db.js), Muster
+[note-store.test.js](../tests/unit/note-store.test.js)) und die
 **statischen Guards**: Migrations-Lock/-Drift/-Kette, Deploy-Vertrag,
 Vendor-Integrität, Harness-CSS-Parität, LOC-Limits, CSS-/i18n-/Icon-/Markup-Regeln.
 Ein Guard ist ein Test, der den Quellbaum liest und bei einer Regelverletzung
@@ -31,8 +32,17 @@ const { bootstrap } = require('./_helpers/setup');
 const ctx = bootstrap({ LOCAL_DEV_MODE: '1' });   // VOR jedem App-require
 test.before(ctx.start);
 test.after(ctx.stop);
-const res = await fetch(ctx.url('/api/notebooks'));
+const { get, send } = ctx;                        // fetch-Responses
+const res = await send('/api/notes', 'POST', { notebook_id: 1, title: 'x' });
+const eva = ctx.client();                         // eigener Cookie-Jar = ein „Browser“
+const { status, json } = await eva.call('/auth/login', { method: 'POST', body: { email, password } });
 ```
+
+Auf einen Hintergrund-Job wartet jeder Test mit derselben Schleife,
+[tests/_helpers/jobs.js](../tests/_helpers/jobs.js):
+``await waitForJob(async () => (await get(`/api/jobs/${id}`)).json())`` — mit
+Timeout und Meldung statt stillem Hängen. Keine eigene Poll-, Cookie- oder
+Temp-DB-Logik pro Testdatei: fehlt ein Helfer, gehört er dorthin.
 
 Die Wegwerf-DB liegt auf `/dev/shm`, wenn vorhanden (`TEST_TMPDIR` übersteuert),
 und `LOCAL_DEV_MODE=0` wird gesetzt, sofern nicht übergeben — der Auth-Guard ist
@@ -117,8 +127,8 @@ grüner Test mit kaputter UI.
 
 - **Playwright findet Chromium nicht:** `npx playwright install chromium`.
 - **Test öffnet die Repo-DB** → Fehler `DB_PATH missing`: die Temp-DB vor dem
-  ersten `require` setzen (Unit: wie note-store.test.js; Integration:
-  `bootstrap()`).
+  ersten `require` setzen (Unit: `useTempDb()` aus tests/_helpers/temp-db.js;
+  Integration: `bootstrap()`).
 - **Port belegt:** e2e nutzt 3210, e2e-app 3211; lokal wird ein bereits laufender
   Server auf diesem Port wiederverwendet (`reuseExistingServer`), in CI nie.
 

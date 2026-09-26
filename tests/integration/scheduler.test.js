@@ -5,20 +5,14 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const { bootstrap } = require('./_helpers/setup');
+const { waitForJob } = require('../_helpers/jobs');
 
 const ctx = bootstrap({ LOCAL_DEV_MODE: '1' });
 test.before(ctx.start);
 test.after(ctx.stop);
 
 const TZ = 'Europe/Zurich';
-const waitDone = async (queue, id) => {
-  for (let i = 0; i < 100; i++) {
-    const job = queue.getJob(id);
-    if (job.status === 'done' || job.status === 'error') return job;
-    await new Promise((r) => setTimeout(r, 10));
-  }
-  throw new Error('job did not finish');
-};
+const waitDone = (queue, id) => waitForJob(() => queue.getJob(id));
 
 test('jobs-cleanup is registered with its cron', () => {
   const scheduler = require('../../routes/jobs/shared/scheduler');

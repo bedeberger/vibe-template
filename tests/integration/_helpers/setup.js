@@ -6,28 +6,22 @@
 //   const { bootstrap } = require('./_helpers/setup');
 //   const ctx = bootstrap({ LOCAL_DEV_MODE: '1' });   // before any app require
 //   test.before(ctx.start); test.after(ctx.stop);
-//   … fetch(ctx.url('/api/notes')) …
+//
+//   const res = await ctx.get('/api/notes?notebook_id=1');           // fetch Response
+//   const res = await ctx.send('/api/notes', 'POST', { title: 'x' }); // JSON body
+//   const eva = ctx.client();                                          // own cookie jar = one "browser"
+//   const { status, json } = await eva.call('/auth/login', { method: 'POST', body: { … } });
+//
+// LOCAL_DEV_MODE=1 authenticates every request (no login needed); with '0' use
+// ctx.client() and log in like a browser.
 
 const fs = require('fs');
-const os = require('os');
 const path = require('path');
-
-// Throwaway DB on a RAM filesystem when available: on runners with network
-// storage every SQLite write otherwise pays network latency. TEST_TMPDIR overrides.
-function tmpBase() {
-  if (process.env.TEST_TMPDIR) return process.env.TEST_TMPDIR;
-  try {
-    fs.accessSync('/dev/shm', fs.constants.W_OK);
-    return '/dev/shm';
-  } catch {
-    return os.tmpdir();
-  }
-}
+const { tmpBase, tempDbPath, removeDb } = require('../../_helpers/temp-db');
 
 function bootstrap(env = {}) {
-  const db = path.join(tmpBase(), `vt-int-${process.pid}-${Date.now()}.db`);
-  const clean = () => { for (const s of ['', '-wal', '-shm']) fs.rmSync(db + s, { force: true }); };
-  clean();
+  const db = tempDbPath('int');
+  removeDb(db);
   Object.assign(process.env, {
     DB_PATH: db,
     LOG_PATH: path.join(tmpBase(), `vt-int-${process.pid}.log`),
@@ -39,6 +33,29 @@ function bootstrap(env = {}) {
 
   let server;
   let base;
+  const url = (p) => base + p;
+
+  // A client with its own session cookie. Answers { status, json, headers };
+  // json is null for a non-JSON body (an HTML page, a redirect).
+  function client() {
+    let cookie = '';
+    const call = async (p, { method = 'GET', body } = {}) => {
+      const res = await fetch(url(p), {
+        method,
+        redirect: 'manual',
+        headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(cookie ? { Cookie: cookie } : {}) },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      const set = res.headers.get('set-cookie');
+      if (set) cookie = set.split(';')[0];
+      const text = await res.text();
+      let json = null;
+      try { json = JSON.parse(text); } catch { /* not JSON */ }
+      return { status: res.status, json, headers: res.headers };
+    };
+    return { call };
+  }
+
   return {
     db,
     async start() {
@@ -52,10 +69,14 @@ function bootstrap(env = {}) {
     },
     stop() {
       server?.close();
-      clean();
+      removeDb(db);
       fs.rmSync(process.env.LOG_PATH, { force: true });
     },
-    url: (p) => base + p,
+    url,
+    get: (p) => fetch(url(p)),
+    send: (p, method, body) =>
+      fetch(url(p), { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
+    client,
   };
 }
 

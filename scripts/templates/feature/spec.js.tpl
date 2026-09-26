@@ -11,7 +11,7 @@ test.beforeEach(async ({ page, request }) => {
 });
 
 test('mounts, loads and shows the empty state', async ({ page }) => {
-  await expect(page.locator('[x-data="__CARD__"] .card-title')).toHaveText('__LABEL_DE__');
+  await expect(page.locator('[x-data="__CARD__"] .card-title')).toHaveText(__LABEL_DE_JS__);
   await expect(page.locator('[x-data="__CARD__"] .card-empty')).toBeVisible();
 });
 

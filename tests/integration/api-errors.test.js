@@ -11,9 +11,7 @@ const ctx = bootstrap({ LOCAL_DEV_MODE: '1' });
 test.before(ctx.start);
 test.after(ctx.stop);
 
-const get = (p) => fetch(ctx.url(p));
-const send = (p, method, body) =>
-  fetch(ctx.url(p), { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+const { get, send } = ctx;
 
 async function expectError(resPromise, status, error) {
   const res = await resPromise;

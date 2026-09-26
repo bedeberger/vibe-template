@@ -52,8 +52,10 @@ grün sind.
 ## Harte Regeln (immer gültig)
 
 - **Domänen-Facade als einziger Eintrittspunkt.** Eine Domäne wird nur über
-  ihre Facade in `lib/` erreicht ([lib/note-store.js](lib/note-store.js)). Kein
-  Roh-SQL gegen `notes`/`notebooks` aus Routen oder Jobs. **Warum:** ein Ort für
+  ihre Facade in `lib/` erreicht ([lib/note-store.js](lib/note-store.js),
+  [lib/user-store.js](lib/user-store.js)). Kein Roh-SQL gegen die Tabellen einer
+  Domäne aus Routen, Jobs oder einer fremden Facade; die Liste der Domänen ist
+  `DOMAINS` in [scripts/hooks/_rules.js](scripts/hooks/_rules.js). **Warum:** ein Ort für
   Invarianten, Validierung und künftiges Caching.
 - **Langläufer nur via Job-Queue.** Alles, was einen Request spürbar blockieren
   würde, läuft als Job-Typ in [routes/jobs/](routes/jobs/) (Dedup, Status,
@@ -123,7 +125,7 @@ Ein Hook warnt, er lehrt nicht: die Alternative steht im Volltext der Regel.
 | Keine Inline-`style`/`<style>` (nur `:style="{ '--x': … }"`) | `style-guard.js` **blockt** · `no-inline-style.test` | public/ |
 | Kein natives `<select>` — `combobox` ([public/CLAUDE.md](public/CLAUDE.md)) | `style-guard.js` warnt | public/ |
 | Kein `datetime('now')` — `${NOW_ISO_SQL}` | `style-guard.js` warnt · `architecture-tripwire.test` | db/, lib/, routes/, scripts/, public/js |
-| Kein Roh-SQL auf `notes`/`notebooks`, kein `db/notes.js`-Import ausserhalb der Facade | `style-guard.js` warnt · `architecture-tripwire.test` | alles ausser db/ + lib/note-store.js |
+| Domänen in `DOMAINS` (`_rules.js`) nur über ihre Facade: kein Roh-SQL auf ihre Tabellen, kein `db/<domain>.js`-Import ausserhalb der Facade | `style-guard.js` warnt · `architecture-tripwire.test` | alles ausser db/ + der jeweiligen Facade |
 | Jeder String in `de.json` **und** `en.json`, gleiche `{Platzhalter}`, kein verwaister/fehlender Key, kein Hardcode-Text | `i18n-check.js` · `i18n-locale-parity` / `i18n-keys-defined` / `i18n-no-hardcoded-text.test` | public/ |
 | LOC-Caps (JS 600, Partial 250, CSS 600) | `loc-limits-check.js` · `loc-limits.test` | public/js, lib, routes, db, scripts, partials, css |
 | Tokens statt Rohwerte, `@layer`-Pflicht, Selektor unique, keine toten Klassen | `spacing-scale` / `css-layers` / `dedup-tripwire` / `css-tokens-defined` / `css-dead-classes` / `css-comment-balance.test` | public/css |

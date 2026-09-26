@@ -23,6 +23,10 @@ const path = require('path');
 // The two views of the app (docs/auth.md): every feature belongs to exactly one.
 const VIEWS = ['user', 'admin'];
 
+// kebab-case: segments of [a-z0-9] joined by single hyphens, starting with a
+// letter — no 'foo--bar', no trailing 'foo-' (hash route, file stem, camelCase key).
+const ID_RE = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
+
 const pascal = (id) => id.replace(/(^|-)([a-z0-9])/g, (_, __, c) => c.toUpperCase());
 
 function paths(f) {
@@ -51,7 +55,7 @@ function check(root, features) {
       if (typeof f[k] !== 'string' || !f[k]) v.push(`${where}: Feld "${k}" fehlt`);
     }
     if (!VIEWS.includes(f.view)) v.push(`${where}: Feld "view" muss ${VIEWS.join(' | ')} sein (welche Sicht zeigt es)`);
-    if (!/^[a-z][a-z0-9-]*$/.test(f.id || '')) v.push(`${where}: id muss kebab-case sein (Hash-Route, Dateistamm)`);
+    if (!ID_RE.test(f.id || '')) v.push(`${where}: id muss kebab-case sein (Hash-Route, Dateistamm)`);
     if (ids.has(f.id)) v.push(`${where}: doppelte id`);
     if (cards.has(f.card)) v.push(`${where}: Karte "${f.card}" doppelt vergeben`);
     ids.add(f.id); cards.add(f.card);
@@ -86,4 +90,4 @@ function check(root, features) {
   return v;
 }
 
-module.exports = { paths, check, pascal, VIEWS };
+module.exports = { paths, check, pascal, VIEWS, ID_RE };

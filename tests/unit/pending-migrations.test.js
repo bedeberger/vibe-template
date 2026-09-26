@@ -10,20 +10,18 @@
 
 const test = require('node:test');
 const assert = require('node:assert');
-const os = require('os');
-const fs = require('fs');
-const path = require('path');
 const Database = require('better-sqlite3');
 
 const { pendingCount, UNKNOWN } = require('../../scripts/pending-migrations.js');
 const { loadMigrations } = require('../../db/migrations');
+const { tempDbPath, removeDb } = require('../_helpers/temp-db');
 
 const CHAIN = loadMigrations();
 const HIGHEST = CHAIN.at(-1).version;
 
 const tmpFiles = [];
 function tmpDb(build) {
-  const file = path.join(os.tmpdir(), `vt-pending-${process.pid}-${tmpFiles.length}.db`);
+  const file = tempDbPath('pending');
   tmpFiles.push(file);
   const db = new Database(file);
   build(db);
@@ -38,11 +36,7 @@ function stamped(...versions) {
   });
 }
 
-test.after(() => {
-  for (const f of tmpFiles) {
-    for (const suffix of ['', '-wal', '-shm']) fs.rmSync(`${f}${suffix}`, { force: true });
-  }
-});
+test.after(() => tmpFiles.forEach(removeDb));
 
 test('a DB at the current version has zero pending migrations', () => {
   assert.equal(pendingCount(stamped(HIGHEST)), 0);
@@ -64,7 +58,7 @@ test('MAX() counts, not the most recently inserted row', () => {
 
 test('unknown (-1) instead of 0 when the question cannot be answered', () => {
   // (a) file does not exist
-  assert.equal(pendingCount(path.join(os.tmpdir(), `vt-pending-missing-${process.pid}.db`)), UNKNOWN);
+  assert.equal(pendingCount(tempDbPath('pending-missing')), UNKNOWN);
   // (b) no path given
   assert.equal(pendingCount(undefined), UNKNOWN);
   assert.equal(pendingCount(''), UNKNOWN);

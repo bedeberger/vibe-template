@@ -12,7 +12,7 @@ const ctx = bootstrap({ LOCAL_DEV_MODE: '1', OIDC_CLIENT_SECRET: 'integration-oi
 test.before(ctx.start);
 test.after(ctx.stop);
 
-const get = (p) => fetch(ctx.url(p));
+const { get } = ctx;
 const patch = (body) => fetch(ctx.url('/api/admin/settings'), {
   method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
 });

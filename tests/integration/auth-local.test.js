@@ -13,25 +13,8 @@ const ctx = bootstrap({ LOCAL_DEV_MODE: '0', ADMIN_EMAIL: 'Admin@Example.com', A
 test.before(ctx.start);
 test.after(ctx.stop);
 
-// Minimal cookie jar per "browser".
-function client() {
-  let cookie = '';
-  const call = async (p, { method = 'GET', body } = {}) => {
-    const res = await fetch(ctx.url(p), {
-      method,
-      redirect: 'manual',
-      headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(cookie ? { Cookie: cookie } : {}) },
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    const set = res.headers.get('set-cookie');
-    if (set) cookie = set.split(';')[0];
-    const text = await res.text();
-    let json = null;
-    try { json = JSON.parse(text); } catch { /* html */ }
-    return { status: res.status, json, headers: res.headers };
-  };
-  return { call };
-}
+// One cookie jar per "browser" (bootstrap → client()).
+const { client } = ctx;
 
 const admin = client();
 const eva = client();

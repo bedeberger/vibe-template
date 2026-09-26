@@ -106,6 +106,9 @@ test('drag & drop reorders the notes → PUT with the full order, no duplicate n
   await dragNote(page, 'Zweite', 'Erste');
   await expect.poll(() => titles(page)).toEqual(['Zweite', 'Erste']);
   await expect(page.locator('.note-card')).toHaveCount(2);
+  // Moved nodes must not replay the card entry animation (flicker mid-drag).
+  const anims = await page.locator('.note-card').evaluateAll((els) => els.map((e) => getComputedStyle(e).animationName));
+  expect(anims).toEqual(['none', 'none']);
   const state = await (await request.get('/__mock/state')).json();
   expect(state.orders).toEqual([{ notebookId: 1, ids: [2, 1] }]);
 });
@@ -204,14 +207,29 @@ test.describe('phone viewport', () => {
     expect(editOverflow).toBeLessThanOrEqual(0);
   });
 
+  // Phone check of the vendor-lib patterns: css/components/popover.css,
+  // css/components/collapsible.css, css/components/sortable-list.css +
+  // js/components/sortable-list.js, js/notes/notes-chart.js.
   test('new notebook popover and the overview chart fit 360px', async ({ page }) => {
     await page.getByRole('button', { name: 'Neues Notizbuch' }).click();
-    await expect(page.getByRole('dialog', { name: 'Neues Notizbuch' })).toBeInViewport({ ratio: 1 });
+    const popover = page.locator('.popover');
+    await expect(popover).toBeInViewport({ ratio: 1 });
     await page.keyboard.press('Escape');
-    await page.getByRole('button', { name: 'Übersicht' }).click();
+    const toggle = page.locator('.collapsible-toggle');
+    expect((await toggle.boundingBox()).height, 'collapsible toggle: tap target too small').toBeGreaterThanOrEqual(24);
+    await toggle.click();
     await expect(page.getByRole('img', { name: 'Notizen pro Notizbuch' })).toBeInViewport();
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(0);
+  });
+
+  test('sortable-list drag handle: touch-safe on a phone', async ({ page }) => {
+    const handle = page.locator('.note-card').first().locator('.note-drag-handle');
+    await expect(handle).toBeInViewport();
+    // touch-action none — otherwise dragging the handle scrolls the page.
+    expect(await handle.evaluate((el) => getComputedStyle(el).touchAction)).toBe('none');
+    await dragNote(page, 'Zweite', 'Erste');
+    await expect.poll(() => titles(page)).toEqual(['Zweite', 'Erste']);
   });
 
   test('notebook combobox opens inside the viewport and stays usable', async ({ page }) => {

@@ -6,20 +6,12 @@
 
 const test = require('node:test');
 const assert = require('node:assert');
-const os = require('os');
-const fs = require('fs');
-const path = require('path');
 
-const DB = path.join(os.tmpdir(), `vt-unit-users-${process.pid}.db`);
-for (const s of ['', '-wal', '-shm']) fs.rmSync(DB + s, { force: true });
-process.env.DB_PATH = DB;
-process.env.LOCAL_DEV_MODE = '0';
-process.env.ADMIN_EMAIL = 'Chef@Example.com';
-process.env.ADMIN_PASSWORD = 'env-admin-passwort-lang';
-
+require('../_helpers/temp-db').useTempDb('users', {
+  ADMIN_EMAIL: 'Chef@Example.com',
+  ADMIN_PASSWORD: 'env-admin-passwort-lang',
+});
 const users = require('../../lib/user-store');
-
-test.after(() => { for (const s of ['', '-wal', '-shm']) fs.rmSync(DB + s, { force: true }); });
 
 test('syncEnvAdmins: the .env admin exists as admin, others are demoted', () => {
   users.syncEnvAdmins();

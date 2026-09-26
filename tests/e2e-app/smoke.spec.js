@@ -78,7 +78,7 @@ test.describe('phone viewport', () => {
       const small = await page.evaluate(() => [...document.querySelectorAll('.icon-btn, .btn-card-close, .btn-close, .job-toast-close')]
         .filter((el) => el.checkVisibility())
         .map((el) => ({ el, b: el.getBoundingClientRect() }))
-        .filter(({ b }) => b.width < 40 || b.height < 40)
+        .filter(({ b }) => b.width < 39.5 || b.height < 39.5) // subpixel layout
         .map(({ el, b }) => `${el.getAttribute('aria-label')} ${Math.round(b.width)}x${Math.round(b.height)}`));
       expect(small, `feature ${f.id}: icon-only tap targets below 40px`).toEqual([]);
     }
