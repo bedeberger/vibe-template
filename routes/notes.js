@@ -1,91 +1,62 @@
 'use strict';
 // Notes API. Handlers go through the note-store facade exclusively — no SQL
 // here. Each handler that touches a specific note tags the log context with
-// its id so the request is traceable end to end.
+// its id so the request is traceable end to end. The pattern every router
+// follows (routes/_http.js): validate the id, set the context, call the
+// facade, return the result — handle() sends it and maps DomainErrors.
 
 const express = require('express');
 const noteStore = require('../lib/note-store');
 const { setContext } = require('../lib/log-context');
+const { notFound } = require('../lib/errors');
+const { handle, requireId } = require('./_http');
 
 const router = express.Router();
 
-function toIntId(v) {
-  const n = Number(v);
-  return Number.isInteger(n) && n > 0 ? n : null;
-}
-
 // ── Notebooks ──────────────────────────────────────────────────────────────
-router.get('/notebooks', (req, res) => {
-  res.json(noteStore.listNotebooks());
-});
+router.get('/notebooks', handle(() => noteStore.listNotebooks()));
 
-router.post('/notebooks', (req, res) => {
-  try {
-    res.status(201).json(noteStore.createNotebook(req.body?.name));
-  } catch (e) {
-    res.status(400).json({ error: e.message });
-  }
-});
+router.post('/notebooks', handle((req) => noteStore.createNotebook(req.body?.name), { status: 201 }));
 
 // Manual order (drag & drop): body { ids } = every note of the notebook in
 // its new order. Answers with the reordered list.
-router.put('/notebooks/:id/note-order', (req, res) => {
-  const id = toIntId(req.params.id);
-  if (!id) return res.status(400).json({ error: 'invalid id' });
+router.put('/notebooks/:id/note-order', handle((req) => {
+  const id = requireId(req.params.id);
   setContext({ entity: id });
-  try {
-    res.json(noteStore.reorderNotes(id, req.body?.ids));
-  } catch (e) {
-    res.status(e.message === 'unknown notebook' ? 404 : 400).json({ error: e.message });
-  }
-});
+  return noteStore.reorderNotes(id, req.body?.ids);
+}));
 
 // ── Notes ────────────────────────────────────────────────────────────────
-router.get('/notes', (req, res) => {
-  const notebookId = toIntId(req.query.notebook_id);
-  if (!notebookId) return res.status(400).json({ error: 'notebook_id required' });
-  res.json(noteStore.listNotes(notebookId));
-});
+router.get('/notes', handle((req) => {
+  const notebookId = requireId(req.query.notebook_id, 'notebook_id required');
+  return noteStore.listNotes(notebookId);
+}));
 
-router.post('/notes', (req, res) => {
-  const notebookId = toIntId(req.body?.notebook_id);
-  if (!notebookId) return res.status(400).json({ error: 'notebook_id required' });
-  try {
-    const note = noteStore.createNote({
-      notebookId,
-      title: req.body?.title,
-      body: req.body?.body,
-    });
-    setContext({ entity: note.id });
-    res.status(201).json(note);
-  } catch (e) {
-    res.status(400).json({ error: e.message });
-  }
-});
+router.post('/notes', handle((req) => {
+  const notebookId = requireId(req.body?.notebook_id, 'notebook_id required');
+  const note = noteStore.createNote({ notebookId, title: req.body?.title, body: req.body?.body });
+  setContext({ entity: note.id });
+  return note;
+}, { status: 201 }));
 
-router.get('/notes/:id', (req, res) => {
-  const id = toIntId(req.params.id);
-  if (!id) return res.status(400).json({ error: 'invalid id' });
+router.get('/notes/:id', handle((req) => {
+  const id = requireId(req.params.id);
   setContext({ entity: id });
   const note = noteStore.getNote(id);
-  if (!note) return res.status(404).json({ error: 'not found' });
-  res.json(note);
-});
+  if (!note) throw notFound();
+  return note;
+}));
 
-router.patch('/notes/:id', (req, res) => {
-  const id = toIntId(req.params.id);
-  if (!id) return res.status(400).json({ error: 'invalid id' });
+router.patch('/notes/:id', handle((req) => {
+  const id = requireId(req.params.id);
   setContext({ entity: id });
-  const updated = noteStore.updateNote(id, { title: req.body?.title, body: req.body?.body });
-  if (!updated) return res.status(404).json({ error: 'not found' });
-  res.json(updated);
-});
+  return noteStore.updateNote(id, { title: req.body?.title, body: req.body?.body });
+}));
 
-router.delete('/notes/:id', (req, res) => {
-  const id = toIntId(req.params.id);
-  if (!id) return res.status(400).json({ error: 'invalid id' });
+router.delete('/notes/:id', handle((req) => {
+  const id = requireId(req.params.id);
   setContext({ entity: id });
-  res.json({ deleted: noteStore.deleteNote(id) });
-});
+  return { deleted: noteStore.deleteNote(id) };
+}));
 
 module.exports = router;

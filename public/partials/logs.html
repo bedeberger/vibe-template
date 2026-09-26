@@ -1,0 +1,98 @@
+<!-- Logs feature partial (admin view) — loaded on first open into
+     <section data-feature="logs"> (js/app/feature-host.js). The root element
+     IS the feature card (x-data="logsCard", js/cards/logs-card.js). Reads the
+     server log (docs/logging.md). All values are rendered via x-text — log
+     lines are untrusted text, never x-html.
+     Patterns: DESIGN.md → Karte, Karten-Innenraum, Formulare, Combobox,
+     Schalter, Badges, Status / Laden / Leer / Fehler. -->
+
+<div x-data="logsCard">
+<div class="card card--logs">
+  <div class="card-header card-header--subline">
+    <div class="card-header-titlebar">
+      <span class="card-eyebrow" x-text="t('logs.eyebrow')"></span>
+      <h2 class="card-title" x-text="t('logs.title')"></h2>
+    </div>
+    <div class="card-header-aside">
+      <span class="spinner" x-show="loading" aria-hidden="true"></span>
+      <button type="button" class="toggle-switch__btn" role="switch" :aria-checked="live" @click="toggleLive()"
+              :disabled="isFiltered()">
+        <span class="toggle-switch__track" :class="{ 'is-on': live && !isFiltered() }"><span class="toggle-switch__thumb"></span></span>
+        <span class="toggle-switch__label" x-text="t('logs.live')"></span>
+      </button>
+      <button type="button" class="icon-btn icon-btn--ghost tip--end" @click="loadLogs()" :disabled="loading"
+              :aria-label="t('logs.refresh')" :data-tip="t('logs.refresh')">
+        <svg class="icon" aria-hidden="true"><use href="/icons.svg#rotate-cw"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <form class="card-section logs-filter" @submit.prevent="applyFilter()">
+    <label class="logs-filter-field">
+      <span class="card-form-label" x-text="t('logs.filterLevel')"></span>
+      <div x-data="combobox(() => t('logs.allLevels'), () => t('logs.allLevels'))"
+           x-modelable="value" x-model="filter.level"
+           x-effect="options = levels.map((l) => ({ value: l, label: l.toUpperCase() }))"></div>
+    </label>
+    <label class="logs-filter-field">
+      <span class="card-form-label" x-text="t('logs.filterScope')"></span>
+      <div x-data="combobox(() => t('logs.allScopes'), () => t('logs.allScopes'))"
+           x-modelable="value" x-model="filter.scope"
+           x-effect="options = scopeList().map((s) => ({ value: s, label: s }))"></div>
+    </label>
+    <label class="logs-filter-field">
+      <span class="card-form-label" x-text="t('logs.filterUser')"></span>
+      <input type="text" autocomplete="off" x-model="filter.user" :placeholder="t('logs.filterUserPh')">
+    </label>
+    <label class="logs-filter-field">
+      <span class="card-form-label" x-text="t('logs.filterEntity')"></span>
+      <input type="text" autocomplete="off" x-model="filter.entity" :placeholder="t('logs.filterEntityPh')">
+    </label>
+    <label class="logs-filter-field logs-filter-field--wide">
+      <span class="card-form-label" x-text="t('logs.filterSearch')"></span>
+      <input type="search" autocomplete="off" x-model="filter.q" :placeholder="t('logs.filterSearchPh')">
+    </label>
+    <div class="row logs-filter-actions">
+      <button type="submit" class="primary" :disabled="loading" x-text="t('logs.apply')"></button>
+      <button type="button" x-show="isFiltered()" @click="clearFilter()" :disabled="loading" x-text="t('logs.clear')"></button>
+    </div>
+  </form>
+
+  <p class="card-hint card-section card-section--tight" x-show="isFiltered() && live" x-text="t('logs.livePaused')"></p>
+  <p class="muted-msg card-section card-section--tight" x-show="rotated" x-text="t('logs.rotated')" role="status"></p>
+  <p class="card-status card-status--error" x-show="streamError && live && !isFiltered()" x-text="t('logs.streamError')" role="status"></p>
+  <p class="card-status card-status--error" x-show="loadError" x-text="loadError" role="alert"></p>
+
+  <div class="card-empty" x-show="!loading && !loadError && !entries.length">
+    <p class="card-empty-text" x-text="isFiltered() ? t('logs.noMatches') : t('logs.empty')"></p>
+  </div>
+
+  <ol class="card-section log-list" x-show="entries.length" :aria-label="t('logs.title')">
+    <template x-for="e in entries" :key="e._k">
+      <li class="log-row" :class="'log-row--' + e.level">
+        <time class="log-row-ts tabular-nums" :datetime="e.ts" x-text="fmtTs(e.ts)"></time>
+        <span class="badge log-row-level" :class="badgeClass(e.level)" x-text="e.level.toUpperCase()"></span>
+        <span class="log-row-meta" x-text="[e.scope, e.user, e.entity, e.jobId].filter(Boolean).join(' · ')"></span>
+        <span class="log-row-msg" x-text="e.msg"></span>
+        <button type="button" class="icon-btn icon-btn--ghost log-row-toggle" x-show="e.stack" @click="toggleStack(e._k)"
+                :aria-expanded="expanded[e._k] ? 'true' : 'false'"
+                :aria-label="t('logs.toggleStack')" :data-tip="t('logs.toggleStack')">
+          <svg class="icon" aria-hidden="true"><use href="/icons.svg#chevron-down"/></svg>
+        </button>
+        <pre class="log-row-stack" x-show="e.stack && expanded[e._k]" x-text="(e.stack || []).join('\n')"></pre>
+      </li>
+    </template>
+  </ol>
+
+  <div class="card-section row logs-footer">
+    <button type="button" x-show="hasMore" @click="loadPage({ append: true })" :disabled="loading" x-text="t('logs.loadMore')"></button>
+    <template x-for="f in files" :key="f.key">
+      <button type="button" class="logs-download" @click="download(f)" :aria-label="t('logs.downloadFile', { name: f.name })">
+        <svg class="icon" aria-hidden="true"><use href="/icons.svg#download"/></svg>
+        <span x-text="f.name"></span>
+        <span class="muted-msg--sm tabular-nums" x-text="fileSize(f.size)"></span>
+      </button>
+    </template>
+  </div>
+</div>
+</div>

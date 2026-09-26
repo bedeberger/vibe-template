@@ -11,7 +11,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { ROOT, loc, locCategoryFor } = require('./_rules.js');
-const { touchedPaths, relOf, onPayload } = require('./_touched.js');
+const { touchedPaths, relOf, onPayload, emitContext } = require('./_touched.js');
 
 function check(rel) {
   const cat = locCategoryFor(rel);
@@ -37,6 +37,6 @@ function check(rel) {
 
 onPayload((payload) => {
   const out = [...new Set(touchedPaths(payload).map(relOf).filter(Boolean).map(check).filter(Boolean))];
-  if (out.length) console.log(out.join('\n'));
+  emitContext('PostToolUse', out.join('\n'));
   process.exit(0);
 });

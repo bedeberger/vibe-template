@@ -1,6 +1,6 @@
 // Gate for "Feature-Registry ist SSoT" + the feature anatomy (CLAUDE.md →
 // Harte Regeln; DESIGN.md → "Feature-Anatomie"):
-//   1. every registry entry is a complete feature: card (registered in the card
+//   1. every registry entry is a complete feature with a view (user|admin): card (registered in the card
 //      inventory, with lifecycle), domain module, partial rooted in the card,
 //      entity CSS, fixture harness + harness spec (scripts/feature-anatomy.js);
 //   2. index.html renders the nav AND the feature hosts FROM the registry
@@ -30,7 +30,7 @@ test('Registry: jedes Feature ist vollständig (Anatomie)', () => {
 test('Anatomie-Gate greift (Selbsttest mit einem erfundenen Feature)', () => {
   const v = anatomy.check(ROOT, [{ id: 'zzz-ghost', icon: 'x', labelKey: 'nav.x', card: 'zzzGhostCard', partial: 'zzz-ghost' }]);
   for (const part of ['cards/zzz-ghost-card.js', 'register-cards.js', 'public/js/zzz-ghost/', 'partials/zzz-ghost.html',
-    'entities/zzz-ghost.css', 'zzz-ghost-harness.html', 'Harness-Spec']) {
+    'entities/zzz-ghost.css', 'zzz-ghost-harness.html', 'Harness-Spec', 'Feld "view"']) {
     assert.ok(v.some((x) => x.includes(part)), `Selbsttest: fehlende Meldung für ${part}`);
   }
 });

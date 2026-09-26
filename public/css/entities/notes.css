@@ -14,6 +14,16 @@
   overflow-wrap: anywhere;
 }
 .note-card .note-body:empty { display: none; }
+/* Long bodies: a few lines until "show more" (note-item-card.js measures via
+   x-resize whether the clamp clips at all). */
+.note-card .note-body--clamped {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  overflow: hidden;
+}
+.note-card .note-body-toggle { margin-top: var(--space-xs); }
 /* No body → the header is the whole card: drop its rule, no dangling line. */
 .note-card .card-header:has(+ .note-body:empty) {
   border-bottom: 0;
@@ -24,6 +34,13 @@
 /* Job result under the body (badge-ok carries the look). */
 .note-card .note-stats {
   margin-top: var(--card-gap-tight);
+}
+
+/* Overview chart: Chart.js (responsive, no aspect ratio) sizes to this box. */
+.card--notes .notes-chart {
+  position: relative;
+  height: 12rem;
+  padding-top: var(--space-sm);
 }
 
 /* Edit mode: action buttons right-aligned under the fields. */

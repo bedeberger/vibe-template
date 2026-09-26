@@ -14,6 +14,7 @@ export function initialState() {
     sessionExpired: false, // set by the global 401 handler
     user: null,
     // navigation
+    view: 'user',          // 'user' | 'admin' — follows the active feature's registry view
     activeFeature: DEFAULT_FEATURE,
     featureSub: '',        // optional 2nd hash segment (#<id>/<sub>) — the feature validates it
   };

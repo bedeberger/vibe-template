@@ -15,9 +15,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { walk, toRel, read, stripHtmlComments, lineOf } = require('../../scripts/hooks/_rules.js');
 
-// login.html is the static pre-auth page: served before any JS/i18n runs,
-// no t() available. Pinned until it gets a server-side locale render.
-const ALLOW = { 'public/login.html': 4 };
+const ALLOW = {};
 
 const WORD = /\p{L}{2,}/u;
 const TAG_RE = /<[a-zA-Z/!][^<>"']*(?:(?:"[^"]*"|'[^']*')[^<>"']*)*>/g;

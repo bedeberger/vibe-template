@@ -16,7 +16,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { ROOT, walk, toRel } = require('./_rules.js');
-const { touchedPaths, relOf, onPayload } = require('./_touched.js');
+const { isBash, touchedPaths, relOf, onPayload, emitContext } = require('./_touched.js');
+const { writeTargets } = require('./_dod.js');
 
 const read = (rel) => { try { return fs.readFileSync(path.join(ROOT, rel), 'utf8'); } catch { return ''; } };
 
@@ -85,8 +86,16 @@ function remindersFor(rel) {
   return r;
 }
 
+// Reminders are about WRITES. For Bash, the generous touchedPaths() would fire
+// on `cat db/migrations/…` too, so only real write targets count here
+// (redirect, sed -i, tee, cp …; _dod.js → writeTargets). The gate tests still
+// catch a write this misses.
+function writtenPaths(payload) {
+  return isBash(payload) ? writeTargets(payload.tool_input?.command || '') : touchedPaths(payload);
+}
+
 onPayload((payload) => {
-  const reminders = touchedPaths(payload).map(relOf).filter(Boolean).flatMap(remindersFor);
-  if (reminders.length) console.log(`[drift-reminder] ${[...new Set(reminders)].join('\n')}`);
+  const reminders = writtenPaths(payload).map(relOf).filter(Boolean).flatMap(remindersFor);
+  if (reminders.length) emitContext('PostToolUse', `[drift-reminder] ${[...new Set(reminders)].join('\n')}`);
   process.exit(0);
 });

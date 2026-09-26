@@ -10,38 +10,33 @@ const queue = require('./shared/queue');
 const { TYPE: NOTE_STATS } = require('./note-stats');
 require('./jobs-cleanup'); // scheduled (cron), not enqueueable via the API
 const { setContext } = require('../../lib/log-context');
+const { invalid, notFound } = require('../../lib/errors');
+const { handle, requireId } = require('../_http');
 
 const router = express.Router();
 
 const KNOWN_TYPES = new Set([NOTE_STATS]);
 
-function toIntId(v) {
-  const n = Number(v);
-  return Number.isInteger(n) && n > 0 ? n : null;
-}
-
 // Enqueue (or return the existing active job — dedup is in the queue).
-router.post('/jobs', (req, res) => {
-  const noteId = toIntId(req.body?.note_id);
+router.post('/jobs', handle((req) => {
+  const noteId = requireId(req.body?.note_id, 'note_id required');
   const type = req.body?.type || NOTE_STATS;
-  if (!noteId) return res.status(400).json({ error: 'note_id required' });
-  if (!KNOWN_TYPES.has(type)) return res.status(400).json({ error: `unknown job type: ${type}` });
+  if (!KNOWN_TYPES.has(type)) throw invalid(`unknown job type: ${type}`);
   setContext({ entity: noteId });
-  res.status(202).json(queue.createJob(type, noteId));
-});
+  return queue.createJob(type, noteId);
+}, { status: 202 }));
 
-router.get('/jobs/:id', (req, res) => {
-  const id = toIntId(req.params.id);
-  if (!id) return res.status(400).json({ error: 'invalid id' });
+router.get('/jobs/:id', handle((req) => {
+  const id = requireId(req.params.id);
+  setContext({ jobId: id });
   const job = queue.getJob(id);
-  if (!job) return res.status(404).json({ error: 'not found' });
-  res.json(job);
-});
+  if (!job) throw notFound();
+  return job;
+}));
 
-router.get('/jobs', (req, res) => {
-  const noteId = toIntId(req.query.note_id);
-  if (!noteId) return res.status(400).json({ error: 'note_id required' });
-  res.json(queue.listJobs(noteId));
-});
+router.get('/jobs', handle((req) => {
+  const noteId = requireId(req.query.note_id, 'note_id required');
+  return queue.listJobs(noteId);
+}));
 
 module.exports = router;

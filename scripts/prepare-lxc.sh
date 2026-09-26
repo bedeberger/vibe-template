@@ -187,17 +187,16 @@ EOF
 # Signs the session cookies. Generated — rotating it logs everyone out.
 SESSION_SECRET=${secret}
 
-APP_TIMEZONE=Europe/Zurich
 LOG_LEVEL=info
 
-# First admin (gets global_role=admin at boot).
+# The admin — always signs in with this password, also when OIDC is down.
+# Password ≥ 16 chars (openssl rand -base64 24).
 ADMIN_EMAIL=
+ADMIN_PASSWORD=
 
-# OIDC — the redirect URI is the PUBLIC https URL behind Nginx Proxy Manager.
-OIDC_ISSUER=
-OIDC_CLIENT_ID=
+# Only the OIDC secret lives here. Issuer, client id, redirect URI, sign-in
+# method, timezone etc. are set in the app: admin console → Settings.
 OIDC_CLIENT_SECRET=
-OIDC_REDIRECT_URI=https://app.example.com/auth/callback
 EOF
     chown root:"${APP_USER}" "${CONFIG_DIR}/app.env"
     chmod 0640 "${CONFIG_DIR}/app.env"
@@ -445,7 +444,7 @@ EOF
   fi
   cat <<EOF
 
- • Fill ${CONFIG_DIR}/app.env (ADMIN_EMAIL, OIDC_*).
+ • Fill ${CONFIG_DIR}/app.env (ADMIN_EMAIL, ADMIN_PASSWORD[, OIDC_CLIENT_SECRET]).
  • GitHub → Settings → Variables: DEPLOY_ENABLED=true, optionally
    SELF_HOSTED_CI=true (tests run here instead of on GitHub-hosted runners),
    plus APP_NAME=${APP_NAME} / PORT=${PORT} if not the defaults.

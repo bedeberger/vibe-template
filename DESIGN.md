@@ -5,6 +5,9 @@ nachsehen.** Ein bestehendes Muster wiederverwenden; fehlt es, zuerst hier
 dokumentieren (Abschnitt nach der Vorlage unten), dann bauen. Siehe
 CLAUDE.md → Harte Regeln: "DESIGN.md-Pattern-Katalog vor neuer UI prüfen".
 
+**Jedes Muster hier gilt auch auf dem Handy** — [Mobile (Pflicht)](#mobile-pflicht)
+ist Teil jedes Abschnitts, auch wo er es nicht eigens erwähnt.
+
 Das Design-System ist **Papier/Tinte, editorial**: warmer Papier-Schreibtisch,
 weisse Karten mit schmalem Akzentband, tintenschwarzer Text, Inter für die UI,
 Source Serif 4 für Titel und Lesetext, eckige Badges, Haarlinien-Rahmen, kaum
@@ -16,14 +19,16 @@ wird.
 - [Doku-Vorlage](#doku-vorlage-pflicht-für-neue-abschnitte) ·
   [Token-Pflicht](#token-pflicht-keine-ad-hoc-werte) ·
   [Cascade-Layer](#cascade-layer) ·
-  [Dark Mode](#dark-mode) · [Mobile-Breakpoints](#mobile-breakpoints) ·
+  [Dark Mode](#dark-mode) · [Mobile (Pflicht)](#mobile-pflicht) ·
   [Bewegung](#bewegung) · [Z-Index-Stapel](#z-index-stapel)
 - [App-Shell](#app-shell) · [Zeile / Listenkopf / Tabellen-Scroll](#zeile--listenkopf--tabellen-scroll)
 - [Karte](#karte-card) · [Karten-Innenraum](#karten-innenraum) · [Überschriften-Hierarchie](#überschriften-hierarchie)
 - [Buttons](#buttons) · [Badges](#badges) · [Aktions-Icon-Bibliothek](#aktions-icon-bibliothek-verbindlich) · [Icon-System](#icon-system-lucide-sprite) ·
   [Icon-Button](#icon-button-icon-btn) · [Schliessen-Button](#schliessen-button) ·
   [Tooltip](#tooltip-data-tip)
+- [Vendor-Libs](#vendor-libs) · [Alpine-Plugins](#alpine-plugins)
 - [Formulare](#formulare) · [Combobox](#combobox-auswahlfeld) · [Schalter (Toggle)](#schalter-toggle) · [Tabs](#tabs--modus-umschalter)
+- [Popover](#popover) · [Klappbare Sektion](#klappbare-sektion) · [Sortierbare Liste](#sortierbare-liste)
 - [Status / Laden / Leer / Fehler](#status--laden--leer--fehler) ·
   [Bestätigungsdialog](#bestätigungsdialog-modal) · [Gefahrenzone](#gefahrenzone) ·
   [Job-Toast](#job-toast) · [Sitzungs-Banner](#sitzungs-banner)
@@ -143,13 +148,60 @@ folgt dem Betriebssystem; `<html data-theme="light|dark">` erzwingt ein Theme
 
 ---
 
-## Mobile-Breakpoints
+## Mobile (Pflicht)
 
-**Einsatz:** jede neue Komponente liefert ihr mobiles Verhalten im selben
-Commit mit, in derselben Datei (kein zentrales `mobile.css`).
+**Einsatz:** immer. Jede Ansicht, jede Karte, jedes Muster und jede
+eigenständige Seite (login.html) muss auf dem Handy **vollständig bedienbar**
+sein — nicht bloss "sieht okay aus". Es gibt keine Desktop-only-UI. Eine neue
+Komponente liefert ihr mobiles Verhalten im selben Commit mit, in derselben
+Datei (kein zentrales `mobile.css`).
 
-Custom Properties funktionieren in `@media` nicht, darum sind die Werte literal
-— **nur** aus dieser Leiter wählen:
+**Regeln:**
+
+1. **Referenzbreite 360 px.** Bei 360 × 780 scrollt keine Seite horizontal
+   (`scrollWidth ≤ innerWidth`). Breite Inhalte bekommen ihren eigenen
+   Scroll-Container: Tabellen in `.table-scroll`, Leisten mit `overflow-x: auto`
+   (wie die Nav unter 960 px). Keine fixen px-Breiten auf Blöcken — `max-width`,
+   `minmax()`, `flex-wrap`, `min-width: 0` auf Flex-/Grid-Kindern.
+2. **Alles erreichbar.** Jede Aktion, die es auf dem Desktop gibt, gibt es auch
+   auf dem Handy — sichtbar oder eine Geste weit weg (Umbruch, Scroll-Leiste,
+   Popover). Nichts wird auf Mobile per `display: none` weggenommen, ohne dass es
+   einen anderen Weg dorthin gibt.
+3. **Tap-Ziele.** Unter `@media (pointer: coarse)` sind Icon-only-Buttons
+   (`.icon-btn`, `.btn-card-close`, `.btn-close`, `.job-toast-close`)
+   **mindestens 40 × 40 px**; die Glyphe wächst nicht mit. Sonstige interaktive
+   Elemente mindestens 24 px hoch (WCAG 2.5.8), kleine Steuerelemente wie der
+   [Schalter](#schalter-toggle) bekommen dort ebenfalls 40 px. Eine
+   Cluster-Regel darf das nicht überstimmen: `min-width`/`width` in einer
+   Container-Regel nur für `button:not(.icon-btn)`.
+4. **Nichts nur per Hover.** Tooltips (`data-tip`) sind hover-only und auf Touch
+   unsichtbar — sie ergänzen, sie tragen nie die einzige Information. Icon-only
+   braucht darum immer `aria-label`; eine Aktion hinter `:hover` braucht einen
+   Tap-Weg.
+5. **Formularfelder ≥ 16 px Schrift bis 768 px** — sonst zoomt iOS beim Fokus.
+   Natives Handy-Verhalten nicht bekämpfen: keine Auto-Fokussierung, die die
+   Bildschirmtastatur öffnet ([Combobox](#combobox-auswahlfeld)), `inputmode`/`type`
+   passend zum Inhalt.
+6. **Overlays bleiben im Viewport.** Popover, Combobox-Liste und Dialog passen
+   bei 360 px vollständig in den Viewport (`x-anchor` kippt/klemmt; ein Dialog ist
+   `width: calc(100% - 2rem)` breit und scrollt innen, wie das native `<dialog>`).
+7. **Safe Area.** [index.html](public/index.html) setzt `viewport-fit=cover`,
+   also reicht die Seite unter Notch und abgerundete Ecken. Alles, was am
+   Bildschirmrand klebt (Seitenrand im `body`, `position: fixed`-Elemente),
+   rechnet `env(safe-area-inset-*)` ein — Vorbild: `body` in
+   [base.css](public/css/layout/base.css), [job-toast.css](public/css/components/job-toast.css),
+   `.session-banner`.
+8. **Nachweis im selben Change-Set.** Jede Feature-Spec hat einen Block
+   `test.describe('phone viewport')` mit `viewport: { width: 360 }` (der
+   Generator legt ihn an, [spec.js.tpl](scripts/templates/feature/spec.js.tpl)),
+   erweitert um das mobile Verhalten des Features (Aktionen `toBeInViewport`,
+   Overlays `toBeInViewport({ ratio: 1 })`). Die
+   [Smoke-Spec](tests/e2e-app/smoke.spec.js) prüft jedes Registry-Feature als
+   Touch-Gerät bei 360 px auf Überlauf und 40-px-Tap-Ziele. Der DoD-Hook nennt
+   die Specs zur geänderten Stelle ([docs/testing.md](docs/testing.md)).
+
+**Breakpoints.** Custom Properties funktionieren in `@media` nicht, darum sind
+die Werte literal — **nur** aus dieser Leiter wählen:
 
 | Wert | Rolle |
 |---|---|
@@ -165,7 +217,9 @@ card-actions), die vor der Tablet-Breite umbrechen müssen.
   Viewport-Breiten beim Zoomen), kein Tippfehler.
 - `max-width: N` und `min-width: N` greifen beide bei genau N — ein Paar nutzt
   `N` / `N+1` (oder den `.98`-Trick).
-- Touch: `@media (pointer: coarse)` vergrössert Icon-only-Buttons auf ≥ 40px.
+- Eingabeart statt Breite, wo es um die Bedienung geht: `@media (pointer: coarse)`
+  für Tap-Grössen, `@media (hover: hover)` für Hover-Effekte — ein Tablet mit
+  1024 px ist trotzdem ein Touch-Gerät.
 
 ---
 
@@ -220,6 +274,65 @@ lokal geflickt.
 
 ---
 
+## Vendor-Libs
+
+**Einsatz:** welche Drittbibliotheken im Browser verfügbar sind und wie sie
+laden. Alle sind self-hosted unter [public/vendor/](public/vendor/), versioniert
+im Dateinamen, Lizenz in `vendor/LICENSES/`, geändert nur via
+`npm run vendor:sync` ([scripts/vendor-sync.js](scripts/vendor-sync.js) `LIBS`).
+
+| Lib | Build | Lädt | Nutzung im Template |
+|---|---|---|---|
+| Alpine.js | ESM | beim Boot ([app.js](public/js/app.js)) | alles |
+| Alpine-Plugins (anchor, focus, collapse, resize) | ESM | beim Boot ([alpine-plugins.js](public/js/app/alpine-plugins.js)) | siehe [Alpine-Plugins](#alpine-plugins) |
+| SortableJS | UMD, ~45 KB | bei Bedarf (`loadSortable()`) | [Sortierbare Liste](#sortierbare-liste) |
+| Chart.js | UMD, ~200 KB | bei Bedarf (`loadChart()`) | Übersicht der Notizen-Karte ([notes-chart.js](public/js/notes/notes-chart.js)) |
+
+**Regeln:**
+- **Grosse Libs laden nur bei Bedarf** über [lazy-libs.js](public/js/lazy-libs.js)
+  — nie als `<script>` in index.html. Eine neue Lib bekommt dort einen
+  `load<Name>()`-Einzeiler.
+- **Eine Lib-Instanz nie in den Alpine-State legen** (Chart, Sortable): der
+  reaktive Proxy läuft durch ihre Interna. Die Karte hält nur eine Closure
+  (`_sortableOff`, `_chart` — beide vorab deklariert), die Instanz lebt darin.
+- **Keine Lib ohne Nutzer.** Eine vendorte Lib, die nichts im Template
+  benutzt, kopiert jedes abgeleitete Projekt als toten Ballast mit. Neue Lib ⇒
+  `LIBS`-Eintrag + Lizenz + ein Einsatz + eine Zeile hier.
+- Nicht übernommen aus schreibwerkstatt, mit Absicht: mermaid (3,5 MB),
+  vis-network, jsMind, d3-cloud, Leaflet, diff, altcha — fachspezifisch.
+
+---
+
+## Alpine-Plugins
+
+**Einsatz:** die offiziellen Alpine-Plugins, die das Template registriert —
+vor `Alpine.start()` in [alpine-plugins.js](public/js/app/alpine-plugins.js),
+das App **und** Harness aufrufen. Nachladen geht nicht: eine Direktive ohne
+registriertes Plugin warnt nur.
+
+| Direktive | Plugin | Wofür | Beispiel |
+|---|---|---|---|
+| `x-anchor` | anchor | Panel am Trigger verankern (Floating UI: kippt, bleibt im Viewport) | [Popover](#popover) |
+| `x-trap` | focus | Fokusfalle für Overlays, die **kein** `<dialog>` sind | [Popover](#popover) |
+| `x-collapse` | collapse | animierte Höhe eines `x-show`-Panels | [Klappbare Sektion](#klappbare-sektion) |
+| `x-resize` | resize | `ResizeObserver` als Direktive (`$width`, `$height`) | „Mehr anzeigen" an langen Notizen |
+
+**Regeln:**
+- **`x-trap` nie auf ein `<dialog>`** — `showModal()` bringt Fokusfalle,
+  inerten Hintergrund und ESC selbst mit ([Bestätigungsdialog](#bestätigungsdialog-modal)).
+- **`x-resize` statt handgebautem `ResizeObserver`** samt Teardown: die
+  Messung steht im Template (`x-resize="measureBody($el)"`), das Aufräumen
+  übernimmt Alpine.
+- **Die Combobox nutzt bewusst kein `x-anchor`** (sie schliesst beim Scrollen
+  wie ein natives `<select>` und platziert sich selbst — [Combobox](#combobox-auswahlfeld)).
+- **Kein `container-type` und kein stehender `transform` über einem
+  verankerten Panel**: beides macht den Vorfahren zum Containing Block, und
+  Floating UI rechnet dann gegen die falsche Box.
+- Nicht geladen: `sort` (→ SortableJS), `persist`, `intersect`, `mask`,
+  `morph`. Neues Plugin ⇒ zuerst hier begründen, dann vendoren und registrieren.
+
+---
+
 ## App-Shell
 
 **Einsatz:** der Rahmen von [index.html](public/index.html): Skip-Link,
@@ -262,6 +375,12 @@ Sitzungs-Banner, Kopfzeile, zweispaltiges Layout mit der Feature-Navigation.
 - [layout/app-nav.css](public/css/layout/app-nav.css): `.app-nav`, `.nav-item` (`[aria-current="page"]` = Akzentrahmen + sanfte Akzentfüllung). Unter 960px wird die Navigation zu einem horizontalen Streifen.
 
 **Regeln:**
+- **Zwei Sichten:** die Navigation zeigt nur die Features der aktuellen Sicht
+  (`f.view === view`). Der Admin bekommt rechts in der Kopfzeile einen
+  Modus-Umschalter ([Tabs](#tabs--modus-umschalter) ohne `role="tablist"`,
+  `tabs-btn--active` + `aria-pressed`), alle anderen sehen ihn nicht. Die
+  Sicht folgt dem geöffneten Feature (`openFeature` setzt `view`); ein
+  Deep-Link auf ein Admin-Feature fällt für Nicht-Admins auf den Default zurück.
 - Navigationseinträge kommen **nur** aus der Feature-Registry
   ([features.js](public/js/app/features.js), `icon` = Sprite-ID). Nie ein
   `.nav-item` von Hand schreiben.
@@ -561,7 +680,7 @@ URL und ein eigener Fetch).
 **Ausgelieferte Symbole** (Lucide-Namen; das Gate vergleicht diese Liste mit dem Sprite):
 <!-- icon-list:start -->
 - Chevrons + Pfeile: `chevron-right`, `chevron-left`, `chevron-down`, `chevron-up`, `chevron-last`, `arrow-right`, `arrow-left`, `arrow-up`, `arrow-down`
-- Kernaktionen: `check`, `x`, `plus`, `minus`, `pencil`, `trash`, `search`, `copy`, `download`, `external-link`, `share-2`, `unlink`, `undo`, `redo`, `rotate-cw`, `rotate-ccw`, `more-horizontal`, `grip-vertical`, `pin`, `archive`, `lock`, `lock-open`, `log-out`
+- Kernaktionen: `check`, `x`, `plus`, `minus`, `pencil`, `trash`, `search`, `copy`, `download`, `external-link`, `share-2`, `unlink`, `undo`, `redo`, `rotate-cw`, `rotate-ccw`, `more-horizontal`, `grip-vertical`, `pin`, `archive`, `lock`, `lock-open`, `log-out`, `settings`
 - Status + Mediensteuerung: `circle`, `square`, `alert-triangle`, `circle-help`, `loader`, `activity`, `play`, `pause`, `zap`
 - Viewport: `focus`, `maximize-2`, `minimize-2`, `scan`, `move-horizontal`, `separator-horizontal`
 - Text + Editor: `heading`, `pilcrow`, `quote`, `spell-check`, `message-square`, `lightbulb`, `mic`, `headphones`, `radio`
@@ -863,6 +982,110 @@ bei ≤ 700px eine eigene volle Zeile.
 
 ---
 
+## Popover
+
+**Einsatz:** kleines, nicht-modales Panel an einem Auslöser — ein Kurzformular
+oder eine Auswahl, für die ein Modal zu schwer wäre.
+
+**Markup:**
+```html
+<button type="button" class="icon-btn" x-ref="addBtn" @click="formOpen = true"
+        :aria-expanded="formOpen" :aria-label="t('…')" :data-tip="t('…')">…</button>
+<div class="popover" x-show="formOpen" x-cloak role="dialog" :aria-label="t('…')"
+     x-anchor.bottom-end.offset.4="$refs.addBtn" x-trap="formOpen"
+     @keydown.escape.stop="formOpen = false" @click.outside="formOpen = false">
+  <form class="row" @submit.prevent="…">…</form>
+</div>
+```
+
+**Klassen** [popover.css](public/css/components/popover.css):
+- `.popover` — Panel (Fläche, Rahmen, Schatten, `--z-popover`, Einblenden)
+
+**Regeln:**
+- Position kommt von `x-anchor` (per CSSOM, CSP-sicher) — keine eigene
+  `top`/`left`-Regel, kein `:style`.
+- `x-trap` hält Tab im Panel, fokussiert das erste Feld und gibt den Fokus
+  beim Schliessen an den Auslöser zurück. ESC mit `.stop`, damit eine
+  umgebende Ebene es nicht auch als „Abbrechen" liest.
+- Blockiert es die Seite (Bestätigung, Pflichtentscheidung) → kein Popover,
+  sondern der [Bestätigungsdialog](#bestätigungsdialog-modal).
+
+**Beispiele:** „Neues Notizbuch" in [notes.html](public/partials/notes.html)
+
+---
+
+## Klappbare Sektion
+
+**Einsatz:** sekundärer Inhalt einer Karte, der per Default zu ist
+(Übersicht, Details, Legende).
+
+**Markup:**
+```html
+<button type="button" class="collapsible-toggle" @click="open = !open" :aria-expanded="open" aria-controls="x">
+  <svg class="icon collapsible-chevron" :class="{ 'is-open': open }" aria-hidden="true"><use href="/icons.svg#chevron-right"/></svg>
+  <span x-text="t('…')"></span>
+</button>
+<div id="x" x-show="open" x-collapse x-cloak><div>…Inhalt…</div></div>
+```
+
+**Klassen** [collapsible.css](public/css/components/collapsible.css):
+- `.collapsible-toggle` — zurückhaltender Text-Button mit Chevron
+- `.collapsible-chevron` (`.is-open`) — dreht sich beim Öffnen
+
+**Regeln:**
+- `x-collapse` animiert nur `height`: vertikales Padding gehört ans **Kind**
+  des Panels, nie ans Panel selbst (sonst springt es am Ende der Animation).
+- Teurer Inhalt (ein Diagramm) wird erst beim ersten Öffnen gebaut.
+
+**Beispiele:** „Übersicht" in [notes.html](public/partials/notes.html)
+
+---
+
+## Sortierbare Liste
+
+**Einsatz:** manuelle Reihenfolge einer `x-for`-Liste per Drag & Drop.
+
+**Markup:**
+```html
+<div x-ref="list">
+  <template x-for="item in items" :key="item.id">
+    <article>… <button type="button" class="icon-btn icon-btn--ghost item-drag-handle"
+                       :aria-label="t('…')" :data-tip="t('…')">
+      <svg class="icon" aria-hidden="true"><use href="/icons.svg#grip-vertical"/></svg></button> …</article>
+  </template>
+</div>
+```
+```js
+this._sortableOff = await attachSortable(this.$refs.list, {
+  handle: '.item-drag-handle',
+  onReorder: (from, to) => { this.items = moveItem(this.items, from, to); /* PUT … */ },
+});
+```
+
+**Klassen** [sortable-list.css](public/css/components/sortable-list.css):
+- `[class*="drag-handle"]` — Greif-Cursor, `touch-action: none` (sonst scrollt
+  ein Ziehen auf dem Handy die Seite)
+- `.sortable-ghost` / `.sortable-fallback` — Zielplatz / mitlaufender Klon
+  (von SortableJS gesetzt)
+- `[data-sort-settled]` — schaltet die Einblend-Animation der Einträge ab
+  (gesetzt beim Greifen, bleibt stehen). Ohne das spielt `cardFadeIn` bei
+  jedem Umhängen eines Nachbarn neu ab — das Ziehen ruckelt und flackert.
+
+**Regeln:**
+- Nur über [sortable-list.js](public/js/components/sortable-list.js): er nimmt
+  SortableJS' DOM-Verschiebung zurück, bevor das Array sich ändert — sonst
+  besitzen SortableJS und `x-for` dieselben Knoten doppelt (verwaiste oder
+  doppelte Karten).
+- Gezogen wird nur am Handle; das Handle erscheint erst ab zwei Einträgen.
+- Optimistisch umsortieren, Fehler zeigen und die Server-Reihenfolge neu laden.
+- Die Reihenfolge ist Fachdaten: eigene Spalte (`position`) und ein Endpunkt,
+  der eine vollständige Permutation verlangt.
+
+**Beispiele:** Notizen in [notes.html](public/partials/notes.html),
+[notes-methods.js](public/js/notes/notes-methods.js) `reorderNotes`
+
+---
+
 ## Status / Laden / Leer / Fehler
 
 **Einsatz:** jeder Zustand, in dem eine Ansicht sein kann, mit einer Klasse pro
@@ -1015,7 +1238,7 @@ an die ansichtsbasierte Shell dieses Templates. **Generieren, nicht von Hand
 bauen:**
 
 ```bash
-npm run feature:new -- <id> --label-de "…" --label-en "…" --icon <sprite-id>
+npm run feature:new -- <id> --label-de "…" --label-en "…" --icon <sprite-id> [--view admin]
 ```
 
 Der Generator ([scripts/feature-new.js](scripts/feature-new.js), Vorlagen in
@@ -1027,7 +1250,7 @@ nicht registrierte Karte rendert nichts, ohne Fehler).
 
 | Teil | Datei (Feature `notes`) | Regel |
 | --- | --- | --- |
-| Registry-Eintrag | [features.js](public/js/app/features.js) `{ id, icon, labelKey, card, partial }` | SSoT für Navigation, Host, Hash-Route `#<id>[/<sub>]`, Smoke |
+| Registry-Eintrag | [features.js](public/js/app/features.js) `{ id, view, icon, labelKey, card, partial }` | SSoT für Navigation, Host, Hash-Route `#<id>[/<sub>]`, Smoke; `view: 'user' \| 'admin'` = in welcher der zwei Sichten es erscheint (`--view admin` beim Generator, [docs/auth.md](docs/auth.md)) |
 | Host | [index.html](public/index.html) `<section :data-feature="f.id">` (x-for) | nie pro Feature von Hand geschrieben |
 | Partial | [partials/notes.html](public/partials/notes.html) | geladen beim **ersten Öffnen** ([feature-host.js](public/js/app/feature-host.js)); sein **Wurzelelement ist die Karte** (`x-data="notesCard"`); verschachtelte `data-partial` vor dem Einfügen aufgelöst; > 250 LOC → `partials/<id>/…` |
 | Feature-Karte | [cards/notes-card.js](public/js/cards/notes-card.js) | `Alpine.data('<id>Card')` + `register<Id>Card()`; State vorab deklariert; Lifecycle über `setupCardLifecycle` |
@@ -1036,7 +1259,7 @@ nicht registrierte Karte rendert nichts, ohne Fehler).
 | Unterkomponenten | [cards/note-item-card.js](public/js/cards/note-item-card.js) | `<entity>ItemCard` für Listeneinträge; sprechen mit der Feature-Karte über ein DOM-Event (`note-removed`), greifen nie in sie hinein |
 | Entity-CSS | [css/entities/notes.css](public/css/entities/notes.css) | nur Abweichungen vom Karten-Vokabular; verlinkt in index.html **und** jedem Harness |
 | i18n | `nav.<id>`, `<id>.*` in de.json **und** en.json | camelCase-Bereich für Kebab-IDs (`demo-board` → `demoBoard.title`) |
-| Harness + Spec | [tests/fixtures/notes-harness.html](tests/fixtures/notes-harness.html), [tests/e2e/notes-card.spec.js](tests/e2e/notes-card.spec.js) | `mountFeature('<id>')` ([_harness.js](tests/fixtures/_harness.js)) montiert die echte Karte; Mocks in [tests/server.js](tests/server.js) |
+| Harness + Spec | [tests/fixtures/notes-harness.html](tests/fixtures/notes-harness.html), [tests/e2e/notes-card.spec.js](tests/e2e/notes-card.spec.js) | `mountFeature('<id>')` ([_harness.js](tests/fixtures/_harness.js)) montiert die echte Karte; Mocks in [tests/server.js](tests/server.js); ein `phone viewport`-Block bei 360 px ([Mobile (Pflicht)](#mobile-pflicht)) |
 
 **Lifecycle** ([card-lifecycle.js](public/js/cards/card-lifecycle.js)): die Karte
 lädt, wenn ihr Feature aktiv wird (erstes Öffnen und jedes erneute Öffnen;
@@ -1129,11 +1352,17 @@ ausser `tokens*` legt ihre Regeln in einen Layer.
 | `css/components/tabs.css` | components | Tabs / Segment-Umschalter | `components/tabs.css` |
 | `css/components/toggle-switch.css` | components | boolescher Schalter | `components/toggle-switch.css` |
 | `css/components/combobox.css` | components | durchsuchbares Auswahlfeld (ersetzt `<select>`) | `components/combobox.css` |
+| `css/components/popover.css` | components | am Trigger verankertes Panel (`x-anchor`) | neu |
+| `css/components/collapsible.css` | components | klappbare Sektion (`x-collapse`) | neu (nach `entities/entity-list.css` `.collapsible-*`) |
+| `css/components/sortable-list.css` | components | Drag-Handle + SortableJS-Zustände | neu |
 | `css/components/tooltip.css` | base, components | reiner CSS-Tooltip über `data-tip` | neu (ersetzt die JS-Tooltip-Schicht) |
 | `css/components/confirm-dialog.css` | components | natives `<dialog>` für Bestätigung/Modal | `components/confirm-dialog.css` |
 | `css/components/danger-zone.css` | components | Gefahrenzone | `components/danger-zone.css` |
 | `css/components/job-toast.css` | components | Toast bei fertigem Job | `components/job-toast.css` |
 | `css/entities/notes.css` | components | Abweichungen Feature Notizen | template |
+| `css/entities/users.css` | components | Abweichungen Feature Benutzer | template |
+| `css/entities/logs.css` | components | Abweichungen Feature Logs | template |
+| `css/entities/settings.css` | components | Abweichungen Feature Einstellungen | template |
 
 Assets: [public/fonts/](public/fonts/) (Inter + Source Serif 4 als variable
 woff2, SIL OFL 1.1 — Lizenz in `fonts/OFL.txt`, neben den Dateien belassen),

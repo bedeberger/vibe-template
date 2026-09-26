@@ -129,3 +129,8 @@ test('mobile coverage names specs per view, and reports a stem without any', () 
   assert.deepEqual(none.phone, []);
   assert.deepEqual(none.any, []);
 });
+
+test('a directory-local CLAUDE.md counts as docs', () => {
+  assert.deepEqual(dod.missingCriteria(['routes/notes.js', 'routes/CLAUDE.md']).map((c) => c.key), ['unit', 'integration']);
+  assert.ok(dod.missingCriteria(['routes/notes.js', 'routes/CLAUDE.md.bak']).some((c) => c.key === 'docs'));
+});

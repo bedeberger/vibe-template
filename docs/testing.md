@@ -64,8 +64,9 @@ API-Mocks mit Seed-Daten (ansehen `GET /__mock/state`, zurücksetzen
   **jedes Feature aus der Registry** ([features.js](../public/js/app/features.js),
   zur Laufzeit gelesen — ein neues Feature ist automatisch im Smoke): Nav-Klick →
   Host sichtbar → das lazy geladene Partial hat seine Karte gemountet →
-  Hash-Route; dazu ein Deep-Link. Ein Durchgang im Phone-Viewport (360 px) prüft je
-  Feature, dass nichts horizontal überläuft — die Spec, die der DoD-Hook als
+  Hash-Route; dazu ein Deep-Link. Ein Durchgang im Phone-Viewport (360 px, als Touch-Gerät)
+  prüft je Feature, dass nichts horizontal überläuft und Icon-only-Buttons ≥ 40 px
+  gross sind ([DESIGN.md → Mobile (Pflicht)](../DESIGN.md#mobile-pflicht)) — die Spec, die der DoD-Hook als
   Mobile-Abdeckung nennt. Reines "rendert ohne Fehler" — dort keine
   Verhaltens-Assertions.
 - Verhaltens-Specs, deren Assertion am **echten Backend, am vollständigen

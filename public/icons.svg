@@ -2,7 +2,8 @@
 <!--
   Lucide icon sprite — ISC licence, https://lucide.dev (full text:
   public/icons.LICENSE.txt). Usage:
-    <svg class="icon" aria-hidden="true"><use href="/icons.svg#NAME"/></svg>
+    <svg class="icon" aria-hidden="true"><use href="/icons.svg#NAME"/>  <symbol id="settings"       viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+</svg>
   Stroke/fill come from the .icon class on the consuming <svg>
   (css/components/icons.css) and inherit into the <use> shadow tree, so paths
   carry no presentation attributes. New icon: copy the Lucide paths into a new
@@ -116,4 +117,5 @@
   <symbol id="laptop-minimal" viewBox="0 0 24 24"><rect width="18" height="12" x="3" y="4" rx="2" ry="2"/><line x1="2" x2="22" y1="20" y2="20"/></symbol>
   <symbol id="smartphone"     viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></symbol>
   <symbol id="puzzle"         viewBox="0 0 24 24"><path d="M15.39 4.39a1 1 0 0 0 1.68-.474 2.5 2.5 0 1 1 3.015 3.015 1 1 0 0 0-.475 1.68l1.683 1.682a2.414 2.414 0 0 1 0 3.414L19.61 15.39a1 1 0 0 1-1.68-.475 2.5 2.5 0 1 0-3.015 3.015 1 1 0 0 1 .475 1.68l-1.683 1.683a2.414 2.414 0 0 1-3.414 0L8.61 19.61a1 1 0 0 0-1.68.475 2.5 2.5 0 1 1-3.015-3.015 1 1 0 0 0 .475-1.68l-1.683-1.683a2.414 2.414 0 0 1 0-3.414L4.39 8.61a1 1 0 0 1 1.68.475 2.5 2.5 0 1 0 3.015-3.015 1 1 0 0 1-.475-1.68l1.683-1.683a2.414 2.414 0 0 1 3.414 0z"/></symbol>
+  <symbol id="settings"       viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
 </svg>

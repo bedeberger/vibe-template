@@ -1,5 +1,5 @@
 'use strict';
-// npm run init -- <slug> [--title "…"] [--dry-run] [--no-test]
+// npm run init -- <slug> [--title "…"] [--dry-run] [--no-test] [--fresh] [--force]
 //
 // Turns a fresh clone of the template into its own project. The current name
 // is read from the tree (package.json#name, de.json app.title), not hardcoded —
@@ -12,9 +12,12 @@
 //                          name, systemd unit / paths / runner label defaults in
 //                          prepare-lxc.sh + the workflows, docs, log line
 //
-// Plus the fresh start: CHANGELOG back to [Unreleased], version 0.1.0, local
-// app.db* / app.log removed (only present in a copied — not cloned — folder).
-// Afterwards `npm run test:unit` runs, unless --no-test.
+// Plus the FRESH START — only on the template itself (or with --fresh):
+// CHANGELOG back to [Unreleased], version 0.1.0, local app.db* / app.log (the
+// template's seed data) removed. Renaming an already renamed project keeps its
+// history, version and data. Refuses a dirty git tree (the rename touches
+// dozens of files — mixed with other work the diff is unreviewable) unless
+// --force. Afterwards `npm run test:unit` runs, unless --no-test.
 //
 // Why a script and not a prompt: the slug steers systemd, paths and the runner
 // label — one missed spot deploys under the wrong name. Deterministic, and
@@ -34,6 +37,9 @@ const SKIP_FILE = (name) => /^app\.db/.test(name) || /\.log$/.test(name) || /^\.
 // History stays history: CHANGELOG is reset below, never rewritten.
 const NO_RENAME = new Set(['CHANGELOG.md']);
 const LOCAL_STATE = (name) => /^app\.db(-.+)?$/.test(name) || name === 'app.log';
+// The template's own name, ASSEMBLED so the slug pass can never rewrite this
+// constant (it replaces every whole occurrence in every text file, this one too).
+const TEMPLATE_SLUG = ['vibe', 'template'].join('-');
 
 function textFiles(root, dir = '') {
   const out = [];
@@ -76,9 +82,8 @@ function plan(root, slug, opts = {}) {
   if (title !== oldTitle) {
     const t = esc(oldTitle);
     edit('public/index.html', (s) => s.replace(new RegExp(`<title>${t}</title>`), `<title>${title}</title>`));
-    edit('public/login.html', (s) => s
-      .replace(new RegExp(`(<title>[^<]*?)${t}(</title>)`), `$1${title}$2`)
-      .replace(new RegExp(`<span>${t}</span>`), `<span>${title}</span>`));
+    // The login heading is x-text="t('app.title')" — covered by the i18n pass below.
+    edit('public/login.html', (s) => s.replace(new RegExp(`(<title>[^<]*?)${t}(</title>)`), `$1${title}$2`));
     edit('README.md', (s) => s.replace(new RegExp(`^# ${t}$`, 'm'), `# ${title}`));
     for (const l of ['de', 'en']) {
       edit(`public/js/i18n/${l}.json`, (s) => {
@@ -105,7 +110,11 @@ function plan(root, slug, opts = {}) {
     }
   }
 
-  // 3. Fresh start: version 0.1.0, CHANGELOG without the template's releases.
+  // 3. Fresh start: version 0.1.0, CHANGELOG without the template's releases,
+  //    no template seed DB. Only on the template — a project's own releases
+  //    and data are not the script's to throw away.
+  const fresh = !!opts.fresh || oldSlug === TEMPLATE_SLUG;
+  if (!fresh) return { oldSlug, oldTitle, slug, title, fresh, edits, remove: [] };
   const setVersion = (rel) => {
     const j = JSON.parse(cur(rel));
     if (j.version === '0.1.0') return;
@@ -120,7 +129,7 @@ function plan(root, slug, opts = {}) {
   if (firstRelease !== -1) edits['CHANGELOG.md'] = `${changelog.slice(0, firstRelease).trimEnd()}\n`;
 
   const remove = fs.readdirSync(root).filter(LOCAL_STATE);
-  return { oldSlug, oldTitle, slug, title, edits, remove };
+  return { oldSlug, oldTitle, slug, title, fresh, edits, remove };
 }
 
 function apply(root, p) {
@@ -128,20 +137,33 @@ function apply(root, p) {
   for (const rel of p.remove) fs.rmSync(path.join(root, rel), { force: true });
 }
 
-module.exports = { plan, apply, textFiles };
+// Uncommitted changes in a git checkout? (false outside git — e.g. the tests' temp copy.)
+function dirtyTree(root) {
+  const r = spawnSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' });
+  return r.status === 0 && r.stdout.trim() !== '';
+}
+
+module.exports = { plan, apply, textFiles, TEMPLATE_SLUG };
 
 if (require.main === module) {
   const argv = process.argv.slice(2);
   const slug = argv.find((a) => !a.startsWith('--') && !['--title', '--root'].includes(argv[argv.indexOf(a) - 1]));
   const root = path.resolve(value(argv, '--root') || path.join(__dirname, '..'));
   try {
-    const p = plan(root, slug, { title: value(argv, '--title') });
+    const p = plan(root, slug, { title: value(argv, '--title'), fresh: flag(argv, '--fresh') });
     console.log(`Projekt: ${p.oldSlug} → ${p.slug}   Titel: "${p.oldTitle}" → "${p.title}"`);
+    console.log(p.fresh
+      ? '  Frischstart: CHANGELOG, Version 0.1.0 und lokale DB werden zurückgesetzt.'
+      : '  Nur Umbenennen: CHANGELOG, Version und lokale DB bleiben (--fresh setzt sie zurück).');
     for (const rel of Object.keys(p.edits)) console.log(`  ~ ${rel}`);
     for (const rel of p.remove) console.log(`  - ${rel}`);
     if (flag(argv, '--dry-run')) {
       console.log('\n(--dry-run: nichts geschrieben)');
       process.exit(0);
+    }
+    if (dirtyTree(root) && !flag(argv, '--force')) {
+      throw new Error('Arbeitsbaum hat uncommittete Änderungen — erst committen (oder --force), '
+        + 'sonst ist der Umbenennungs-Diff nicht von der übrigen Arbeit zu trennen.');
     }
     apply(root, p);
     console.log('\nNoch zu tun: GitHub-Variable APP_NAME=' + p.slug + ' setzen (docs/deployment.md), .env aus .env.example,');

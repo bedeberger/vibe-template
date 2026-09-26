@@ -7,8 +7,8 @@
 @layer components {
 .job-toast {
   position: fixed;
-  bottom: var(--space-lg);
-  right: var(--space-lg);
+  bottom: calc(var(--space-lg) + env(safe-area-inset-bottom));
+  right: max(var(--space-lg), env(safe-area-inset-right));
   z-index: var(--z-toast);
   display: flex;
   align-items: center;
@@ -57,9 +57,9 @@
 
 @media (max-width: 600px) {
   .job-toast {
-    left: var(--space-lg);
-    right: var(--space-lg);
-    bottom: var(--space-md);
+    left: max(var(--space-lg), env(safe-area-inset-left));
+    right: max(var(--space-lg), env(safe-area-inset-right));
+    bottom: calc(var(--space-md) + env(safe-area-inset-bottom));
     max-width: none;
   }
 }

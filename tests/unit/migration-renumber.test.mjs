@@ -45,14 +45,27 @@ test('without a collision nothing is touched', () => {
   assert.deepEqual(planRenumber([...remote, '0141_mine.js'], remote).moves, []);
 });
 
-test('an own migration ABOVE the remote max stays put', () => {
-  // Mixed: 0141 collides, 0145 doesn't. The gap at 0144 is harmless — the
-  // runner sorts by `version`, it does not count.
+test('once one own migration collides, every later own one moves along', () => {
+  // Mixed: 0141 collides, 0145 doesn't — but 0145 may build on 0141, so both
+  // move and keep their order (0143 before 0144).
   const remote = ['0141_theirs.js', '0142_theirs.js'];
   const local = [...remote, '0141_mine.js', '0145_mine_later.js'];
 
   const { moves } = planRenumber(local, remote);
-  assert.deepEqual(moves.map((m) => [m.oldName, m.newName]), [['0141_mine.js', '0143_mine.js']]);
+  assert.deepEqual(moves.map((m) => [m.oldName, m.newName]), [
+    ['0141_mine.js', '0143_mine.js'],
+    ['0145_mine_later.js', '0144_mine_later.js'],
+  ]);
+});
+
+test('a move never lands on the number of another own migration', () => {
+  // Regression: remote adds 0005 while 0005_mine + 0006_mine2 are local.
+  // Moving only the collider would put 0005_mine on 0006 next to 0006_mine2.
+  const remote = ['0004_a.js', '0005_theirs.js'];
+  const local = [...remote, '0005_mine.js', '0006_mine2.js'];
+
+  const names = planRenumber(local, remote).moves.map((m) => m.newName);
+  assert.deepEqual(names, ['0006_mine.js', '0007_mine2.js']);
 });
 
 test('an empty origin/main leaves everything own in place', () => {

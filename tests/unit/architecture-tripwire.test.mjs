@@ -25,7 +25,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const {
   ROOT, walk, toRel, read, stripJsComments, lineOf,
-  DATETIME_NOW_RE, RAW_DOMAIN_SQL_RE, DOMAIN_DB_IMPORT_RE, mayUseDomainDb, DOMAIN_FACADE,
+  DATETIME_NOW_RE, DOMAINS, domainAccessViolations, domainAccessMessage,
 } = require('../../scripts/hooks/_rules.js');
 
 const JS = ['.js', '.mjs', '.cjs'];
@@ -39,19 +39,29 @@ const hits = (files, re, skip = () => false) => files.filter((f) => !skip(f)).fl
   return [...code.matchAll(re)].map((m) => `${f}:${lineOf(code, m.index)}: ${m[0]}`);
 });
 
-test('Facade: kein Roh-SQL gegen notes/notebooks ausserhalb db/ + lib/note-store.js', () => {
-  assert.ok(existsSync(join(ROOT, DOMAIN_FACADE)), `${DOMAIN_FACADE} fehlt — Facade umbenannt? _rules.js nachziehen.`);
-  const v = hits(serverFiles(), RAW_DOMAIN_SQL_RE, mayUseDomainDb);
-  assert.deepEqual(v, [], 'Roh-SQL gegen Domaenen-Tabellen — nur ueber die Facade lib/note-store.js '
-    + `(CLAUDE.md "Domänen-Facade als einziger Eintrittspunkt"):\n  ${v.join('\n  ')}`);
+test('Facade: jede Domäne (DOMAINS in _rules.js) nur über ihre Facade — kein Roh-SQL, kein DB-Modul-Import', () => {
+  const v = serverFiles().flatMap((f) => {
+    const code = stripJsComments(read(f));
+    return domainAccessViolations(f, code).map((x) => `${f}:${lineOf(code, x.index)}: ${x.match}\n    → ${domainAccessMessage(x)}`);
+  });
+  assert.deepEqual(v, [], `Domänen-Zugriff an der Facade vorbei:\n  ${v.join('\n  ')}`);
 });
 
-test('Facade: db/notes.js wird nur von der Facade importiert', () => {
-  const v = hits(serverFiles(), DOMAIN_DB_IMPORT_RE, mayUseDomainDb);
-  assert.deepEqual(v, [], `Direkter Import des Domaenen-DB-Moduls — lib/note-store.js verwenden:\n  ${v.join('\n  ')}`);
-  // Self-test: the facade itself does import it (otherwise the regex is broken).
-  assert.ok(DOMAIN_DB_IMPORT_RE.test(read(DOMAIN_FACADE)), 'Regex erkennt den Facade-Import nicht — kaputt?');
-  DOMAIN_DB_IMPORT_RE.lastIndex = 0;
+test('Facade: jede registrierte Domäne existiert, und ihre Regeln greifen (kein vacuous pass)', () => {
+  for (const d of DOMAINS) {
+    assert.ok(existsSync(join(ROOT, d.facade)), `${d.facade} fehlt — Facade umbenannt? DOMAINS in _rules.js nachziehen.`);
+    assert.ok(existsSync(join(ROOT, `${d.dbModule}.js`)), `${d.dbModule}.js fehlt — DOMAINS in _rules.js nachziehen.`);
+    // The facade itself imports its DB module; seen from a route that is a violation.
+    const facadeCode = stripJsComments(read(d.facade));
+    assert.ok(domainAccessViolations('routes/probe.js', facadeCode).some((x) => x.domain === d && x.kind === 'import'),
+      `Import-Regex für ${d.dbModule} erkennt den Facade-Import nicht — kaputt?`);
+    const sql = `db.prepare('SELECT * FROM ${d.tables[0]}')`;
+    assert.ok(domainAccessViolations('routes/probe.js', sql).some((x) => x.kind === 'sql'), `SQL-Regex für ${d.name} greift nicht`);
+    assert.deepEqual(domainAccessViolations(d.facade, sql).filter((x) => x.domain === d), [], 'die Facade darf ihre Tabellen');
+  }
+  // A facade may not touch ANOTHER domain's tables.
+  const [a, b] = DOMAINS;
+  assert.ok(domainAccessViolations(a.facade, `SELECT * FROM ${b.tables[0]}`).length, 'Facade A darf nicht an Tabellen von B');
 });
 
 test("kein datetime('now') im Code (NOW_ISO_SQL-Pflicht)", () => {

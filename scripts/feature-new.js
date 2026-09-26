@@ -1,5 +1,5 @@
 'use strict';
-// npm run feature:new -- <id> [--label-de "…"] [--label-en "…"] [--icon <sprite-id>] [--dry-run]
+// npm run feature:new -- <id> [--label-de "…"] [--label-en "…"] [--icon <sprite-id>] [--view user|admin] [--dry-run]
 //
 // Scaffolds a complete frontend feature from scripts/templates/feature/ — the
 // anatomy of DESIGN.md → "Feature-Anatomie", exactly what
@@ -47,6 +47,8 @@ function plan(root, id, opts) {
   const fill = (s) => Object.entries(vars).reduce((out, [k, v]) => out.split(k).join(v), s);
 
   const icon = opts.icon || 'file-text';
+  const view = opts.view || 'user';
+  if (!['user', 'admin'].includes(view)) throw new Error(`--view muss user oder admin sein: "${view}"`);
   if (!read('public/icons.svg').includes(`<symbol id="${icon}"`)) {
     throw new Error(`Icon "${icon}" gibt es im Sprite public/icons.svg nicht (Liste: DESIGN.md → Icon-System)`);
   }
@@ -78,7 +80,7 @@ function plan(root, id, opts) {
   };
 
   edit('public/js/app/features.js', (s) => insertBefore(s, '// @features:end',
-    `  { id: '${id}', icon: '${icon}', labelKey: 'nav.${camel(id)}', card: '${card}', partial: '${id}' },\n`,
+    `  { id: '${id}', view: '${view}', icon: '${icon}', labelKey: 'nav.${camel(id)}', card: '${card}', partial: '${id}' },\n`,
     'features.js'));
   edit('public/js/app/register-cards.js', (s) => {
     s = insertBefore(s, '// @register-cards:imports', `import { register${pascal(id)}Card } from '../cards/${id}-card.js';\n`, 'register-cards.js');
@@ -134,10 +136,10 @@ module.exports = { plan, apply, camel, pascal };
 
 if (require.main === module) {
   const argv = process.argv.slice(2);
-  const id = argv.find((a) => !a.startsWith('--') && !['--label-de', '--label-en', '--icon', '--root'].includes(argv[argv.indexOf(a) - 1]));
+  const id = argv.find((a) => !a.startsWith('--') && !['--label-de', '--label-en', '--icon', '--view', '--root'].includes(argv[argv.indexOf(a) - 1]));
   const root = path.resolve(value(argv, '--root') || path.join(__dirname, '..'));
   try {
-    const p = plan(root, id, { labelDe: value(argv, '--label-de'), labelEn: value(argv, '--label-en'), icon: value(argv, '--icon') });
+    const p = plan(root, id, { labelDe: value(argv, '--label-de'), labelEn: value(argv, '--label-en'), icon: value(argv, '--icon'), view: value(argv, '--view') });
     console.log(`Feature "${p.id}" (Karte ${p.card})`);
     for (const rel of Object.keys(p.files)) console.log(`  + ${rel}`);
     for (const rel of Object.keys(p.edits)) console.log(`  ~ ${rel}`);

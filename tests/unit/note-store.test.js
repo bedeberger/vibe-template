@@ -83,3 +83,11 @@ test('reorderNotes rejects anything but a permutation of the notebook', () => {
   assert.throws(() => noteStore.reorderNotes(99999, []), /unknown notebook/);
   assert.deepEqual(noteStore.listNotes(nb.id).map((n) => n.id), [b.id, a.id]); // untouched
 });
+
+test('updateNote refuses a blank title and reports a missing note', () => {
+  const nb = noteStore.createNotebook('Update rules');
+  const note = noteStore.createNote({ notebookId: nb.id, title: 'Keep me' });
+  assert.throws(() => noteStore.updateNote(note.id, { title: '   ' }), /note title required/);
+  assert.equal(noteStore.getNote(note.id).title, 'Keep me');
+  assert.throws(() => noteStore.updateNote(99999, { title: 'x' }), (e) => e.kind === 'not_found');
+});

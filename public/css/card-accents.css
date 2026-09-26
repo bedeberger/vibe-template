@@ -8,4 +8,5 @@
 @layer components {
   .card--nav   { --card-accent: var(--card-accent-nav); }
   .card--notes { --card-accent: var(--card-accent-notes); }
+  .card--users { --card-accent: var(--card-accent-users); }
 }

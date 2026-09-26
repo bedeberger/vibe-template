@@ -4,7 +4,7 @@
 // (scripts/feature-new.js, which must produce exactly this). Documented in
 // DESIGN.md → "Feature-Anatomie".
 //
-// For a registry entry { id: 'notes', card: 'notesCard', partial: 'notes' }:
+// For a registry entry { id: 'notes', view: 'user', card: 'notesCard', partial: 'notes' }:
 //   public/js/cards/notes-card.js        Alpine.data('notesCard') + registerNotesCard()
 //   public/js/app/register-cards.js      imports + calls registerNotesCard
 //   public/js/notes/                     domain module(s) (notes-methods.js …)
@@ -19,6 +19,9 @@
 
 const fs = require('fs');
 const path = require('path');
+
+// The two views of the app (docs/auth.md): every feature belongs to exactly one.
+const VIEWS = ['user', 'admin'];
 
 const pascal = (id) => id.replace(/(^|-)([a-z0-9])/g, (_, __, c) => c.toUpperCase());
 
@@ -47,6 +50,7 @@ function check(root, features) {
     for (const k of ['id', 'icon', 'labelKey', 'card', 'partial']) {
       if (typeof f[k] !== 'string' || !f[k]) v.push(`${where}: Feld "${k}" fehlt`);
     }
+    if (!VIEWS.includes(f.view)) v.push(`${where}: Feld "view" muss ${VIEWS.join(' | ')} sein (welche Sicht zeigt es)`);
     if (!/^[a-z][a-z0-9-]*$/.test(f.id || '')) v.push(`${where}: id muss kebab-case sein (Hash-Route, Dateistamm)`);
     if (ids.has(f.id)) v.push(`${where}: doppelte id`);
     if (cards.has(f.card)) v.push(`${where}: Karte "${f.card}" doppelt vergeben`);
@@ -82,4 +86,4 @@ function check(root, features) {
   return v;
 }
 
-module.exports = { paths, check, pascal };
+module.exports = { paths, check, pascal, VIEWS };

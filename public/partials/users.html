@@ -1,0 +1,120 @@
+<!-- Users feature partial (admin view) — loaded on first open into
+     <section data-feature="users"> (js/app/feature-host.js). The root element
+     IS the feature card (x-data="usersCard", js/cards/users-card.js); each
+     account is a userItemCard sub-component. docs/auth.md.
+     Patterns: DESIGN.md → Karte, Formulare, Badges, Icon-Button, Bestätigungsdialog. -->
+
+<div x-data="usersCard" @user-updated="replaceUser($event.detail)" @user-removed="removeUser($event.detail)">
+<div class="card card--users">
+  <div class="card-header card-header--subline">
+    <div class="card-header-titlebar">
+      <span class="card-eyebrow" x-text="t('users.eyebrow')"></span>
+      <h2 class="card-title" x-text="t('users.title')"></h2>
+    </div>
+    <div class="card-header-aside">
+      <span class="spinner" x-show="loading" aria-hidden="true"></span>
+      <span class="badge badge-neutral tabular-nums" x-text="users.length"></span>
+    </div>
+  </div>
+
+  <div class="card-section">
+    <h3 class="card-section-title" x-text="t('users.newTitle')"></h3>
+    <div class="card-form-grid">
+      <div class="card-form-row">
+        <label class="card-form-label" for="new-user-email" x-text="t('users.email')"></label>
+        <input id="new-user-email" type="email" autocomplete="off" x-model="draftEmail">
+      </div>
+      <div class="card-form-row">
+        <label class="card-form-label" for="new-user-name" x-text="t('users.name')"></label>
+        <input id="new-user-name" type="text" autocomplete="off" x-model="draftName">
+      </div>
+      <div class="card-form-row">
+        <label class="card-form-label" for="new-user-password" x-text="t('users.initialPassword')"></label>
+        <div class="card-form-field">
+          <div class="row">
+            <input id="new-user-password" :type="showDraftPassword ? 'text' : 'password'" autocomplete="new-password"
+                   x-model="draftPassword" aria-describedby="new-user-password-note">
+            <button type="button" @click="fillPassword()" x-text="t('users.generate')"></button>
+          </div>
+          <p class="card-form-field-note" id="new-user-password-note" x-text="t('users.initialPasswordNote', { min: 12 })"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card-section row users-create-actions">
+    <button type="button" class="primary" @click="createUser()" :disabled="busy || !draftEmail || !draftPassword">
+      <svg class="icon" aria-hidden="true"><use href="/icons.svg#plus"/></svg>
+      <span x-text="t('users.add')"></span>
+    </button>
+  </div>
+  <p class="card-form-error" x-show="createError" x-text="createError" role="alert"></p>
+  <p class="card-form-saved" x-show="createdEmail" x-text="t('users.created', { email: createdEmail })" role="status"></p>
+  <p class="card-status card-status--error" x-show="loadError" x-text="loadError"></p>
+</div>
+
+<template x-for="u in users" :key="u.email">
+  <article class="card card--users user-card" x-data="userItemCard(u)">
+    <div class="card-header card-header--subline">
+      <div class="card-header-titlebar">
+        <h3 class="card-title" x-text="user.display_name || user.email"></h3>
+        <div class="card-subline">
+          <span class="user-email" x-text="user.email"></span>
+          <span class="badge badge-neutral" x-show="user.env_managed" x-text="t('users.badgeEnv')"></span>
+          <span class="badge badge-ok" x-show="!user.env_managed && !isDisabled" x-text="t('users.badgeActive')"></span>
+          <span class="badge badge-err" x-show="isDisabled" x-text="t('users.badgeDisabled')"></span>
+          <span class="badge badge-warn" x-show="user.must_change" x-text="t('users.badgeMustChange')"></span>
+          <span class="spinner" x-show="busy" aria-hidden="true"></span>
+        </div>
+      </div>
+      <template x-if="!user.env_managed">
+        <div class="card-actions">
+          <button type="button" class="icon-btn icon-btn--ghost" @click="openPassword()" :disabled="busy"
+                  :aria-label="t('users.setPassword')" :data-tip="t('users.setPassword')">
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#rotate-ccw"/></svg>
+          </button>
+          <button type="button" class="icon-btn icon-btn--ghost" @click="toggleStatus()" :disabled="busy"
+                  :aria-label="isDisabled ? t('users.enable') : t('users.disable')"
+                  :data-tip="isDisabled ? t('users.enable') : t('users.disable')">
+            <svg class="icon" aria-hidden="true"><use :href="isDisabled ? '/icons.svg#lock-open' : '/icons.svg#lock'"/></svg>
+          </button>
+          <span class="action-sep" aria-hidden="true"></span>
+          <button type="button" class="icon-btn icon-btn--ghost icon-btn--danger tip--end" @click="$refs.deleteDlg.showModal()" :disabled="busy"
+                  :aria-label="t('users.delete')" :data-tip="t('users.delete')">
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#trash"/></svg>
+          </button>
+        </div>
+      </template>
+    </div>
+    <p class="card-hint" x-show="user.env_managed" x-text="t('users.envHint')"></p>
+    <p class="card-hint">
+      <span x-text="t('users.lastSeen')"></span>: <span x-text="user.last_seen_at ? fmt(user.last_seen_at) : t('users.never')"></span>
+    </p>
+    <p class="card-form-error" x-show="error" x-text="error" role="alert"></p>
+
+    <dialog class="confirm-dialog" x-ref="pwDlg">
+      <div class="confirm-dialog-title" x-text="t('users.setPassword')"></div>
+      <div class="confirm-dialog-message" x-text="t('users.setPasswordMsg', { email: user.email })"></div>
+      <input class="confirm-dialog-input" type="text" autocomplete="off" x-model="pwDraft" :readonly="pwSaved"
+             :aria-label="t('users.initialPassword')">
+      <p class="card-form-error" x-show="pwError" x-text="pwError" role="alert"></p>
+      <p class="card-form-saved" x-show="pwSaved" x-text="t('users.passwordSaved')" role="status"></p>
+      <div class="confirm-dialog-actions">
+        <button type="button" class="confirm-dialog-btn" @click="$refs.pwDlg.close()"
+                x-text="pwSaved ? t('users.close') : t('users.cancel')"></button>
+        <button type="button" class="confirm-dialog-btn confirm-dialog-btn--primary" x-show="!pwSaved"
+                @click="savePassword()" :disabled="busy" x-text="t('users.save')"></button>
+      </div>
+    </dialog>
+
+    <dialog class="confirm-dialog" x-ref="deleteDlg">
+      <div class="confirm-dialog-title" x-text="t('users.deleteTitle')"></div>
+      <div class="confirm-dialog-message" x-text="t('users.deleteMsg', { email: user.email })"></div>
+      <div class="confirm-dialog-actions">
+        <button type="button" class="confirm-dialog-btn" @click="$refs.deleteDlg.close()" x-text="t('users.cancel')"></button>
+        <button type="button" class="confirm-dialog-btn confirm-dialog-btn--danger" @click="remove()" :disabled="busy"
+                x-text="t('users.delete')"></button>
+      </div>
+    </dialog>
+  </article>
+</template>
+</div>

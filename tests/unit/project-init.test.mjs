@@ -45,17 +45,26 @@ test('rename leaves no occurrence of the old slug and sets the title everywhere'
   for (const l of ['de', 'en']) assert.equal(JSON.parse(read(tmp, `public/js/i18n/${l}.json`)).app.title, 'Invoice Hub');
   assert.match(read(tmp, 'public/index.html'), /<title>Invoice Hub<\/title>/);
   assert.match(read(tmp, 'public/login.html'), /<title>[^<]*Invoice Hub<\/title>/);
-  assert.match(read(tmp, 'public/login.html'), /<span>Invoice Hub<\/span>/);
   assert.equal(JSON.parse(read(tmp, 'public/manifest.webmanifest')).name, 'Invoice Hub');
   assert.match(read(tmp, 'scripts/prepare-lxc.sh'), /APP_NAME="\$\{APP_NAME:-invoice-hub\}"/);
   assert.match(read(tmp, '.github/workflows/deploy.yml'), /vars\.APP_NAME \|\| 'invoice-hub'/);
   assert.ok(!fs.existsSync(path.join(tmp, 'app.db')), 'lokale DB nicht entfernt');
   assert.doesNotMatch(read(tmp, 'CHANGELOG.md'), /^## \[\d/m);
 
-  // Generic: a renamed project renames again (name read from the tree).
-  init.apply(tmp, init.plan(tmp, 'billing', {}));
+  // Generic: a renamed project renames again (name read from the tree) —
+  // but keeps its own releases, version and data (no second fresh start).
+  const pkg = JSON.parse(read(tmp, 'package.json'));
+  fs.writeFileSync(path.join(tmp, 'package.json'), `${JSON.stringify({ ...pkg, version: '1.2.0' }, null, 2)}\n`);
+  fs.appendFileSync(path.join(tmp, 'CHANGELOG.md'), '\n## [1.2.0] - 2026-01-01\n- own release\n');
+  fs.writeFileSync(path.join(tmp, 'app.db'), 'real data');
+  const again = init.plan(tmp, 'billing', {});
+  assert.equal(again.fresh, false);
+  init.apply(tmp, again);
   assert.deepEqual(hits(tmp, 'invoice-hub'), []);
   assert.equal(JSON.parse(read(tmp, 'public/js/i18n/de.json')).app.title, 'billing');
+  assert.equal(JSON.parse(read(tmp, 'package.json')).version, '1.2.0');
+  assert.match(read(tmp, 'CHANGELOG.md'), /## \[1\.2\.0\]/);
+  assert.ok(fs.existsSync(path.join(tmp, 'app.db')), 'zweiter Lauf hat die Projekt-DB gelöscht');
 });
 
 test('rename matches whole names only and refuses bad slugs', () => {

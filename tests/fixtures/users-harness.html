@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>users harness</title>
+  <!-- Same stylesheets in the same order as public/index.html (cascade order
+       must match or layout assertions lie). Gated: tests/unit/harness-css-parity.test.mjs -->
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/card-accents.css">
+  <link rel="stylesheet" href="/css/layout/base.css">
+  <link rel="stylesheet" href="/css/layout/layout-base.css">
+  <link rel="stylesheet" href="/css/layout/twocolumn.css">
+  <link rel="stylesheet" href="/css/layout/app-nav.css">
+  <link rel="stylesheet" href="/css/layout/utilities.css">
+  <link rel="stylesheet" href="/css/components/icons.css">
+  <link rel="stylesheet" href="/css/components/card-form/card-shell.css">
+  <link rel="stylesheet" href="/css/components/card-form/card-blocks.css">
+  <link rel="stylesheet" href="/css/components/card-form/form-elements.css">
+  <link rel="stylesheet" href="/css/components/card-form/card-actions.css">
+  <link rel="stylesheet" href="/css/components/buttons-badges.css">
+  <link rel="stylesheet" href="/css/components/icon-btn.css">
+  <link rel="stylesheet" href="/css/components/btn-close.css">
+  <link rel="stylesheet" href="/css/components/status-msg.css">
+  <link rel="stylesheet" href="/css/components/skeleton.css">
+  <link rel="stylesheet" href="/css/components/tabs.css">
+  <link rel="stylesheet" href="/css/components/toggle-switch.css">
+  <link rel="stylesheet" href="/css/components/combobox.css">
+  <link rel="stylesheet" href="/css/components/popover.css">
+  <link rel="stylesheet" href="/css/components/collapsible.css">
+  <link rel="stylesheet" href="/css/components/sortable-list.css">
+  <link rel="stylesheet" href="/css/components/tooltip.css">
+  <link rel="stylesheet" href="/css/components/confirm-dialog.css">
+  <link rel="stylesheet" href="/css/components/danger-zone.css">
+  <link rel="stylesheet" href="/css/components/job-toast.css">
+  <link rel="stylesheet" href="/css/entities/notes.css">
+  <link rel="stylesheet" href="/css/entities/users.css">
+  <link rel="stylesheet" href="/css/entities/logs.css">
+  <link rel="stylesheet" href="/css/entities/settings.css">
+</head>
+<body>
+  <!-- Fixture harness for the users feature: the REAL card + partial, mounted by
+       tests/fixtures/_harness.js against the mock API of tests/server.js. -->
+  <main class="layout-main" x-data="harnessRoot">
+    <section data-feature="users"></section>
+  </main>
+  <script type="module">
+    import { mountFeature } from '/tests/fixtures/_harness.js';
+    mountFeature('users');
+  </script>
+</body>
+</html>

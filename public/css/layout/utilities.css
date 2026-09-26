@@ -51,6 +51,8 @@
   .row > input { flex: 1 0 100%; }
   .row > button { flex: 1; }
 }
+/* An icon-only button keeps its square in a row, stacked or not. */
+.row > .icon-btn { flex: 0 0 auto; }
 
 /* Wide tables scroll horizontally instead of overflowing the card:
    <div class="table-scroll"><table>…</table></div> */

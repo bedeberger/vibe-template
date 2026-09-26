@@ -2,7 +2,8 @@
      <section data-feature="notes"> (js/app/feature-host.js). The root element
      IS the feature card (x-data="notesCard", js/cards/notes-card.js); each list
      item is a noteItemCard sub-component. Anatomy: DESIGN.md → Feature-Anatomie.
-     Patterns: DESIGN.md → Karte, Karten-Innenraum, Formulare, Icon-Button. -->
+     Patterns: DESIGN.md → Karte, Karten-Innenraum, Formulare, Icon-Button,
+     Popover, Klappbare Sektion, Sortierbare Liste. -->
 
 <div x-data="notesCard" @note-removed="removeNote($event.detail)">
 <div class="card card--notes">
@@ -18,10 +19,30 @@
   <div class="card-form-grid">
     <div class="card-form-row">
       <label class="card-form-label" id="notebook-label" x-text="t('notebook.label')"></label>
-      <div id="notebook-select" aria-labelledby="notebook-label"
-           x-data="combobox()" x-modelable="value" x-model="currentNotebookId"
-           x-effect="options = notebooks.map((nb) => ({ value: nb.id, label: nb.name }))"
-           @combobox-change="selectNotebook($event.detail)"></div>
+      <div class="row">
+        <div id="notebook-select" aria-labelledby="notebook-label"
+             x-data="combobox()" x-modelable="value" x-model="currentNotebookId"
+             x-effect="options = notebooks.map((nb) => ({ value: nb.id, label: nb.name }))"
+             @combobox-change="selectNotebook($event.detail)"></div>
+        <button type="button" class="icon-btn tip--end" x-ref="notebookAddBtn" @click="openNotebookForm()"
+                :aria-expanded="notebookFormOpen" :aria-label="t('notebook.add')" :data-tip="t('notebook.add')">
+          <svg class="icon" aria-hidden="true"><use href="/icons.svg#folder-plus"/></svg>
+        </button>
+      </div>
+      <!-- Popover (DESIGN.md → Popover): x-anchor pins it to the button, x-trap
+           keeps Tab inside and returns focus to the button on close. -->
+      <div class="popover" x-show="notebookFormOpen" x-cloak role="dialog" :aria-label="t('notebook.add')"
+           x-anchor.bottom-end.offset.4="$refs.notebookAddBtn" x-trap="notebookFormOpen"
+           @keydown.escape.stop="notebookFormOpen = false" @click.outside="notebookFormOpen = false">
+        <form class="row" @submit.prevent="createNotebook()">
+          <input type="text" x-model="newNotebookName" :placeholder="t('notebook.namePlaceholder')"
+                 :aria-label="t('notebook.namePlaceholder')">
+          <button type="submit" class="primary" :disabled="!newNotebookName.trim()">
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#check"/></svg>
+            <span x-text="t('notebook.create')"></span>
+          </button>
+        </form>
+      </div>
     </div>
     <div class="card-form-row">
       <label class="card-form-label" for="new-note-title" x-text="t('notes.newLabel')"></label>
@@ -39,8 +60,26 @@
   <div class="card-empty" x-show="!notes.length">
     <p class="card-empty-text" x-text="t('notes.empty')"></p>
   </div>
+  <p class="card-status card-status--error" x-show="reorderError" x-text="reorderError"></p>
+
+  <!-- Collapsible section (DESIGN.md → Klappbare Sektion); Chart.js loads on first open. -->
+  <div class="card-section">
+    <button type="button" class="collapsible-toggle" @click="overviewOpen = !overviewOpen"
+            :aria-expanded="overviewOpen" aria-controls="notes-overview">
+      <svg class="icon collapsible-chevron" :class="{ 'is-open': overviewOpen }" aria-hidden="true"><use href="/icons.svg#chevron-right"/></svg>
+      <span x-text="t('notes.overview')"></span>
+    </button>
+    <div id="notes-overview" x-show="overviewOpen" x-collapse x-cloak>
+      <div class="notes-chart">
+        <canvas x-ref="notesChart" role="img" :aria-label="t('notes.chartLabel')"></canvas>
+      </div>
+    </div>
+  </div>
 </div>
 
+<!-- Sortable list (DESIGN.md → Sortierbare Liste): the x-for items are the
+     draggables, dragged by .note-drag-handle only. -->
+<div class="note-list" x-ref="noteList">
 <template x-for="note in notes" :key="note.id">
   <article class="card card--notes note-card" x-data="noteItemCard(note)">
     <template x-if="!editing">
@@ -56,6 +95,10 @@
             </div>
           </div>
           <div class="card-actions">
+            <button type="button" class="icon-btn icon-btn--ghost note-drag-handle" x-show="notes.length > 1"
+                    :aria-label="t('notes.reorder')" :data-tip="t('notes.reorder')">
+              <svg class="icon" aria-hidden="true"><use href="/icons.svg#grip-vertical"/></svg>
+            </button>
             <button type="button" class="icon-btn icon-btn--ghost" @click="startEdit()" :disabled="busy"
                     :aria-label="t('notes.edit')" :data-tip="t('notes.edit')">
               <svg class="icon" aria-hidden="true"><use href="/icons.svg#pencil"/></svg>
@@ -72,7 +115,11 @@
           </div>
         </div>
         <!-- x-html sink: bodyHtml is escaped in note-card.js (escape invariant). -->
-        <div class="note-body" x-html="bodyHtml"></div>
+        <!-- Clamped until expanded; x-resize measures whether it clips (DESIGN.md → Alpine-Plugins). -->
+        <div class="note-body" :class="{ 'note-body--clamped': !bodyExpanded }" x-html="bodyHtml"
+             x-resize="measureBody($el)"></div>
+        <button type="button" class="btn-compact note-body-toggle" x-show="bodyOverflows" @click="bodyExpanded = !bodyExpanded"
+                :aria-expanded="bodyExpanded" x-text="bodyExpanded ? t('notes.showLess') : t('notes.showMore')"></button>
         <p class="note-stats" x-show="stats">
           <span class="badge badge-ok tabular-nums" x-text="stats ? t('notes.stats', stats) : ''"></span>
         </p>
@@ -98,4 +145,5 @@
     </template>
   </article>
 </template>
+</div>
 </div>

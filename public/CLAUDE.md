@@ -11,6 +11,11 @@ Gilt zusätzlich zur Root-[CLAUDE.md](../CLAUDE.md); CSS-Regeln in
   **Warum:** der Deploy liefert genau die geprüften Bytes aus, die App
   funktioniert in einem geschlossenen Netz, und kein Dritter sieht unsere
   Nutzer. Gegated: `tests/unit/vendor-integrity.test.mjs`.
+- **Vendor-Libs laden je nach Grösse:** Alpine + Plugins beim Boot
+  ([js/app/alpine-plugins.js](js/app/alpine-plugins.js), App **und** Harness),
+  Chart.js/SortableJS erst bei Bedarf über [js/lazy-libs.js](js/lazy-libs.js)
+  — nie als `<script>` in index.html. Eine Lib-Instanz kommt nie in den
+  Alpine-State. Inventar + Regeln: DESIGN.md → "Vendor-Libs", "Alpine-Plugins".
 - **Features haben eine feste Anatomie** (DESIGN.md → "Feature-Anatomie",
   gegated durch `feature-registry.test`) und werden **generiert**:
   `npm run feature:new -- <id>`. Registry-Eintrag in

@@ -7,14 +7,20 @@
   },
   "nav": {
     "notes": "Notizen",
-    "label": "Hauptnavigation"
+    "label": "Hauptnavigation",
+    "users": "Benutzer",
+    "logs": "Logs",
+    "settings": "Einstellungen"
   },
   "session": {
     "expired": "Sitzung abgelaufen. Bitte neu anmelden — deine Eingaben bleiben erhalten.",
     "relogin": "Neu anmelden"
   },
   "notebook": {
-    "label": "Notizbuch"
+    "label": "Notizbuch",
+    "add": "Neues Notizbuch",
+    "namePlaceholder": "Name des Notizbuchs …",
+    "create": "Anlegen"
   },
   "notes": {
     "newPlaceholder": "Titel der neuen Notiz …",
@@ -29,7 +35,14 @@
     "updated": "Geändert",
     "titlePlaceholder": "Titel",
     "bodyPlaceholder": "Text …",
-    "newLabel": "Neue Notiz"
+    "newLabel": "Neue Notiz",
+    "reorder": "Verschieben (ziehen)",
+    "showMore": "Mehr anzeigen",
+    "showLess": "Weniger anzeigen",
+    "overview": "Übersicht",
+    "chartLabel": "Notizen pro Notizbuch",
+    "chartSeries": "Notizen",
+    "reorderFailed": "Reihenfolge konnte nicht gespeichert werden."
   },
   "combobox": {
     "choose": "Auswählen …",
@@ -39,5 +52,146 @@
   },
   "a11y": {
     "skipToMain": "Zum Inhalt springen"
+  },
+  "users": {
+    "title": "Benutzer",
+    "eyebrow": "Admin-Konsole",
+    "newTitle": "Neuer Benutzer",
+    "email": "E-Mail",
+    "name": "Name",
+    "initialPassword": "Initialpasswort",
+    "generate": "Generieren",
+    "initialPasswordNote": "Mindestens {min} Zeichen. Bei der ersten Anmeldung muss der Benutzer es durch ein eigenes ersetzen.",
+    "add": "Anlegen",
+    "created": "{email} angelegt — gib das Initialpasswort sicher weiter.",
+    "badgeEnv": "Admin (.env)",
+    "badgeActive": "Aktiv",
+    "badgeDisabled": "Gesperrt",
+    "badgeMustChange": "Initialpasswort",
+    "envHint": "Dieses Konto wird über die .env verwaltet (ADMIN_EMAIL + ADMIN_PASSWORD, lokal LOCAL_DEV_MODE) und lässt sich hier nicht ändern.",
+    "lastSeen": "Zuletzt angemeldet",
+    "never": "nie",
+    "setPassword": "Initialpasswort neu setzen",
+    "setPasswordMsg": "Neues Initialpasswort für {email}. Die nächste Anmeldung verlangt ein eigenes Passwort.",
+    "passwordSaved": "Gespeichert — gib das Passwort sicher weiter.",
+    "enable": "Entsperren",
+    "disable": "Sperren",
+    "delete": "Löschen",
+    "deleteTitle": "Benutzer löschen?",
+    "deleteMsg": "{email} wird endgültig gelöscht. Eine offene Sitzung endet sofort.",
+    "cancel": "Abbrechen",
+    "close": "Schliessen",
+    "save": "Speichern",
+    "err": {
+      "email": "Bitte eine gültige E-Mail-Adresse angeben.",
+      "exists": "Diese E-Mail gibt es schon.",
+      "envManaged": "Diese Adresse gehört zum .env-Admin.",
+      "passwordRequired": "Bitte ein Passwort angeben.",
+      "tooShort": "Das Passwort braucht mindestens {min} Zeichen.",
+      "tooLong": "Das Passwort ist zu lang.",
+      "notFound": "Diesen Benutzer gibt es nicht mehr.",
+      "generic": "Das hat nicht geklappt. Bitte erneut versuchen."
+    }
+  },
+  "logs": {
+    "title": "Logs",
+    "empty": "Die Log-Datei ist leer.",
+    "eyebrow": "Administration",
+    "live": "Live",
+    "refresh": "Neu laden",
+    "filterLevel": "Level",
+    "allLevels": "Alle Level",
+    "filterScope": "Bereich",
+    "allScopes": "Alle Bereiche",
+    "filterUser": "Benutzer",
+    "filterUserPh": "E-Mail",
+    "filterEntity": "Objekt",
+    "filterEntityPh": "z. B. GET /api/notes",
+    "filterSearch": "Suche",
+    "filterSearchPh": "Text in Meldung oder Stacktrace",
+    "apply": "Filtern",
+    "clear": "Filter zurücksetzen",
+    "livePaused": "Live-Tail pausiert, solange ein Filter aktiv ist.",
+    "rotated": "Die Log-Datei wurde rotiert — ältere Einträge stehen jetzt in der nächsten Datei.",
+    "streamError": "Live-Verbindung unterbrochen — verbinde neu …",
+    "loadError": "Logs konnten nicht geladen werden: {error}",
+    "noMatches": "Keine Einträge für diesen Filter.",
+    "toggleStack": "Stacktrace ein-/ausblenden",
+    "loadMore": "Ältere laden",
+    "downloadFile": "{name} herunterladen"
+  },
+  "view": {
+    "user": "App",
+    "admin": "Admin"
+  },
+  "login": {
+    "title": "Anmelden",
+    "adminTitle": "Admin-Anmeldung",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "submit": "Anmelden",
+    "dev": "Weiter als Dev-User",
+    "oidc": "Mit Single Sign-on anmelden",
+    "changeTitle": "Eigenes Passwort setzen",
+    "changeHint": "Du hast dich mit einem Initialpasswort angemeldet. Wähle ein eigenes mit mindestens {min} Zeichen.",
+    "newPassword": "Neues Passwort",
+    "repeatPassword": "Neues Passwort wiederholen",
+    "changeSubmit": "Passwort speichern",
+    "err": {
+      "invalid": "E-Mail oder Passwort stimmt nicht.",
+      "disabled": "Dieses Konto ist gesperrt.",
+      "rateLimited": "Zu viele Versuche. Bitte später erneut versuchen.",
+      "tooShort": "Das Passwort braucht mindestens {min} Zeichen.",
+      "tooLong": "Das Passwort ist zu lang.",
+      "unchanged": "Das neue Passwort muss sich vom Initialpasswort unterscheiden.",
+      "mismatch": "Die beiden Passwörter stimmen nicht überein.",
+      "generic": "Anmeldung fehlgeschlagen. Bitte erneut versuchen."
+    }
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "intro": "Laufzeit-Konfiguration der App. Änderungen gelten sofort, ohne Neustart. Secrets und Serverstart-Werte bleiben in der .env.",
+    "tab": {
+      "general": "Allgemein",
+      "auth": "Anmeldung",
+      "jobs": "Jobs"
+    },
+    "field": {
+      "timezone": "Zeitzone",
+      "authMethod": "Login-Methode",
+      "oidcIssuer": "OIDC-Issuer",
+      "oidcClientId": "Client-ID",
+      "oidcRedirectUri": "Redirect-URI",
+      "oidcClientSecret": "Client-Secret",
+      "retentionDays": "Aufbewahrung (Tage)"
+    },
+    "help": {
+      "timezone": "Steuert die Datumsanzeige und die Zeitpläne der Jobs.",
+      "authMethod": "Wie sich Benutzer anmelden. Der Admin aus der .env meldet sich immer mit seinem Passwort an, auch wenn OIDC ausfällt.",
+      "oidcRedirectUri": "Die öffentliche Adresse, z. B. https://app.example.com/auth/callback — beim Anbieter identisch eintragen.",
+      "oidcClientSecret": "Steht als OIDC_CLIENT_SECRET in der .env und wird hier nie angezeigt.",
+      "retentionDays": "Erledigte und fehlgeschlagene Jobs werden nachts nach dieser Frist gelöscht."
+    },
+    "placeholder": {
+      "oidcIssuer": "https://accounts.google.com",
+      "oidcRedirectUri": "https://app.example.com/auth/callback"
+    },
+    "method": {
+      "local": "Lokale Konten",
+      "oidc": "Single Sign-on (OIDC)"
+    },
+    "secretSet": "In .env gesetzt",
+    "secretMissing": "Fehlt in .env",
+    "save": "Speichern",
+    "discard": "Verwerfen",
+    "saved": "Gespeichert.",
+    "err": {
+      "range": "Der Wert liegt ausserhalb des erlaubten Bereichs.",
+      "value": "Dieser Wert ist nicht erlaubt.",
+      "timezone": "Diese Zeitzone ist unbekannt.",
+      "url": "Bitte eine gültige http(s)-Adresse angeben.",
+      "oidcRequired": "Für OIDC braucht es Issuer, Client-ID und Redirect-URI.",
+      "generic": "Das hat nicht geklappt. Bitte erneut versuchen."
+    }
   }
 }

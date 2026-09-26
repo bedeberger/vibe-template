@@ -98,6 +98,10 @@
   --card-accent-notes-base: #b8862a;
   --card-accent-notes: light-dark(var(--card-accent-notes-base),
     oklch(from var(--card-accent-notes-base) max(var(--accent-dark-floor), calc(l + var(--accent-dark-lift))) calc(c * var(--accent-dark-chroma)) h));
+
+  --card-accent-users-base: #6a4f8f;
+  --card-accent-users: light-dark(var(--card-accent-users-base),
+    oklch(from var(--card-accent-users-base) max(var(--accent-dark-floor), calc(l + var(--accent-dark-lift))) calc(c * var(--accent-dark-chroma)) h));
 }
 
 :root[data-theme="light"] { color-scheme: light; }

@@ -1,0 +1,11 @@
+/* Users feature (public/partials/users.html, admin view). Declares ONLY the
+ * deviations from the shared card vocabulary (DESIGN.md → Karten-Innenraum,
+ * Besitzer-Regel in public/css/CLAUDE.md). */
+
+@layer components {
+/* Create button right-aligned under the form, like the note edit actions. */
+.users-create-actions { justify-content: flex-end; }
+
+/* Long addresses must wrap on a phone instead of widening the card. */
+.user-card .user-email { overflow-wrap: anywhere; }
+}

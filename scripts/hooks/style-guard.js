@@ -7,7 +7,7 @@
 //   • same in browser JS (template strings, el.style.x = …)                   → WARN
 //   • native <select> in public/**/*.html                                      → WARN (combobox)
 //   • datetime('now') in server/browser JS                                     → WARN (${NOW_ISO_SQL})
-//   • raw SQL on notes/notebooks outside db/ + lib/note-store.js              → WARN (domain facade)
+//   • raw SQL on a domain's tables outside db/ + its facade (_rules DOMAINS) → WARN (domain facade)
 //   • import of db/notes.js outside the facade                                 → WARN
 //   • toLocale(Date|Time)String / Intl.DateTimeFormat without tzOpts() in public/js → WARN
 // Only the NEWLY written text is checked (Write.content / Edit.new_string /
@@ -21,8 +21,8 @@
 // the rules themselves live in _rules.js, shared with those tests.
 
 const {
-  markupStyleViolations, jsStyleViolations, DATETIME_NOW_RE, RAW_DOMAIN_SQL_RE,
-  DOMAIN_DB_IMPORT_RE, mayUseDomainDb, stripJsComments,
+  markupStyleViolations, jsStyleViolations, DATETIME_NOW_RE,
+  domainAccessViolations, domainAccessMessage, stripJsComments,
 } = require('./_rules.js');
 const { isBash, touchedPaths, relOf, writtenText, onPayload } = require('./_touched.js');
 
@@ -75,15 +75,7 @@ function analyse(rel, text) {
       warns.push("datetime('now') gefunden: liefert kein ISO+Z → ${NOW_ISO_SQL} aus db/now.js interpolieren "
         + '(auch in Vergleichen) — sonst wird architecture-tripwire.test rot.');
     }
-    if (isServer && !mayUseDomainDb(rel)) {
-      if (test(RAW_DOMAIN_SQL_RE, code)) {
-        warns.push('Roh-SQL gegen notes/notebooks ausserhalb db/ + lib/note-store.js: Domaenen-Zugriff nur ueber die '
-          + 'Facade (CLAUDE.md "Domänen-Facade als einziger Eintrittspunkt") — sonst wird architecture-tripwire.test rot.');
-      }
-      if (test(DOMAIN_DB_IMPORT_RE, code)) {
-        warns.push('Direkter Import von db/notes.js: Routen/Jobs importieren nur die Facade lib/note-store.js.');
-      }
-    }
+    if (isServer) warns.push(...domainAccessViolations(rel, code).map(domainAccessMessage));
   }
 
   return { blocks, warns };

@@ -14,6 +14,8 @@ const users = require('../lib/user-store');
 const rateLimit = require('../lib/login-ratelimit');
 const { sessionUser, sessionView, establishSession, verifyPasswordLogin } = require('../lib/auth');
 const { setContext } = require('../lib/log-context');
+const { isDomainError } = require('../lib/errors');
+const { sendDomainError } = require('./_http');
 const logger = require('../logger');
 
 const router = express.Router();
@@ -88,8 +90,10 @@ router.post('/auth/password', express.json({ limit: '8kb' }), async (req, res, n
       result = await users.changePassword(e, password, newPassword);
     } catch (err) {
       // Policy error (too short, unchanged …): the current password was right.
+      // Anything else is unexpected → the central 500 handler (server.js).
+      if (!isDomainError(err)) throw err;
       rateLimit.recordSuccess(req.ip);
-      return res.status(400).json({ error: err.message });
+      return sendDomainError(res, err);
     }
     if (!result.ok) return fail(req, res, e, 'Passwortwechsel');
     rateLimit.recordSuccess(req.ip);
@@ -113,24 +117,29 @@ router.get('/auth/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/login'));
 });
 
-// ── OIDC (AUTH_METHOD=oidc, provider-agnostic, lazy) ───────────────────────
-let _clientPromise = null;
+// ── OIDC (auth.method=oidc, provider-agnostic, lazy) ───────────────────────
+// The client is cached per configuration: a change in the admin console
+// (issuer, client id, redirect URI) builds a fresh one at the next login.
+let _client = { key: null, promise: null };
 async function getOidcClient() {
-  if (env.authMethod() !== 'oidc') throw new Error('OIDC not active (AUTH_METHOD)');
-  if (!process.env.OIDC_ISSUER) throw new Error('OIDC not configured');
-  if (!_clientPromise) {
-    _clientPromise = (async () => {
+  if (env.authMethod() !== 'oidc') throw new Error('OIDC not active (auth.method)');
+  const cfg = env.oidcConfig();
+  if (!cfg.issuer) throw new Error('OIDC not configured');
+  const key = JSON.stringify(cfg);
+  if (_client.key !== key) {
+    const promise = (async () => {
       const { Issuer } = require('openid-client');
-      const issuer = await Issuer.discover(process.env.OIDC_ISSUER);
+      const issuer = await Issuer.discover(cfg.issuer);
       return new issuer.Client({
-        client_id: process.env.OIDC_CLIENT_ID,
-        client_secret: process.env.OIDC_CLIENT_SECRET,
-        redirect_uris: [process.env.OIDC_REDIRECT_URI],
+        client_id: cfg.clientId,
+        client_secret: cfg.clientSecret,
+        redirect_uris: [cfg.redirectUri],
         response_types: ['code'],
       });
-    })().catch((e) => { _clientPromise = null; throw e; });
+    })().catch((e) => { if (_client.promise === promise) _client = { key: null, promise: null }; throw e; });
+    _client = { key, promise };
   }
-  return _clientPromise;
+  return _client.promise;
 }
 
 router.get('/auth/login', async (req, res) => {
@@ -139,7 +148,7 @@ router.get('/auth/login', async (req, res) => {
     res.redirect(client.authorizationUrl({ scope: 'openid email profile' }));
   } catch (e) {
     logger.warn(`OIDC login: ${e.message}`);
-    res.status(501).send('OIDC not configured. Set AUTH_METHOD=oidc + OIDC_* env.');
+    res.status(501).send('OIDC not configured. Admin console → Settings → Sign-in.');
   }
 });
 
@@ -147,7 +156,7 @@ router.get('/auth/callback', async (req, res) => {
   try {
     const client = await getOidcClient();
     const params = client.callbackParams(req);
-    const tokenSet = await client.callback(process.env.OIDC_REDIRECT_URI, params);
+    const tokenSet = await client.callback(env.oidcConfig().redirectUri, params);
     const claims = tokenSet.claims();
     const email = env.norm(claims.email);
     if (!email) throw new Error('no email claim');

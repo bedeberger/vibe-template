@@ -1,0 +1,19 @@
+/* Collapsible section — a toggle button over a panel animated by x-collapse.
+ * DESIGN.md → "Klappbare Sektion". x-collapse animates height only: vertical
+ * padding belongs to the panel's CHILD, never to the panel itself. */
+
+@layer components {
+.collapsible-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) 0;
+  border: 0;
+  background: none;
+  color: var(--color-muted);
+  font-weight: var(--fw-medium);
+}
+.collapsible-toggle:hover { background: none; color: var(--color-text); }
+.collapsible-chevron { transition: transform var(--transition-base); }
+.collapsible-chevron.is-open { transform: rotate(90deg); }
+}

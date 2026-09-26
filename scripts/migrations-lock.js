@@ -15,8 +15,14 @@
 // the migration name. Re-indenting a frozen migration therefore raises NO false
 // alarm; real logic or name changes do.
 //
-//   node scripts/migrations-lock.js            # verify (exit != 0 on drift)
-//   node scripts/migrations-lock.js --write    # freeze the current chain
+//   node scripts/migrations-lock.js                    # verify (exit != 0 on drift)
+//   node scripts/migrations-lock.js --write            # freeze NEW migrations (append)
+//   node scripts/migrations-lock.js --write --force    # also re-freeze changed ones
+//
+// --write refuses when a frozen entry would change: running it just to turn the
+// test green would silently bless an edited, possibly deployed migration.
+// --force is for exactly one case — the migration was never deployed (still
+// unpushed); migration:renumber passes it after moving your own files.
 //
 // After adding a migration run `npm run migrations:lock` and commit the updated
 // db/migrations.lock.json in the same commit. The diff must show ONLY new
@@ -78,7 +84,8 @@ function verify(lock = readLock(), current = computeEntries()) {
     } else if (cur.fingerprint !== frozen.fingerprint) {
       violations.push(
         `Eingefrorene Migration ${frozen.version} wurde nachträglich geändert (eingefroren: „${frozen.name}", jetzt: „${cur.name}") — forward-only verletzt. `
-          + 'Wurde sie noch NIE deployt: „npm run migrations:lock" laufen lassen und den Lock-Diff bewusst prüfen.'
+          + 'Wurde sie noch NIE deployt (nicht gepusht): „npm run migrations:lock -- --force" und den Lock-Diff bewusst prüfen. '
+          + 'Sonst: Änderung zurücknehmen und als NEUE Migration schreiben.'
       );
     }
   }
@@ -101,6 +108,12 @@ module.exports = { LOCK_PATH, fingerprint, computeEntries, readLock, writeLock, 
 
 if (require.main === module) {
   if (process.argv.includes('--write')) {
+    const violations = verify();
+    if (violations.length && !process.argv.includes('--force')) {
+      console.error('Lock NICHT geschrieben — eingefrorene Einträge würden sich ändern:\n'
+        + violations.map((v) => ` - ${v}`).join('\n'));
+      process.exit(1);
+    }
     writeLock(computeEntries());
     console.log(`Lock aktualisiert: ${path.relative(process.cwd(), LOCK_PATH)}`);
   } else {

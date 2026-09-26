@@ -6,7 +6,7 @@
 // only in CI.
 //
 // Only when the working tree has changes — pure conversation turns skip the
-// suite. Green → exit 0, silent. Red → warning on stderr, but still exit 0
+// suite. Green → exit 0, silent. Red → systemMessage warning, but still exit 0
 // (NON-BLOCKING): parallel sessions may share one checkout, and a blocking
 // gate would lock one session for another's drift. CI is the binding gate.
 // test:unit is browserless (seconds), no e2e/smoke. Without node_modules (fresh
@@ -36,7 +36,11 @@ process.stdin.on('end', () => {
 
   const out = `${res.stdout || ''}\n${res.stderr || ''}`.trim();
   const tail = out.split('\n').slice(-40).join('\n');
-  process.stderr.write('[stop-gate] WARNUNG: `npm run test:unit` ist ROT — pruefen, ob es zu DEINER Arbeit gehoert '
-    + `(bei Parallel-Sessions oft Fremd-Drift). CI ist das verbindliche Gate:\n${tail}\n`);
+  // systemMessage: shown to the user, blocks nothing (stderr on exit 0 is
+  // visible to no one).
+  process.stdout.write(JSON.stringify({
+    systemMessage: '[stop-gate] WARNUNG: `npm run test:unit` ist ROT — pruefen, ob es zu DEINER Arbeit gehoert '
+      + `(bei Parallel-Sessions oft Fremd-Drift). CI ist das verbindliche Gate:\n${tail}`,
+  }));
   process.exit(0);
 });

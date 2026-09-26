@@ -15,26 +15,56 @@
   <link rel="stylesheet" href="/css/layout/layout-base.css">
   <link rel="stylesheet" href="/css/components/card-form/card-shell.css">
   <link rel="stylesheet" href="/css/components/card-form/card-blocks.css">
+  <link rel="stylesheet" href="/css/components/card-form/form-elements.css">
   <link rel="stylesheet" href="/css/components/buttons-badges.css">
 </head>
 <body>
-  <main class="login-shell">
+  <!-- Login page (docs/auth.md): an Alpine page of its own (js/login.js), all
+       text via t(). Offers what /auth/methods reports: password login (local
+       users + the .env admin), OIDC, the dev bypass; and the forced change of
+       an initial password. -->
+  <main class="login-shell" x-data="loginPage" x-cloak>
     <div class="card card--nav">
       <div class="card-header">
         <h1 class="site-title">
           <img src="/icon.svg" alt="" class="site-logo" width="40" height="40">
-          <span>vibe-template</span>
+          <span x-text="t('app.title')"></span>
         </h1>
       </div>
-      <!-- Dev bypass: only works when LOCAL_DEV_MODE=1 on the server. -->
-      <form class="card-section" method="POST" action="/auth/dev-login">
-        <button class="primary login-btn" type="submit">Continue as Dev</button>
+
+      <!-- Dev bypass: only when LOCAL_DEV_MODE=1 on the server. -->
+      <form class="card-section" method="POST" action="/auth/dev-login" x-show="methods.devMode">
+        <button class="primary login-btn" type="submit" x-text="t('login.dev')"></button>
       </form>
-      <p class="card-section card-section--tight card-hint">oder</p>
-      <form class="card-section card-section--tight" method="GET" action="/auth/login">
-        <button class="login-btn" type="submit">Sign in with OIDC</button>
+
+      <!-- Password login: local users, or only the admin when AUTH_METHOD=oidc. -->
+      <form class="card-section form-stack" x-show="mode === 'login' && showPasswordForm" @submit.prevent="login()" novalidate>
+        <h2 class="card-section-title" x-text="methods.method === 'local' ? t('login.title') : t('login.adminTitle')"></h2>
+        <label for="login-email" x-text="t('login.email')"></label>
+        <input id="login-email" type="email" autocomplete="username" required x-model="email">
+        <label for="login-password" x-text="t('login.password')"></label>
+        <input id="login-password" type="password" autocomplete="current-password" required x-model="password">
+        <p class="card-form-error" x-show="error" x-text="error" role="alert"></p>
+        <button class="primary login-btn" type="submit" :disabled="busy || !email || !password" x-text="t('login.submit')"></button>
+      </form>
+
+      <!-- Initial password → the user sets their own before a session opens. -->
+      <form class="card-section form-stack" x-show="mode === 'change'" @submit.prevent="changePassword()" novalidate>
+        <h2 class="card-section-title" x-text="t('login.changeTitle')"></h2>
+        <p class="card-hint" x-text="t('login.changeHint', { min: minLength })"></p>
+        <label for="login-new" x-text="t('login.newPassword')"></label>
+        <input id="login-new" type="password" autocomplete="new-password" required x-model="newPassword">
+        <label for="login-repeat" x-text="t('login.repeatPassword')"></label>
+        <input id="login-repeat" type="password" autocomplete="new-password" required x-model="repeatPassword">
+        <p class="card-form-error" x-show="error" x-text="error" role="alert"></p>
+        <button class="primary login-btn" type="submit" :disabled="busy || !newPassword" x-text="t('login.changeSubmit')"></button>
+      </form>
+
+      <form class="card-section card-section--tight" method="GET" action="/auth/login" x-show="mode === 'login' && methods.method === 'oidc'">
+        <button class="login-btn" type="submit" x-text="t('login.oidc')"></button>
       </form>
     </div>
   </main>
+  <script type="module" src="/js/login.js"></script>
 </body>
 </html>

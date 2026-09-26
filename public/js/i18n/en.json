@@ -7,14 +7,20 @@
   },
   "nav": {
     "notes": "Notes",
-    "label": "Main navigation"
+    "label": "Main navigation",
+    "users": "Users",
+    "logs": "Logs",
+    "settings": "Settings"
   },
   "session": {
     "expired": "Session expired. Please sign in again — your input is kept.",
     "relogin": "Sign in again"
   },
   "notebook": {
-    "label": "Notebook"
+    "label": "Notebook",
+    "add": "New notebook",
+    "namePlaceholder": "Notebook name …",
+    "create": "Create"
   },
   "notes": {
     "newPlaceholder": "Title of the new note …",
@@ -29,7 +35,14 @@
     "updated": "Updated",
     "titlePlaceholder": "Title",
     "bodyPlaceholder": "Text …",
-    "newLabel": "New note"
+    "newLabel": "New note",
+    "reorder": "Move (drag)",
+    "showMore": "Show more",
+    "showLess": "Show less",
+    "overview": "Overview",
+    "chartLabel": "Notes per notebook",
+    "chartSeries": "Notes",
+    "reorderFailed": "Could not save the order."
   },
   "combobox": {
     "choose": "Choose …",
@@ -39,5 +52,146 @@
   },
   "a11y": {
     "skipToMain": "Skip to content"
+  },
+  "users": {
+    "title": "Users",
+    "eyebrow": "Admin console",
+    "newTitle": "New user",
+    "email": "Email",
+    "name": "Name",
+    "initialPassword": "Initial password",
+    "generate": "Generate",
+    "initialPasswordNote": "At least {min} characters. The user must replace it with their own at first login.",
+    "add": "Create",
+    "created": "{email} created — hand over the initial password securely.",
+    "badgeEnv": "Admin (.env)",
+    "badgeActive": "Active",
+    "badgeDisabled": "Disabled",
+    "badgeMustChange": "Initial password",
+    "envHint": "This account is managed via .env (ADMIN_EMAIL + ADMIN_PASSWORD, locally LOCAL_DEV_MODE) and cannot be changed here.",
+    "lastSeen": "Last login",
+    "never": "never",
+    "setPassword": "Reset initial password",
+    "setPasswordMsg": "New initial password for {email}. The next login requires a password of their own.",
+    "passwordSaved": "Saved — hand over the password securely.",
+    "enable": "Enable",
+    "disable": "Disable",
+    "delete": "Delete",
+    "deleteTitle": "Delete user?",
+    "deleteMsg": "{email} will be deleted permanently. An open session ends immediately.",
+    "cancel": "Cancel",
+    "close": "Close",
+    "save": "Save",
+    "err": {
+      "email": "Please enter a valid email address.",
+      "exists": "This email already exists.",
+      "envManaged": "This address belongs to the .env admin.",
+      "passwordRequired": "Please enter a password.",
+      "tooShort": "The password needs at least {min} characters.",
+      "tooLong": "The password is too long.",
+      "notFound": "This user no longer exists.",
+      "generic": "That did not work. Please try again."
+    }
+  },
+  "logs": {
+    "title": "Logs",
+    "empty": "The log file is empty.",
+    "eyebrow": "Administration",
+    "live": "Live",
+    "refresh": "Reload",
+    "filterLevel": "Level",
+    "allLevels": "All levels",
+    "filterScope": "Scope",
+    "allScopes": "All scopes",
+    "filterUser": "User",
+    "filterUserPh": "Email",
+    "filterEntity": "Entity",
+    "filterEntityPh": "e.g. GET /api/notes",
+    "filterSearch": "Search",
+    "filterSearchPh": "Text in message or stack trace",
+    "apply": "Filter",
+    "clear": "Clear filter",
+    "livePaused": "Live tail is paused while a filter is active.",
+    "rotated": "The log file was rotated — older entries are now in the next file.",
+    "streamError": "Live connection lost — reconnecting …",
+    "loadError": "Could not load logs: {error}",
+    "noMatches": "No entries match this filter.",
+    "toggleStack": "Show/hide stack trace",
+    "loadMore": "Load older",
+    "downloadFile": "Download {name}"
+  },
+  "view": {
+    "user": "App",
+    "admin": "Admin"
+  },
+  "login": {
+    "title": "Sign in",
+    "adminTitle": "Admin sign-in",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "dev": "Continue as dev user",
+    "oidc": "Sign in with single sign-on",
+    "changeTitle": "Set your own password",
+    "changeHint": "You signed in with an initial password. Choose your own with at least {min} characters.",
+    "newPassword": "New password",
+    "repeatPassword": "Repeat new password",
+    "changeSubmit": "Save password",
+    "err": {
+      "invalid": "Email or password is incorrect.",
+      "disabled": "This account is disabled.",
+      "rateLimited": "Too many attempts. Please try again later.",
+      "tooShort": "The password needs at least {min} characters.",
+      "tooLong": "The password is too long.",
+      "unchanged": "The new password must differ from the initial password.",
+      "mismatch": "The two passwords do not match.",
+      "generic": "Sign-in failed. Please try again."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "intro": "Runtime configuration of the app. Changes apply immediately, without a restart. Secrets and server start values stay in the .env.",
+    "tab": {
+      "general": "General",
+      "auth": "Sign-in",
+      "jobs": "Jobs"
+    },
+    "field": {
+      "timezone": "Time zone",
+      "authMethod": "Sign-in method",
+      "oidcIssuer": "OIDC issuer",
+      "oidcClientId": "Client ID",
+      "oidcRedirectUri": "Redirect URI",
+      "oidcClientSecret": "Client secret",
+      "retentionDays": "Retention (days)"
+    },
+    "help": {
+      "timezone": "Controls date display and job schedules.",
+      "authMethod": "How users sign in. The admin from the .env always signs in with their password, even if OIDC is down.",
+      "oidcRedirectUri": "The public address, e.g. https://app.example.com/auth/callback — enter it identically at the provider.",
+      "oidcClientSecret": "Lives as OIDC_CLIENT_SECRET in the .env and is never shown here.",
+      "retentionDays": "Finished and failed jobs are deleted overnight after this period."
+    },
+    "placeholder": {
+      "oidcIssuer": "https://accounts.google.com",
+      "oidcRedirectUri": "https://app.example.com/auth/callback"
+    },
+    "method": {
+      "local": "Local accounts",
+      "oidc": "Single sign-on (OIDC)"
+    },
+    "secretSet": "Set in .env",
+    "secretMissing": "Missing in .env",
+    "save": "Save",
+    "discard": "Discard",
+    "saved": "Saved.",
+    "err": {
+      "range": "The value is outside the allowed range.",
+      "value": "This value is not allowed.",
+      "timezone": "Unknown time zone.",
+      "url": "Please enter a valid http(s) address.",
+      "oidcRequired": "OIDC needs issuer, client ID and redirect URI.",
+      "generic": "That did not work. Please try again."
+    }
   }
 }

@@ -17,7 +17,7 @@ Das Umbenennen macht **das Script**, nicht du per Suchen/Ersetzen: [scripts/proj
 
 1. `git status --porcelain`: Der Tree muss sauber sein, sonst sind die Änderungen des Scripts nicht mehr isoliert sichtbar. Ist er nicht sauber, abbrechen und melden.
 2. `npm run init -- <slug> --title "<Anzeigename>" --dry-run`: Liste der Dateien zeigen.
-3. `npm run init -- <slug> --title "<Anzeigename>"`: schreibt die Dateien und lässt danach `npm run test:unit` laufen. Rot ⇒ Ursache melden, nicht mit eigenen Ersetzungen „nachhelfen“. Liegt eine Namensstelle ausserhalb der Reichweite des Scripts, wird das Script erweitert (und der Test mit ihm).
+3. `npm run init -- <slug> --title "<Anzeigename>"`: schreibt die Dateien und lässt danach `npm run test:unit` laufen. Auf dem Template setzt es zusätzlich CHANGELOG, Version und lokale DB zurück (Frischstart); ein bereits umbenanntes Projekt wird nur umbenannt — Releases und Daten bleiben (`--fresh` erzwingt den Frischstart). Einen schmutzigen Tree verweigert das Script selbst. Rot ⇒ Ursache melden, nicht mit eigenen Ersetzungen „nachhelfen“. Liegt eine Namensstelle ausserhalb der Reichweite des Scripts, wird das Script erweitert (und der Test mit ihm).
 4. `git diff --stat` zeigen. Committen nur, wenn der User es sagt.
 
 ## 3. Was das Script nicht kann (Checkliste an den User)

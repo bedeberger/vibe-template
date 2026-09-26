@@ -11,7 +11,6 @@ const helmet = require('helmet');
 const compression = require('compression');
 const session = require('express-session');
 const SqliteStore = require('better-sqlite3-session-store')(session);
-const authEnv = require('./lib/auth-env');
 
 // ── Production guard ──────────────────────────────────────────────────────
 // NODE_ENV=production (set by the systemd unit, docs/deployment.md) must never
@@ -32,27 +31,25 @@ if (IS_PROD) {
     throw new Error('ADMIN_PASSWORD ohne ADMIN_EMAIL — der Admin-Login braucht beides.');
   }
 }
-// AUTH_METHOD must be a known value in every environment — fail at boot, not at
-// the first login.
-authEnv.authMethod();
-
 const logger = require('./logger');
 const { runWithContext, setContext } = require('./lib/log-context');
 
 // DB setup + migrations run on import.
 const { db } = require('./db/schema');
 const appSettings = require('./lib/app-settings');
+const authEnv = require('./lib/auth-env');
 const { ensureAdminFromEnv, requireAuth, requireAdmin } = require('./lib/auth');
 const { runDevSeedIfNeeded } = require('./lib/dev-seed');
 
 const authRouter = require('./routes/auth');
 const notesRouter = require('./routes/notes');
 const adminUsersRouter = require('./routes/admin-users');
+const adminLogsRouter = require('./routes/admin-logs');
+const adminSettingsRouter = require('./routes/admin-settings');
 const jobsRouter = require('./routes/jobs'); // also registers the job runners + schedules
 const scheduler = require('./routes/jobs/shared/scheduler');
 
 // ── Boot-time bootstrap (idempotent) ───────────────────────────────────────
-try { appSettings.bootstrapFromEnv(); } catch (e) { logger.warn(`settings bootstrap: ${e.message}`); }
 try { ensureAdminFromEnv(); } catch (e) { logger.warn(`admin bootstrap: ${e.message}`); }
 runDevSeedIfNeeded().catch((e) => logger.warn(`dev seed: ${e.message}`));
 
@@ -114,7 +111,9 @@ app.use(requireAuth);
 
 // Routes.
 app.use('/', authRouter);
+app.use('/api/admin/logs', requireAdmin, adminLogsRouter);
 app.use('/api/admin', requireAdmin, adminUsersRouter);
+app.use('/api/admin', requireAdmin, adminSettingsRouter);
 app.use('/api', notesRouter);
 app.use('/api', jobsRouter);
 
@@ -135,6 +134,20 @@ app.get('/', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
 app.use((req, res) => {
   if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'not found' });
   res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
+});
+
+// Central error handler — the last middleware. Domain refusals never get here
+// (routes/_http.js answers them); what arrives is either a client error raised
+// by Express itself (malformed JSON → 400, body too large → 413) or a bug / DB
+// failure → logged with its stack, answered as a generic 500 without internals.
+app.use((err, req, res, next) => {
+  const status = Number(err.status || err.statusCode);
+  if (status >= 400 && status < 500) {
+    return res.status(status).json({ error: err.expose ? err.message : 'bad request' });
+  }
+  logger.error(`Unerwarteter Fehler: ${err.stack || err.message}`);
+  if (res.headersSent) return next(err); // Express closes the half-sent response
+  res.status(500).json({ error: 'internal error' });
 });
 
 const PORT = Number(process.env.PORT) || 3000;

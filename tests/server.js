@@ -12,6 +12,10 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
+const authUsersMocks = require('./mocks/auth-users');
+const settingsMocks = require('./mocks/settings');
+const logsMocks = require('./mocks/logs');
+
 const PORT = Number(process.env.PORT) || 3210;
 const ROOT = path.resolve(__dirname, '..');
 const PUBLIC = path.join(ROOT, 'public');
@@ -32,12 +36,18 @@ let state;
 // Seed the harness sees on every reset: one note with markup in its body (the
 // escape invariant), one empty. Two notebooks so switching can be tested.
 const SEED_NOTES = () => [
-  { id: 1, notebook_id: 1, title: 'Erste', body: 'Hallo <b>Welt</b>', updated_at: '2026-01-01T09:30:00.000Z' },
-  { id: 2, notebook_id: 1, title: 'Zweite', body: '', updated_at: '2026-01-01T09:00:00.000Z' },
-  { id: 3, notebook_id: 2, title: 'Anderes Buch', body: 'x', updated_at: '2026-01-01T08:00:00.000Z' },
+  { id: 1, notebook_id: 1, position: 0, title: 'Erste', body: 'Hallo <b>Welt</b>', updated_at: '2026-01-01T09:30:00.000Z' },
+  { id: 2, notebook_id: 1, position: 1, title: 'Zweite', body: '', updated_at: '2026-01-01T09:00:00.000Z' },
+  { id: 3, notebook_id: 2, position: 0, title: 'Anderes Buch', body: 'x', updated_at: '2026-01-01T08:00:00.000Z' },
 ];
+const SEED_NOTEBOOKS = () => [{ id: 1, name: 'Harness' }, { id: 2, name: 'Zweites' }];
+// A body long enough to be clamped ("show more").
+const LONG_BODY = Array.from({ length: 12 }, (_, i) => `Zeile ${i + 1}`).join('\n');
 function reset() {
-  state = { notes: SEED_NOTES(), noteSeq: 100, patches: [], deletes: [], creates: [], jobs: new Map(), jobSeq: 0 };
+  state = {
+    notes: SEED_NOTES(), notebooks: SEED_NOTEBOOKS(), noteSeq: 100, notebookSeq: 10,
+    patches: [], deletes: [], creates: [], orders: [], jobs: new Map(), jobSeq: 0,
+  };
 }
 reset();
 
@@ -58,20 +68,47 @@ function json(res, status, body) {
 
 async function handleMock(req, res, url) {
   let m;
-  if (url === '/__mock/reset' && req.method === 'POST') { reset(); return json(res, 200, {}), true; }
+  if (url === '/__mock/reset' && req.method === 'POST') { reset(); authUsersMocks.reset(); settingsMocks.reset(); logsMocks.reset(); return json(res, 200, {}), true; }
+  if (await authUsersMocks.handle(req, res, url, { json, readBody })) return true;
+  if (await settingsMocks.handle(req, res, url, { json, readBody })) return true;
+  if (await logsMocks.handle(req, res, url, { json, readBody })) return true;
   if (url === '/__mock/state' && req.method === 'GET') {
-    return json(res, 200, { patches: state.patches, deletes: state.deletes, creates: state.creates, jobs: state.jobs.size }), true;
+    return json(res, 200, {
+      patches: state.patches, deletes: state.deletes, creates: state.creates, orders: state.orders,
+      notebooks: state.notebooks, jobs: state.jobs.size,
+    }), true;
+  }
+  // Test knob: a long note in notebook 1.
+  if (url === '/__mock/long-note' && req.method === 'POST') {
+    state.notes.push({ id: 50, notebook_id: 1, position: 2, title: 'Lang', body: LONG_BODY, updated_at: '2026-01-01T07:00:00.000Z' });
+    return json(res, 200, {}), true;
   }
   if (url === '/api/notebooks' && req.method === 'GET') {
-    return json(res, 200, [{ id: 1, name: 'Harness' }, { id: 2, name: 'Zweites' }]), true;
+    const count = (id) => state.notes.filter((n) => n.notebook_id === id).length;
+    return json(res, 200, state.notebooks.map((nb) => ({ ...nb, note_count: count(nb.id) }))), true;
+  }
+  if (url === '/api/notebooks' && req.method === 'POST') {
+    const body = await readBody(req);
+    const nb = { id: ++state.notebookSeq, name: body.name };
+    state.notebooks.push(nb);
+    return json(res, 201, nb), true;
+  }
+  // Recorded, not applied: the mock is shared by parallel workers, and a
+  // persisted order would leak into another spec's list.
+  if ((m = url.match(/^\/api\/notebooks\/(\d+)\/note-order$/)) && req.method === 'PUT') {
+    const body = await readBody(req);
+    state.orders.push({ notebookId: Number(m[1]), ids: body.ids });
+    return json(res, 200, state.notes.filter((n) => n.notebook_id === Number(m[1]))), true;
   }
   if (url === '/api/notes' && req.method === 'GET') {
     const nb = Number(new URLSearchParams(req.url.split('?')[1] || '').get('notebook_id'));
-    return json(res, 200, state.notes.filter((n) => n.notebook_id === nb)), true;
+    const list = state.notes.filter((n) => n.notebook_id === nb).sort((a, b) => a.position - b.position);
+    return json(res, 200, list), true;
   }
   if (url === '/api/notes' && req.method === 'POST') {
     const body = await readBody(req);
-    const note = { id: ++state.noteSeq, updated_at: '2026-01-02T10:00:00.000Z', ...body };
+    const top = Math.min(0, ...state.notes.filter((n) => n.notebook_id === body.notebook_id).map((n) => n.position));
+    const note = { id: ++state.noteSeq, position: top - 1, updated_at: '2026-01-02T10:00:00.000Z', ...body };
     state.notes.push(note);
     state.creates.push(note);
     return json(res, 201, note), true;

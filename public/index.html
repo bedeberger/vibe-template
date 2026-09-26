@@ -37,12 +37,18 @@
   <link rel="stylesheet" href="/css/components/tabs.css">
   <link rel="stylesheet" href="/css/components/toggle-switch.css">
   <link rel="stylesheet" href="/css/components/combobox.css">
+  <link rel="stylesheet" href="/css/components/popover.css">
+  <link rel="stylesheet" href="/css/components/collapsible.css">
+  <link rel="stylesheet" href="/css/components/sortable-list.css">
   <link rel="stylesheet" href="/css/components/tooltip.css">
   <link rel="stylesheet" href="/css/components/confirm-dialog.css">
   <link rel="stylesheet" href="/css/components/danger-zone.css">
   <link rel="stylesheet" href="/css/components/job-toast.css">
   <!-- entities -->
   <link rel="stylesheet" href="/css/entities/notes.css">
+  <link rel="stylesheet" href="/css/entities/users.css">
+  <link rel="stylesheet" href="/css/entities/logs.css">
+  <link rel="stylesheet" href="/css/entities/settings.css">
   <!-- @entity-css:end — `npm run feature:new` inserts above this line. -->
 </head>
 <body>
@@ -63,6 +69,13 @@
         <p class="subtitle" x-text="t('app.subtitle')"></p>
       </div>
       <div class="site-header-aside" x-show="user">
+        <!-- View switch (docs/auth.md): only the admin has a second view. -->
+        <div class="tabs" x-show="isAdmin">
+          <button type="button" class="tabs-btn" :class="{ 'tabs-btn--active': view === 'user' }" :aria-pressed="view === 'user'"
+                  @click="switchView('user')" x-text="t('view.user')"></button>
+          <button type="button" class="tabs-btn" :class="{ 'tabs-btn--active': view === 'admin' }" :aria-pressed="view === 'admin'"
+                  @click="switchView('admin')" x-text="t('view.admin')"></button>
+        </div>
         <span class="site-header-user" x-text="user ? user.email : ''"></span>
         <a class="icon-btn icon-btn--ghost tip--below tip--end" href="/auth/logout"
            :aria-label="t('app.logout')" :data-tip="t('app.logout')">
@@ -76,12 +89,15 @@
       <aside class="layout-sidebar">
         <nav class="card card--nav app-nav" :aria-label="t('nav.label')">
           <template x-for="f in features" :key="f.id">
+            <!-- Only the features of the current view (registry field `view`). -->
+            <template x-if="f.view === view">
             <button type="button" class="nav-item"
                     :aria-current="activeFeature === f.id ? 'page' : null"
                     @click="openFeature(f.id)">
               <svg class="icon" aria-hidden="true"><use :href="'/icons.svg#' + f.icon"/></svg>
               <span x-text="t(f.labelKey)"></span>
             </button>
+            </template>
           </template>
         </nav>
       </aside>

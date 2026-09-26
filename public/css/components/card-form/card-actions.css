@@ -28,7 +28,9 @@
 @media (max-width: 700px) {
   /* Right-aligned like desktop; tighter gaps because touch targets grow. */
   .card-actions { width: 100%; gap: var(--space-xs); justify-content: flex-end; }
-  .card-actions button { flex: 1 1 auto; min-width: 0; }
+  /* Text buttons only: `min-width: 0` on an icon-btn would beat its 40px
+     coarse-pointer tap target (higher specificity, same layer). */
+  .card-actions button:not(.icon-btn) { flex: 1 1 auto; min-width: 0; }
   /* Many buttons (grouped toolbar): natural width + compact padding. */
   .card-actions--grouped button {
     flex: 0 1 auto;

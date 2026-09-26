@@ -48,9 +48,10 @@ function fileName(version, slug) {
 // The plan: which of the own (= unknown to remote) files move where? Pure, so
 // the unit test can check it without git.
 //
-// Every own file whose number is <= the highest number in `remote` moves —
-// ascending, so the relative order of the own migrations is kept (they may
-// build on each other).
+// As soon as ONE own file collides (number <= the highest number in `remote`),
+// ALL own files are renumbered from remoteMax + 1 on — ascending, so their
+// relative order is kept (they may build on each other). Moving only the
+// colliding ones would land 0005_mine on 0006 next to an own 0006_mine2.
 function planRenumber(local, remote) {
   const remoteSet = new Set(remote);
   const remoteMax = remote.reduce((max, f) => {
@@ -63,12 +64,13 @@ function planRenumber(local, remote) {
     .map((f) => ({ file: f, ...parseName(f) }))
     .sort((a, b) => a.version - b.version);
 
-  let next = remoteMax + 1;
   const moves = [];
-  for (const m of own) {
-    if (m.version > remoteMax) continue; // no collision — stays put
-    const to = next++;
-    moves.push({ from: m.version, to, oldName: m.file, newName: fileName(to, m.slug) });
+  if (own.some((m) => m.version <= remoteMax)) {
+    let next = remoteMax + 1;
+    for (const m of own) {
+      const to = next++;
+      if (to !== m.version) moves.push({ from: m.version, to, oldName: m.file, newName: fileName(to, m.slug) });
+    }
   }
   return { remoteMax, own: own.map((m) => m.file), moves };
 }
@@ -160,8 +162,9 @@ function main(argv) {
   }
 
   // Regenerate the lock in a SEPARATE process — loadMigrations() already has the
-  // old file names in Node's require cache.
-  execFileSync(process.execPath, [path.join(__dirname, 'migrations-lock.js'), '--write'], {
+  // old file names in Node's require cache. --force: the moved files are your
+  // own, unpushed ones, so their (local) lock entries may change.
+  execFileSync(process.execPath, [path.join(__dirname, 'migrations-lock.js'), '--write', '--force'], {
     cwd: ROOT,
     stdio: 'inherit',
   });

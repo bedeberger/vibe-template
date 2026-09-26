@@ -34,8 +34,10 @@ einen Seed-basierten `tests/unit/migration-000N-<name>.test.mjs` schreiben.
 whitespace-normalisierten `up()`-Quelle plus Name. Mit der Migration committen.
 Der Lock-Diff darf immer nur Zeilen **hinzufügen** — eine geänderte Zeile heisst,
 eine veröffentlichte Migration wurde bearbeitet, was eine Prod-DB, die die alte
-Bedeutung schon angewendet hat, in eine Crash-Schleife schickt. (Noch nie
-deployt? Dann ist Neu-Einfrieren legitim — den Diff bewusst prüfen.)
+Bedeutung schon angewendet hat, in eine Crash-Schleife schickt. Deshalb
+verweigert `migrations:lock` das Schreiben, sobald sich ein eingefrorener Eintrag
+ändern würde. Noch nie deployt (nicht gepusht)? Dann ist Neu-Einfrieren legitim:
+`npm run migrations:lock -- --force`, und den Diff bewusst prüfen.
 
 ## Paralleles Arbeiten: Umnummerieren
 

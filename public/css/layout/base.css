@@ -64,17 +64,21 @@ body {
   font-feature-settings: "kern", "liga", "calt", "cv11";
   min-height: 100vh;
   min-height: 100dvh;
-  padding: var(--space-lg) var(--space-lg) var(--space-page-end);
+  /* Side gutter never under the notch / rounded corners (index.html sets
+     viewport-fit=cover, so the page reaches into the safe-area insets). */
+  --page-pad-x: var(--space-lg);
+  padding: var(--space-lg) max(var(--page-pad-x), env(safe-area-inset-right))
+    var(--space-page-end) max(var(--page-pad-x), env(safe-area-inset-left));
   max-width: 860px;
   margin: 0 auto;
 }
 
 @media (min-width: 600px) {
-  body { padding: var(--space-xl) var(--space-xl) var(--space-page-end); }
+  body { --page-pad-x: var(--space-xl); padding-top: var(--space-xl); }
 }
 
 @media (min-width: 960px) {
-  body { padding: var(--space-2xl) var(--space-xl) var(--space-page-end); max-width: 1600px; }
+  body { padding-top: var(--space-2xl); max-width: 1600px; }
 }
 
 h1 {

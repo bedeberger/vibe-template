@@ -9,7 +9,7 @@
 // _rules.js#localeParity). Pure reminder, never blocks.
 
 const { read, LOCALES, localeFile, flattenKeys, localeParity } = require('./_rules.js');
-const { touchedPaths, relOf, onPayload } = require('./_touched.js');
+const { touchedPaths, relOf, onPayload, emitContext } = require('./_touched.js');
 
 const fmt = (arr) => arr.slice(0, 12).join(', ') + (arr.length > 12 ? ` … (+${arr.length - 12})` : '');
 
@@ -35,6 +35,6 @@ onPayload((payload) => {
     if (placeholderDrift.length) out.push(`{Platzhalter}-Drift de ≠ en: ${fmt(placeholderDrift)}`);
   }
 
-  if (out.length) console.log(`[i18n-check] ${out.join('\n')}\n→ sonst wird i18n-locale-parity.test rot.`);
+  if (out.length) emitContext('PostToolUse', `[i18n-check] ${out.join('\n')}\n→ sonst wird i18n-locale-parity.test rot.`);
   process.exit(0);
 });

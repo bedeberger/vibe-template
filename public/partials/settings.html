@@ -1,0 +1,135 @@
+<!-- Settings feature partial (admin view) — loaded on first open into
+     <section data-feature="settings"> (js/app/feature-host.js). The root element
+     IS the feature card (x-data="settingsCard", js/cards/settings-card.js).
+     Everything here is an app setting (lib/app-settings.js) — the runtime
+     configuration that does NOT live in .env (CLAUDE.md ".env nur minimal").
+     One tab per SETTINGS[*].tab; a new setting gets its row in its tab below.
+     Patterns: DESIGN.md → Karte, Tabs, Formulare, Combobox. -->
+
+<div x-data="settingsCard">
+<div class="card card--settings">
+  <div class="card-header card-header--subline">
+    <div class="card-header-titlebar">
+      <span class="card-eyebrow" x-text="t('users.eyebrow')"></span>
+      <h2 class="card-title" x-text="t('settings.title')"></h2>
+    </div>
+    <div class="card-header-aside">
+      <span class="spinner" x-show="loading" aria-hidden="true"></span>
+    </div>
+  </div>
+  <p class="card-hint" x-text="t('settings.intro')"></p>
+  <p class="card-status card-status--error" x-show="loadError" x-text="loadError"></p>
+
+  <div class="card-section" x-show="tabs.length">
+    <div class="tabs" role="tablist" :aria-label="t('settings.title')">
+      <button type="button" class="tabs-btn" role="tab" :aria-selected="tab === 'general'" @click="tab = 'general'"
+              x-text="t('settings.tab.general')"></button>
+      <button type="button" class="tabs-btn" role="tab" :aria-selected="tab === 'auth'" @click="tab = 'auth'"
+              x-text="t('settings.tab.auth')"></button>
+      <button type="button" class="tabs-btn" role="tab" :aria-selected="tab === 'jobs'" @click="tab = 'jobs'"
+              x-text="t('settings.tab.jobs')"></button>
+    </div>
+  </div>
+
+  <!-- Allgemein -->
+  <div class="card-section" role="tabpanel" data-tab="general" x-show="tabs.length && tab === 'general'">
+    <div class="card-form-grid">
+      <div class="card-form-row">
+        <label class="card-form-label" id="set-tz-label" x-text="t('settings.field.timezone')"></label>
+        <div class="card-form-field">
+          <div aria-labelledby="set-tz-label" aria-describedby="set-tz-note"
+               x-data="combobox()" x-modelable="value" x-model="draft['app.timezone']"
+               x-effect="options = timezones"></div>
+          <p class="card-form-field-note" id="set-tz-note" x-text="t('settings.help.timezone')"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Anmeldung -->
+  <div class="card-section" role="tabpanel" data-tab="auth" x-show="tabs.length && tab === 'auth'">
+    <div class="card-form-grid">
+      <div class="card-form-row card-form-row--top">
+        <span class="card-form-label" id="set-method-label" x-text="t('settings.field.authMethod')"></span>
+        <div class="card-form-field">
+          <div class="form-radio-group form-radio-group--card" role="radiogroup" aria-labelledby="set-method-label">
+            <label class="form-radio-option">
+              <input type="radio" name="set-auth-method" value="local" x-model="draft['auth.method']">
+              <span x-text="t('settings.method.local')"></span>
+            </label>
+            <label class="form-radio-option">
+              <input type="radio" name="set-auth-method" value="oidc" x-model="draft['auth.method']">
+              <span x-text="t('settings.method.oidc')"></span>
+            </label>
+          </div>
+          <p class="card-form-field-note" x-text="t('settings.help.authMethod')"></p>
+        </div>
+      </div>
+
+      <div class="card-form-section-divider"></div>
+
+      <div class="card-form-row">
+        <label class="card-form-label" for="set-oidc-issuer" x-text="t('settings.field.oidcIssuer')"></label>
+        <div class="card-form-field">
+          <input id="set-oidc-issuer" type="url" autocomplete="off" x-model="draft['oidc.issuer']"
+                 :placeholder="t('settings.placeholder.oidcIssuer')"
+                 :aria-invalid="errorField === 'oidc.issuer'" aria-describedby="set-error">
+        </div>
+      </div>
+      <div class="card-form-row">
+        <label class="card-form-label" for="set-oidc-client" x-text="t('settings.field.oidcClientId')"></label>
+        <div class="card-form-field">
+          <input id="set-oidc-client" type="text" autocomplete="off" x-model="draft['oidc.client_id']"
+                 :aria-invalid="errorField === 'oidc.client_id'" aria-describedby="set-error">
+        </div>
+      </div>
+      <div class="card-form-row">
+        <label class="card-form-label" for="set-oidc-redirect" x-text="t('settings.field.oidcRedirectUri')"></label>
+        <div class="card-form-field">
+          <input id="set-oidc-redirect" type="url" autocomplete="off" x-model="draft['oidc.redirect_uri']"
+                 :placeholder="t('settings.placeholder.oidcRedirectUri')"
+                 :aria-invalid="errorField === 'oidc.redirect_uri'" aria-describedby="set-error set-oidc-redirect-note">
+          <p class="card-form-field-note" id="set-oidc-redirect-note" x-text="t('settings.help.oidcRedirectUri')"></p>
+        </div>
+      </div>
+      <div class="card-form-row">
+        <span class="card-form-label" x-text="t('settings.field.oidcClientSecret')"></span>
+        <div class="card-form-field">
+          <div class="row">
+            <span class="badge badge-ok" x-show="env.oidcClientSecret" x-text="t('settings.secretSet')"></span>
+            <span class="badge badge-warn" x-show="!env.oidcClientSecret" x-text="t('settings.secretMissing')"></span>
+          </div>
+          <p class="card-form-field-note" x-text="t('settings.help.oidcClientSecret')"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Jobs -->
+  <div class="card-section" role="tabpanel" data-tab="jobs" x-show="tabs.length && tab === 'jobs'">
+    <div class="card-form-grid">
+      <div class="card-form-row">
+        <label class="card-form-label" for="set-retention" x-text="t('settings.field.retentionDays')"></label>
+        <div class="card-form-field">
+          <input id="set-retention" class="form-num" type="number" inputmode="numeric"
+                 :min="meta['jobs.retention_days']?.min" :max="meta['jobs.retention_days']?.max"
+                 x-model="draft['jobs.retention_days']"
+                 :aria-invalid="errorField === 'jobs.retention_days'" aria-describedby="set-error set-retention-note">
+          <p class="card-form-field-note" id="set-retention-note" x-text="t('settings.help.retentionDays')"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-section row settings-actions" x-show="tabs.length">
+    <button type="button" class="primary" @click="save()" :disabled="busy || !isDirty()">
+      <svg class="icon" aria-hidden="true"><use href="/icons.svg#check"/></svg>
+      <span x-text="t('settings.save')"></span>
+    </button>
+    <button type="button" @click="discard()" :disabled="busy || !isDirty()" x-text="t('settings.discard')"></button>
+    <span class="spinner" x-show="busy" aria-hidden="true"></span>
+  </div>
+  <p class="card-form-error" id="set-error" x-show="error" x-text="error" role="alert"></p>
+  <p class="card-form-saved" x-show="savedMsg && !isDirty()" x-text="t('settings.saved')" role="status"></p>
+</div>
+</div>

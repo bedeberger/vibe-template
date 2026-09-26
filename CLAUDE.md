@@ -36,8 +36,10 @@ grün sind.
 - **Frontend:** Vanilla-SPA + Alpine.js, kein Bundler; Drittcode committet in
   `public/vendor/`. **Styling:** reines CSS, Token-System, `@layer`-Cascade,
   Designsystem in [DESIGN.md](DESIGN.md).
-- **Auth:** Session-Guard auf jeder Route ausser den öffentlichen. OIDC
-  (anbieterunabhängig) + `LOCAL_DEV_MODE`-Bypass.
+- **Auth:** Session-Guard auf jeder Route ausser den öffentlichen. Default:
+  lokale Konten (vom Admin angelegt, scrypt); alternativ OIDC. Zwei Sichten
+  (`view: 'user' | 'admin'` in der Registry). **Admin nur über die `.env`**
+  (`ADMIN_EMAIL` + `ADMIN_PASSWORD`, nie in der DB) — [docs/auth.md](docs/auth.md).
 - **Logging:** Winston mit einem Kontext-Tag pro Request/Job, selbstrotierende
   Datei.
 - **Tests:** Unit + Integration (`node --test`), E2E-Harnesses + Real-App-E2E
@@ -65,6 +67,16 @@ grün sind.
   Font/kein externes Script; vendorte Dateien sind versioniert + lizenziert und
   ändern sich nur via `npm run vendor:sync`. Die CSP bleibt `'self'`. Details:
   [public/CLAUDE.md](public/CLAUDE.md).
+- **`.env` nur minimal, alles andere in der Admin-Konsole.** In die `.env`
+  gehört nur, was (a) ein **Secret** ist, (b) **vor der DB** gebraucht wird oder
+  den Weg in die Konsole öffnet (`DB_PATH`, `PORT`, `ADMIN_EMAIL`), oder (c) **pro
+  Prozess** gilt (`NODE_ENV`, `SCHEDULER`, `LOCAL_DEV_MODE`). Jede andere
+  Einstellung ist ein Eintrag im `SETTINGS`-Register von
+  [lib/app-settings.js](lib/app-settings.js) und eine Zeile in ihrem Tab unter
+  Admin-Konsole → Einstellungen ([partials/settings.html](public/partials/settings.html)).
+  **Warum:** eine `.env`-Zeile heisst SSH + Neustart für jede Änderung; der
+  Admin kann sie nicht selbst und rasch vornehmen, und niemand merkt es, bis er
+  es braucht.
 - **`x-html` nur mit vorab-escaptem Content** (`escHtml()`), kein
   Runtime-Sanitizer. **Warum:** eine einzige auditierbare Escape-Invariante.
 - **Relationale Integrität.** Jede `*_id` ist ein echter FK, indiziert, mit
@@ -79,6 +91,11 @@ grün sind.
   mit Feature-Karte, Fachmodul, Partial, Entity-CSS, Harness + Spec — generiert
   von `npm run feature:new`, gegated durch `feature-registry.test`. Die Root ist
   nur die Shell. Details: [DESIGN.md → Feature-Anatomie](DESIGN.md#feature-anatomie).
+- **Mobile ist Pflicht.** Alles muss auf dem Handy (Referenz 360 px, Touch)
+  voll bedienbar sein: kein horizontaler Überlauf, jede Aktion erreichbar,
+  Tap-Ziele ≥ 40 px, nichts nur per Hover, Safe Area beachtet; der Nachweis
+  (Phone-Spec) kommt im selben Change-Set. Details:
+  [DESIGN.md → Mobile (Pflicht)](DESIGN.md#mobile-pflicht).
 - **DESIGN.md-Pattern-Katalog vor neuer UI prüfen.** Wiederverwenden; fehlt das
   Pattern, zuerst dort dokumentieren, dann bauen.
 - **Styles nur in `public/css/`**, Tokens statt Rohwerte, jede Datei in einem
@@ -114,7 +131,9 @@ Ein Hook warnt, er lehrt nicht: die Alternative steht im Volltext der Regel.
 | Icons nur aus dem Lucide-Sprite, Icon-only mit `aria-label` + `data-tip` | `icons-sprite` / `button-icons` / `action-icons-tripwire` / `icon-size-consistency.test` | public/icons.svg, public/ |
 | `x-html` nur über einen Getter mit `escHtml()` | `escape-xss.test` · Harness-Spec `notes-card.spec` | public/ |
 | Self-hosted: keine externe URL, Vendor-Datei = Paketversion + Lizenz | `vendor-integrity.test` | public/, tests/fixtures |
+| `process.env.X` im Servercode nur aus der Allowlist (Secret / Bootstrap / pro Prozess); `.env.example` == Allowlist | `env-minimal.test` | server.js, logger.js, lib/, routes/, db/, .env.example |
 | Feature-Anatomie vollständig (Karte registriert + Lifecycle, Fachmodul, Partial mit Karte als Wurzel, Entity-CSS, Harness + Spec); Nav + Hosts aus der Registry | `feature-registry.test` (Regeln: `scripts/feature-anatomy.js`) · `feature-new.test` · Smoke liest die Registry | public/, tests/fixtures, tests/e2e |
+| Mobile: kein Überlauf bei 360 px, Icon-only-Tap-Ziele ≥ 40 px (Touch) | `smoke.spec` (Phone-Durchgang je Registry-Feature) · `phone viewport`-Block je Feature-Spec (vom Generator angelegt) | public/ |
 | State vorab deklariert; `req.params` ⇒ `setContext()` | `architecture-tripwire.test` | public/js, routes/ |
 | FK für jede `*_id`, FK indiziert, bewusstes `ON DELETE`, `*_at` ISO+Z | `schema-integrity.test` | db/ |
 | Migration ⇒ Squash-Fold + `squash:check` + `migrations:lock`; nie umnummerieren | `drift-reminders.js` · `squash-drift` / `migration-lock` / `migration-chain-boot.test` | db/ |
@@ -156,8 +175,10 @@ Refactoring, nur Desktop)? Das sagen und aufhören.
 ## Doku-Index
 
 Die Doku **vor** einer Änderung in ihrem Bereich lesen.
+[auth.md](docs/auth.md) Anmeldung, lokale Konten, .env-Admin, zwei Sichten ·
 [deployment.md](docs/deployment.md) LXC, Runner, Nginx Proxy Manager, Deploy +
-Rollback, Betrieb · [migrations.md](docs/migrations.md) Squash, Lock,
+Rollback, Betrieb · [logging.md](docs/logging.md) Log-Format, Rotation,
+Admin-Log-Viewer · [migrations.md](docs/migrations.md) Squash, Lock,
 Renumber, Pending-Zähler · [testing.md](docs/testing.md) welche Suite wann,
 Harness, Console-Guard, Fallen · [DESIGN.md](DESIGN.md) UI-Muster-Katalog +
 CSS-Inventar.
@@ -167,7 +188,7 @@ CSS-Inventar.
 `/feature` führt durch. Kurzfassung:
 
 1. **Frontend-Gerüst:** `npm run feature:new -- <id> --label-de … --label-en …
-   --icon …` — Karte, Fachmodul, Partial, Entity-CSS, Harness + Spec und jede
+   --icon … [--view admin]` — Karte, Fachmodul, Partial, Entity-CSS, Harness + Spec und jede
    Registrierung (Registry, Karten-Inventar, Links, DESIGN.md-Inventar, i18n in
    beiden Locales). Stattdessen eine Karte in einem bestehenden Feature: `/karte`.
 2. **i18n:** jeder weitere String in `de.json` und `en.json`.

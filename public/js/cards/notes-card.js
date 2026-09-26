@@ -16,7 +16,14 @@ export function notesCard() {
     notes: [],
     newNoteTitle: '',
     loading: false,
+    notebookFormOpen: false,
+    newNotebookName: '',
+    overviewOpen: false,
+    reorderError: '',
     _lifecycle: null,
+    // Plain closures, not the lib instances (notes-methods.js / notes-chart.js).
+    _sortableOff: null,
+    _chart: null,
 
     t,
     fmt: formatDate,
@@ -25,10 +32,17 @@ export function notesCard() {
       this._lifecycle = setupCardLifecycle(this, {
         feature: 'notes',
         load: (ctx) => ctx.loadNotebooks(),
-        resetState: () => ({ notebooks: [], currentNotebookId: null, notes: [], newNoteTitle: '' }),
+        resetState: () => ({ notebooks: [], currentNotebookId: null, notes: [], newNoteTitle: '', reorderError: '' }),
       });
+      this.setupSortable();
+      // The chart follows the list (add, delete, notebook switch) while open.
+      this.$watch(() => [this.overviewOpen, this.notes.length, this.currentNotebookId, this.notebooks.length],
+        () => this.$nextTick(() => this.renderChart()));
     },
-    destroy() { this._lifecycle?.destroy(); },
+    destroy() {
+      this._lifecycle?.destroy();
+      this.destroyExtras();
+    },
 
     ...notesMethods,
   };

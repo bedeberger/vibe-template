@@ -78,7 +78,9 @@ const CRITERIA = [
     key: 'docs',
     by: ['backend', 'frontend'],
     label: 'Doku (docs/ bzw. README/CLAUDE/DESIGN)',
-    re: /^(?:docs\/|README\.md|CLAUDE\.md|DESIGN\.md)/,
+    // CLAUDE.md in ANY directory: the directory-local rules (routes/CLAUDE.md …)
+    // are exactly where a routes/ or lib/ change is documented.
+    re: /^(?:docs\/|README\.md|DESIGN\.md|(?:.+\/)?CLAUDE\.md$)/,
   },
 ];
 

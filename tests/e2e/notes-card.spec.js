@@ -1,7 +1,8 @@
 // E2E (fixture harness): the notes feature card in isolation — real partial,
 // real notesCard + noteItemCard, mock API (tests/server.js). Checks DOM/module
 // behaviour that doesn't need the real backend: load on open, the escape
-// invariant of the x-html sink, add, edit → PATCH, job polling, delete.
+// invariant of the x-html sink, add, edit → PATCH, job polling, delete, and
+// the vendor-lib patterns (drag & drop, popover, collapsible chart, clamp).
 
 const { test, expect } = require('./_helpers/fixtures');
 
@@ -86,6 +87,104 @@ test('delete → note-removed event → the card disappears', async ({ page, req
   expect((await (await request.get('/__mock/state')).json()).deletes).toEqual([2]);
 });
 
+// Drag a note card by its handle onto another card (SortableJS fallback mode
+// listens to pointer events — move in steps so it sees a real drag).
+async function dragNote(page, fromTitle, toTitle) {
+  const handle = page.locator('.note-card', { hasText: fromTitle }).getByRole('button', { name: 'Verschieben (ziehen)' });
+  const target = page.locator('.note-card', { hasText: toTitle });
+  const h = await handle.boundingBox();
+  const t = await target.boundingBox();
+  await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2 + 10, { steps: 5 });
+  await page.mouse.move(t.x + t.width / 2, t.y + 5, { steps: 15 });
+  await page.mouse.up();
+}
+const titles = (page) => page.locator('.note-card .card-title').allTextContents();
+
+test('drag & drop reorders the notes → PUT with the full order, no duplicate nodes', async ({ page, request }) => {
+  await dragNote(page, 'Zweite', 'Erste');
+  await expect.poll(() => titles(page)).toEqual(['Zweite', 'Erste']);
+  await expect(page.locator('.note-card')).toHaveCount(2);
+  const state = await (await request.get('/__mock/state')).json();
+  expect(state.orders).toEqual([{ notebookId: 1, ids: [2, 1] }]);
+});
+
+test('a failed reorder shows the error and restores the server order', async ({ page, consoleGuard }) => {
+  consoleGuard.ignore(/reorder failed|status of 500/);
+  // Per page, not via the shared mock (parallel workers).
+  await page.route('**/api/notebooks/*/note-order', (route) =>
+    route.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"mock failure"}' }));
+  await dragNote(page, 'Zweite', 'Erste');
+  await expect(page.getByText('Reihenfolge konnte nicht gespeichert werden.')).toBeVisible();
+  await expect.poll(() => titles(page)).toEqual(['Erste', 'Zweite']);
+});
+
+test('new notebook popover: anchored, focus trapped, Escape returns focus', async ({ page }) => {
+  const addBtn = page.getByRole('button', { name: 'Neues Notizbuch' });
+  await addBtn.click();
+  const pop = page.getByRole('dialog', { name: 'Neues Notizbuch' });
+  await expect(pop).toBeVisible();
+  const name = pop.getByRole('textbox');
+  await expect(name).toBeFocused();
+  // x-anchor placed it right under the button, right-aligned.
+  const b = await addBtn.boundingBox();
+  const p = await pop.boundingBox();
+  expect(Math.abs(p.y - (b.y + b.height + 4))).toBeLessThanOrEqual(2);
+  expect(Math.abs(p.x + p.width - (b.x + b.width))).toBeLessThanOrEqual(2);
+  // Tab stays inside (x-trap): input → button → back to input.
+  await name.fill('x');
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Tab');
+  await expect(name).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(pop).toBeHidden();
+  await expect(addBtn).toBeFocused();
+});
+
+test('new notebook → POST, selected, empty list', async ({ page, request }) => {
+  await page.getByRole('button', { name: 'Neues Notizbuch' }).click();
+  const pop = page.getByRole('dialog', { name: 'Neues Notizbuch' });
+  await pop.getByRole('textbox').fill('Frisch');
+  await pop.getByRole('button', { name: 'Anlegen' }).click();
+  await expect(pop).toBeHidden();
+  await expect(page.getByRole('combobox', { name: 'Notizbuch' }).getByRole('button')).toHaveText('Frisch');
+  await expect(page.locator('.note-card')).toHaveCount(0);
+  const state = await (await request.get('/__mock/state')).json();
+  expect(state.notebooks.map((nb) => nb.name)).toContain('Frisch');
+});
+
+test('overview: collapsed by default, Chart.js loads only on open', async ({ page }) => {
+  const toggle = page.getByRole('button', { name: 'Übersicht' });
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  expect(await page.evaluate(() => typeof window.Chart)).toBe('undefined');
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  const canvas = page.getByRole('img', { name: 'Notizen pro Notizbuch' });
+  await expect(canvas).toBeVisible();
+  await expect.poll(() => page.evaluate(() => typeof window.Chart)).toBe('function');
+  // The chart follows the list: notebook 1 has 2 notes, notebook 2 has 1.
+  const data = await page.evaluate(() => window.Chart.getChart(document.querySelector('.notes-chart canvas')).data.datasets[0].data);
+  expect(data).toEqual([2, 1]);
+  await page.locator('.note-card', { hasText: 'Zweite' }).getByRole('button', { name: 'Löschen' }).click();
+  await expect.poll(() => page.evaluate(() => window.Chart.getChart(document.querySelector('.notes-chart canvas')).data.datasets[0].data))
+    .toEqual([1, 1]);
+});
+
+test('long body is clamped; "show more" appears only where it clips (x-resize)', async ({ page, request }) => {
+  await request.post('/__mock/long-note');
+  await page.reload();
+  await page.waitForFunction(() => window.__harnessReady === true);
+  const long = page.locator('.note-card', { hasText: 'Lang' });
+  await expect(long.getByRole('button', { name: 'Mehr anzeigen' })).toBeVisible();
+  await expect(page.locator('.note-card', { hasText: 'Erste' }).getByRole('button', { name: 'Mehr anzeigen' })).toHaveCount(0);
+  const body = long.locator('.note-body');
+  const clamped = (await body.boundingBox()).height;
+  await long.getByRole('button', { name: 'Mehr anzeigen' }).click();
+  await expect(long.getByRole('button', { name: 'Weniger anzeigen' })).toHaveAttribute('aria-expanded', 'true');
+  expect((await body.boundingBox()).height).toBeGreaterThan(clamped * 2);
+});
+
 test.describe('phone viewport', () => {
   test.use({ viewport: { width: 360, height: 780 } });
 
@@ -93,7 +192,7 @@ test.describe('phone viewport', () => {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow, `notes harness overflows by ${overflow}px at 360px`).toBeLessThanOrEqual(0);
     const card = page.locator('.note-card').first();
-    for (const name of ['Bearbeiten', 'Statistik berechnen', 'Löschen']) {
+    for (const name of ['Verschieben (ziehen)', 'Bearbeiten', 'Statistik berechnen', 'Löschen']) {
       const btn = card.getByRole('button', { name });
       await expect(btn).toBeInViewport();
       const box = await btn.boundingBox();
@@ -103,6 +202,16 @@ test.describe('phone viewport', () => {
     await card.getByRole('button', { name: 'Bearbeiten' }).click();
     const editOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(editOverflow).toBeLessThanOrEqual(0);
+  });
+
+  test('new notebook popover and the overview chart fit 360px', async ({ page }) => {
+    await page.getByRole('button', { name: 'Neues Notizbuch' }).click();
+    await expect(page.getByRole('dialog', { name: 'Neues Notizbuch' })).toBeInViewport({ ratio: 1 });
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Übersicht' }).click();
+    await expect(page.getByRole('img', { name: 'Notizen pro Notizbuch' })).toBeInViewport();
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
   });
 
   test('notebook combobox opens inside the viewport and stays usable', async ({ page }) => {

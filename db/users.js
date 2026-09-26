@@ -57,7 +57,15 @@ const _setCred = db.prepare(`
 function getCredential(email) { return _getCred.get(email); }
 function setCredential(email, hash, mustChange) { _setCred.run({ email, hash, must_change: mustChange ? 1 : 0 }); }
 
+// Account + its initial password in ONE transaction: a failing second write
+// must not leave an account that can never log in.
+const _insertWithCredential = db.transaction(({ email, displayName, hash }) => {
+  _insert.run({ email, display_name: displayName });
+  setCredential(email, hash, true);
+});
+function insertUserWithCredential(args) { _insertWithCredential(args); return _get.get(args.email); }
+
 module.exports = {
   getUser, listUsers, getUserWithCredential, insertUser, upsertSeen, touch, setDisplayName, setStatus, setRole, demoteAllExcept, deleteUser,
-  getCredential, setCredential,
+  getCredential, setCredential, insertUserWithCredential,
 };

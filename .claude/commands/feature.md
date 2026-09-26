@@ -19,8 +19,8 @@ Bestimme (bei Unklarheit **nachfragen**, nicht raten):
 ## Teil A — Backend (Daten)
 
 1. Domänen-DB-Modul unter `db/<domäne>.js` (Muster: [db/notes.js](db/notes.js)) — prepared Statements, `${NOW_ISO_SQL}` ([db/now.js](db/now.js)) für jeden `*_at`-Wert, **nie** `datetime('now')`.
-2. **Facade** unter `lib/<domäne>-store.js` (Muster: [lib/note-store.js](lib/note-store.js)): Validierung + Invarianten hier, nicht in der Route. Routes und Jobs importieren **nur die Facade** — kein Roh-SQL ausserhalb von `db/` (Harte Regel „Domänen-Facade").
-3. Router unter `routes/<domäne>.js` (Muster: [routes/notes.js](routes/notes.js)), in [server.js](server.js) mounten.
+2. **Facade** unter `lib/<domäne>-store.js` (Muster: [lib/note-store.js](lib/note-store.js)): Validierung + Invarianten hier, nicht in der Route; Ablehnungen als `invalid()` / `notFound()` / `conflict()` aus [lib/errors.js](lib/errors.js). Routes und Jobs importieren **nur die Facade** — kein Roh-SQL ausserhalb von `db/` (Harte Regel „Domänen-Facade"). Die Domäne mit ihren Tabellen, dem DB-Modul und der Facade in `DOMAINS` in [scripts/hooks/_rules.js](scripts/hooks/_rules.js) eintragen — erst dann bewachen Hook und `architecture-tripwire.test` sie.
+3. Router unter `routes/<domäne>.js` (Muster: [routes/notes.js](routes/notes.js)): jeder Handler in `handle()` aus [routes/_http.js](routes/_http.js), Ids via `requireId()`, Ergebnis zurückgeben statt `res.json()`. In [server.js](server.js) mounten.
 4. **Logging-Context:** jede Route setzt `setContext({ entity: … })` ([lib/log-context.js](lib/log-context.js)) nach der ID-Validierung.
 
 ## Teil B — Backend (Job)

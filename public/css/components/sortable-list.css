@@ -1,0 +1,21 @@
+/* Sortable list — drag & drop via SortableJS (js/components/sortable-list.js).
+ * DESIGN.md → "Sortierbare Liste". The classes are set by SortableJS. */
+
+@layer components {
+/* The drag handle: grab cursor, and no touch scrolling from it — otherwise a
+   drag on a phone scrolls the page instead. */
+[class*="drag-handle"] {
+  cursor: grab;
+  touch-action: none;
+}
+/* Items already on screen when a drag starts (set by sortable-list.js): no
+   entry animation — a re-inserted node would replay it on every swap. */
+[data-sort-settled] { animation: none; }
+/* The slot where the item will land. */
+.sortable-ghost { opacity: var(--opacity-hint); }
+/* The fallback clone that follows the pointer (in <body>). */
+.sortable-fallback {
+  box-shadow: var(--shadow-md);
+  cursor: grabbing;
+}
+}

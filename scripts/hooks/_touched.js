@@ -80,4 +80,12 @@ function onPayload(fn) {
   });
 }
 
-module.exports = { payloadFrom, isBash, touchedPaths, relOf, writtenText, onPayload };
+// Hand a non-blocking hint to Claude. On exit 0 Claude reads ONLY
+// hookSpecificOutput.additionalContext — plain stdout lands in the transcript
+// view, where nobody acts on it. Every advisory hook goes through here.
+function emitContext(hookEventName, text) {
+  if (!text) return;
+  process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName, additionalContext: text } }));
+}
+
+module.exports = { payloadFrom, isBash, touchedPaths, relOf, writtenText, onPayload, emitContext };

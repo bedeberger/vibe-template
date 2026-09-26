@@ -169,17 +169,45 @@ function jsStyleViolations(src) {
 // ─── DB timestamps: ISO+Z via NOW_ISO_SQL, never datetime('now') ───────────
 const DATETIME_NOW_RE = /datetime\(\s*['"]now['"]\s*\)/gi;
 
-// ─── Domain facade: notes/notebooks only via lib/note-store.js ──────────────
-const DOMAIN_TABLES = ['notes', 'notebooks'];
-const DOMAIN_FACADE = 'lib/note-store.js';
+// ─── Domain facades: a domain's tables + DB module only via its facade ─────
+// ONE entry per domain. A new domain (CLAUDE.md "Feature hinzufügen" §3) is one
+// line here — the style-guard hook and architecture-tripwire.test pick it up.
+// Forgotten, the new tables are open to raw SQL from any route or job.
+const DOMAINS = [
+  { name: 'notes', tables: ['notes', 'notebooks'], dbModule: 'db/notes', facade: 'lib/note-store.js' },
+  { name: 'users', tables: ['app_users', 'user_credentials'], dbModule: 'db/users', facade: 'lib/user-store.js' },
+];
 // Uppercase SQL keywords only — lowercase English prose ("load from notes")
 // stays out; every SQL statement in this codebase is uppercase.
-const RAW_DOMAIN_SQL_RE = new RegExp(
-  String.raw`\b(?:FROM|INTO|UPDATE|JOIN|TABLE)\s+["'\x60\[]?(?:${DOMAIN_TABLES.join('|')})\b`, 'g');
-// Direct import of the domain DB module (db/notes.js) instead of the facade.
-const DOMAIN_DB_IMPORT_RE = /(?:require\(\s*|from\s+|import\(\s*)['"`][^'"`]*\bdb\/notes(?:\.js)?['"`]/g;
-// Who may touch the tables / the DB module directly.
-const mayUseDomainDb = (rel) => rel.startsWith('db/') || rel === DOMAIN_FACADE || rel.startsWith('tests/');
+const rawSqlRe = (tables) => new RegExp(
+  String.raw`\b(?:FROM|INTO|UPDATE|JOIN|TABLE)\s+["'\x60\[]?(?:${tables.join('|')})\b`, 'g');
+// Direct import of the domain DB module (e.g. db/notes.js) instead of the facade.
+const dbImportRe = (dbModule) => new RegExp(
+  String.raw`(?:require\(\s*|from\s+|import\(\s*)['"\x60][^'"\x60]*\b${dbModule.replace('/', '\\/')}(?:\.js)?['"\x60]`, 'g');
+for (const d of DOMAINS) { d.sqlRe = rawSqlRe(d.tables); d.importRe = dbImportRe(d.dbModule); }
+
+// Facade-rule violations in one file (code already comment-stripped):
+// [{ domain, kind: 'sql' | 'import', index, match }]. db/ and tests/ may touch
+// every domain directly; a facade only its own.
+function domainAccessViolations(rel, code) {
+  if (rel.startsWith('db/') || rel.startsWith('tests/')) return [];
+  const out = [];
+  for (const domain of DOMAINS) {
+    if (rel === domain.facade) continue;
+    for (const [kind, re] of [['sql', domain.sqlRe], ['import', domain.importRe]]) {
+      for (const m of code.matchAll(re)) out.push({ domain, kind, index: m.index, match: m[0] });
+    }
+  }
+  return out;
+}
+
+// The hint for one violation — the alternative, not just the prohibition.
+function domainAccessMessage({ domain, kind }) {
+  return kind === 'sql'
+    ? `Roh-SQL gegen ${domain.tables.join('/')} ausserhalb db/ + ${domain.facade}: Zugriff nur ueber die Facade `
+      + '(CLAUDE.md "Domänen-Facade als einziger Eintrittspunkt") — sonst wird architecture-tripwire.test rot.'
+    : `Direkter Import von ${domain.dbModule}.js: Routen/Jobs importieren nur die Facade ${domain.facade}.`;
+}
 
 // ─── i18n ────────────────────────────────────────────────────────────────────
 const LOCALES = ['de', 'en'];
@@ -229,11 +257,9 @@ module.exports = {
   jsStyleViolations,
   dynamicStyleProblem,
   DATETIME_NOW_RE,
-  DOMAIN_TABLES,
-  DOMAIN_FACADE,
-  RAW_DOMAIN_SQL_RE,
-  DOMAIN_DB_IMPORT_RE,
-  mayUseDomainDb,
+  DOMAINS,
+  domainAccessViolations,
+  domainAccessMessage,
   LOCALES,
   localeFile,
   flattenKeys,

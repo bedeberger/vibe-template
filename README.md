@@ -8,7 +8,9 @@ Abhängigkeiten:
   Forward-only-Migrationen mit Squash-Schnellpfad und eingefrorenem Lock-Register.
 - **Alpine.js, kein Build-Schritt** — natives ESM, Alpine aus node_modules vendort.
 - **Plain CSS** — Token-System, `@layer`-Kaskade, keine Inline-Styles.
-- **Auth** — Session-Guard überall; OIDC in Prod, lokal `LOCAL_DEV_MODE`-Bypass.
+- **Auth** — Session-Guard überall; lokale Benutzerverwaltung als Default (Admin-Konsole),
+  optional OIDC; der Admin meldet sich nur über `ADMIN_EMAIL` + `ADMIN_PASSWORD` aus der `.env`
+  an ([docs/auth.md](docs/auth.md)). Zwei Sichten: User und Admin.
 - **Winston-Logging**, **i18n (de/en)**, **eine generische Hintergrund-Job-Queue**
   mit **Cron-Scheduler** (reiht Jobs zeitgesteuert ein, in der App-Zeitzone).
 
@@ -29,8 +31,9 @@ npm start                   # → http://localhost:3000   (oder: npm run dev)
 ```
 
 Im `LOCAL_DEV_MODE` meldet dich der Auth-Guard automatisch als `DEV_USER_EMAIL`
-an, und beim ersten Start entsteht ein Seed-Notebook mit zwei Notes. Kein Login
-nötig.
+an (als Admin, mit beiden Sichten), und beim ersten Start entstehen ein
+Seed-Notebook mit zwei Notes und zwei lokale Benutzer (`anna@local`,
+`ben@local`, Initialpasswort `dev-passwort-123`). Kein Login nötig.
 
 Dieser Klon ist zum Ausprobieren: `origin` zeigt aufs Template-Repo, ein Push
 ginge dorthin. Für ein eigenes Projekt den nächsten Abschnitt nehmen.
@@ -96,20 +99,31 @@ ist die Karte.
 
 ## Konfiguration
 
-Die ganze Konfiguration läuft über die Umgebung (`.env`, siehe `.env.example`):
+Zwei Orte, bewusst getrennt (CLAUDE.md → „`.env` nur minimal"):
+
+**Admin-Konsole → Einstellungen** — alles, was der Admin selbst und sofort
+ändern können soll, ohne Neustart (`lib/app-settings.js`):
+
+| Tab | Einstellung |
+| --- | --- |
+| Allgemein | Zeitzone (Datumsanzeige + Job-Zeitpläne) |
+| Anmeldung | Login-Methode (lokal / OIDC), OIDC-Issuer, Client-ID, Redirect-URI |
+| Jobs | Aufbewahrung erledigter Jobs (Tage) |
+
+**`.env`** (siehe `.env.example`) — nur Secrets, Bootstrap vor der DB und
+Schalter pro Prozess:
 
 | Var | Zweck |
 | --- | --- |
+| `SESSION_SECRET` | Signiert die Session-Cookies — in Prod ≥ 32 Zeichen |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Der Admin; meldet sich immer mit diesem Passwort an, auch bei OIDC |
+| `OIDC_CLIENT_SECRET` | Secret zum OIDC-Client (der Rest steht in der Konsole) |
 | `PORT` | Server-Port (Standard 3000) |
-| `SESSION_SECRET` | Signiert die Session-Cookies — in Prod einen Zufallswert setzen |
 | `DB_PATH` | Pfad der SQLite-Datei (Standard `./app.db`) |
 | `LOG_PATH` / `LOG_LEVEL` | Log-Datei (Standard `./app.log`, rotiert selbst 5 MB × 5) / Winston-Level |
+| `SCHEDULER` | `off` schaltet den Cron-Scheduler dieses Prozesses ab |
 | `NODE_ENV` | `production` → Secure-Cookie, `trust proxy`, Boot verweigert `LOCAL_DEV_MODE` und ein kurzes `SESSION_SECRET` (setzt die systemd-Unit) |
-| `APP_TIMEZONE` | IANA-Zeitzone für die Datumsanzeige (Seed für `app.timezone`) |
-| `LOCAL_DEV_MODE` | `1` = OIDC umgehen + Seed-Daten (nur lokal) |
-| `DEV_USER_EMAIL` | Identität im Dev-Modus |
-| `ADMIN_EMAIL` | Erhält beim Boot `global_role=admin` |
-| `OIDC_ISSUER` / `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` / `OIDC_REDIRECT_URI` | OIDC-Login (Prod) |
+| `LOCAL_DEV_MODE` / `DEV_USER_EMAIL` | `1` = Login umgehen + Seed-Daten, Identität im Dev-Modus (nur lokal) |
 
 ## Tests
 

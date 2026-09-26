@@ -1,0 +1,24 @@
+/* Popover — small non-modal panel pinned to its trigger (x-anchor), focus
+ * kept inside by x-trap. DESIGN.md → "Popover". Position (top/left) is set
+ * inline by x-anchor via CSSOM — CSP-safe, no style attribute in the markup. */
+
+@layer components {
+.popover {
+  position: absolute;
+  z-index: var(--z-popover);
+  width: max-content;
+  /* A fixed cap, not calc(100vw - …): vw includes a classic scrollbar, so
+     the panel would overhang the visible area by its width. 19rem fits a
+     320 px phone with x-anchor's 5 px edge gap; the .row inside wraps. */
+  max-width: 19rem;
+  padding: var(--space-md);
+  background: var(--color-surface);
+  border: var(--border-thin) solid var(--color-border-focus);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  transition: opacity var(--transition-base);
+}
+@starting-style {
+  .popover { opacity: 0; }
+}
+}

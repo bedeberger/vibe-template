@@ -14,6 +14,9 @@ export function noteItemCard(note) {
     draftBody: note.body,
     stats: null,
     busy: false,
+    // Long body: clamped until expanded; the toggle shows only when it clips.
+    bodyExpanded: false,
+    bodyOverflows: false,
 
     t,
     fmt: formatDate,
@@ -21,6 +24,12 @@ export function noteItemCard(note) {
     // x-html sink → content is escaped here (escape invariant).
     get bodyHtml() {
       return escHtml(this.note.body).replace(/\n/g, '<br>');
+    },
+
+    // x-resize on the body (DESIGN.md → "Alpine-Plugins"). Measured only while
+    // clamped — expanded, nothing clips and the toggle would vanish.
+    measureBody(el) {
+      if (!this.bodyExpanded) this.bodyOverflows = el.scrollHeight > el.clientHeight + 1;
     },
 
     startEdit() {

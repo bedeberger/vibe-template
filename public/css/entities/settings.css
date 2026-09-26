@@ -1,0 +1,8 @@
+/* Settings feature (public/partials/settings.html, admin view). Declares ONLY
+ * the deviations from the shared card vocabulary (DESIGN.md → Karten-Innenraum,
+ * Besitzer-Regel in public/css/CLAUDE.md). */
+
+@layer components {
+/* Save/discard right-aligned under the tab panels, like the users create action. */
+.settings-actions { justify-content: flex-end; }
+}

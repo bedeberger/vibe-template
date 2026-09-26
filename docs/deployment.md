@@ -110,9 +110,12 @@ auf der Maschine `systemctl list-units 'actions.runner.*'`.
 
 ## 4. Konfigurieren und aktivieren
 
-1. `nano /etc/my-app/app.env` — `ADMIN_EMAIL` und die `OIDC_*`-Werte setzen.
-   `OIDC_REDIRECT_URI` ist die **öffentliche** URL: `https://my-app.example.com/auth/callback`
-   (dieselbe URI beim Identity-Provider registrieren).
+1. `nano /etc/my-app/app.env` — `ADMIN_EMAIL` + `ADMIN_PASSWORD` setzen (und
+   `OIDC_CLIENT_SECRET`, falls OIDC). Mehr gehört nicht hinein: Zeitzone,
+   Login-Methode, OIDC-Issuer/Client-ID/Redirect-URI und Job-Aufbewahrung stellt
+   der Admin nach dem ersten Deploy in der App ein (Admin-Konsole →
+   Einstellungen). Die Redirect-URI ist die **öffentliche** URL
+   `https://my-app.example.com/auth/callback` (dieselbe beim Identity-Provider).
    Nie `LOCAL_DEV_MODE`, `PORT` oder `DB_PATH` hier eintragen — die gehören der Unit.
 2. GitHub → *Settings → Secrets and variables → Actions → Variables*:
 

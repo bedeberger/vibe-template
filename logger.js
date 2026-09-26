@@ -11,7 +11,9 @@ const { contextTag } = require('./lib/log-context');
 const LOG_FILE = process.env.LOG_PATH || path.join(__dirname, 'app.log');
 
 const fmt = winston.format.combine(
-  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
+  // ISO+Z (UTC), like every DB timestamp — the admin log viewer shows it in
+  // the app timezone via formatDate (docs/logging.md).
+  winston.format.timestamp(),
   winston.format.printf(({ timestamp, level, message }) => {
     const tag = contextTag();
     return `${timestamp} ${level.toUpperCase()} ${tag ? tag + ' ' : ''}${message}`;
@@ -28,5 +30,8 @@ const logger = winston.createLogger({
     new winston.transports.File({ filename: LOG_FILE, maxsize: 5 * 1024 * 1024, maxFiles: 5, tailable: true }),
   ],
 });
+
+// The admin log viewer (lib/log-reader.js) reads the same file chain.
+logger.logFile = LOG_FILE;
 
 module.exports = logger;

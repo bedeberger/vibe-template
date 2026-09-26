@@ -80,12 +80,21 @@ test('PostToolUse-Hooks: still auf sauberem Stand, Reminder bei neuer Migration/
     const r = run(hook, { tool_name: 'Edit', tool_input: { file_path: abs('public/js/i18n/de.json'), new_string: 'x' } });
     assert.deepEqual([r.code, r.out.trim()], [0, ''], `${hook} meldet auf dem aktuellen Stand etwas: ${r.out}`);
   }
-  const mig = run('drift-reminders.js', { tool_name: 'Write', tool_input: { file_path: abs('db/migrations/9999_probe.js'), content: 'x' } });
-  assert.match(mig.out, /squash:check/);
-  assert.match(mig.out, /migrations:lock/);
-  const css = run('drift-reminders.js', { tool_name: 'Write', tool_input: { file_path: abs('public/css/components/probe.css'), content: 'x' } });
-  assert.match(css.out, /index\.html/);
-  assert.match(css.out, /CSS-Inventar/);
+  // A hint must arrive as additionalContext — plain stdout never reaches Claude.
+  const context = (r) => {
+    const out = JSON.parse(r.out).hookSpecificOutput;
+    assert.equal(out.hookEventName, 'PostToolUse');
+    return out.additionalContext;
+  };
+  const mig = context(run('drift-reminders.js', { tool_name: 'Write', tool_input: { file_path: abs('db/migrations/9999_probe.js'), content: 'x' } }));
+  assert.match(mig, /squash:check/);
+  assert.match(mig, /migrations:lock/);
+  const css = context(run('drift-reminders.js', { tool_name: 'Write', tool_input: { file_path: abs('public/css/components/probe.css'), content: 'x' } }));
+  assert.match(css, /index\.html/);
+  assert.match(css, /CSS-Inventar/);
+  // Reading a migration via Bash is not editing it — no reminder.
+  const read = run('drift-reminders.js', { tool_name: 'Bash', tool_input: { command: 'cat db/migrations/0001_init.js' } });
+  assert.deepEqual([read.code, read.out], [0, '']);
 });
 
 test('SessionStart liefert valides JSON; Stop-Hook respektiert stop_hook_active', () => {

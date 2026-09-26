@@ -9,6 +9,10 @@
 import { registerCombobox } from '../components/combobox.js';
 import { registerNotesCard } from '../cards/notes-card.js';
 import { registerNoteItemCard } from '../cards/note-item-card.js';
+import { registerUsersCard } from '../cards/users-card.js';
+import { registerUserItemCard } from '../cards/user-item-card.js';
+import { registerLogsCard } from '../cards/logs-card.js';
+import { registerSettingsCard } from '../cards/settings-card.js';
 // @register-cards:imports
 
 export function registerCards(Alpine) {
@@ -21,5 +25,9 @@ export function registerCards(Alpine) {
 
   registerNotesCard(Alpine);
   registerNoteItemCard(Alpine);
+  registerUsersCard(Alpine);
+  registerUserItemCard(Alpine);
+  registerLogsCard(Alpine);
+  registerSettingsCard(Alpine);
   // @register-cards:calls
 }

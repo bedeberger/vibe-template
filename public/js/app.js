@@ -8,7 +8,7 @@
 
 import Alpine from '/vendor/alpine-3.15.12.esm.min.js';
 import { initialState } from '/js/app/app-state.js';
-import { FEATURES, DEFAULT_FEATURE, findFeature } from '/js/app/features.js';
+import { FEATURES, DEFAULT_FEATURE, findFeature, firstFeatureOf } from '/js/app/features.js';
 import { ensurePartial } from '/js/app/feature-host.js';
 import { setupRouting, hashFor } from '/js/app/router.js';
 import { registerCards } from '/js/app/register-cards.js';
@@ -40,14 +40,26 @@ function appRoot() {
       }
       // Hosts are rendered by x-for — wait one tick, then route (#hash or default).
       await this.$nextTick();
-      setupRouting(this, { isKnown: (id) => !!findFeature(id), fallback: DEFAULT_FEATURE });
+      // An admin feature is "unknown" to a non-admin → falls back to the default.
+      setupRouting(this, { isKnown: (id) => this.canSee(findFeature(id)), fallback: DEFAULT_FEATURE });
+    },
+
+    // Two views (docs/auth.md): 'user' for everyone, 'admin' only for the .env
+    // admin. The nav shows the features of the current view; the server guards
+    // /api/admin on its own — this only decides what is shown.
+    get isAdmin() { return this.user?.role === 'admin'; },
+    canSee(feature) { return !!feature && (feature.view === 'user' || this.isAdmin); },
+
+    switchView(view) {
+      const target = firstFeatureOf(view);
+      if (target && this.canSee(target)) this.openFeature(target.id);
     },
 
     // The ONE way to switch features (nav click, hash, code). Exclusive: one
     // feature visible at a time. Re-click on the active one = refresh.
     async openFeature(id, sub = '', { fromHash = false } = {}) {
       const feature = findFeature(id);
-      if (!feature) return;
+      if (!this.canSee(feature)) return;
       if (!fromHash && id === this.activeFeature && sub === this.featureSub) {
         window.dispatchEvent(new CustomEvent(EVT.CARD_REFRESH, { detail: { id } }));
         return;
@@ -58,6 +70,7 @@ function appRoot() {
         console.error(`[app] feature ${id} failed to load`, e);
         return;
       }
+      this.view = feature.view;
       this.activeFeature = id;
       this.featureSub = sub;
       const hash = hashFor(id, sub);
