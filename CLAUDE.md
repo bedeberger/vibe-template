@@ -17,6 +17,9 @@ only when needed.
 `LOCAL_DEV_MODE=1`: login bypassed, seed data). Tests: `npm test`.
 **Production:** one LXC behind Nginx Proxy Manager, deployed by a self-hosted
 runner after green CI on `main` — [docs/deployment.md](docs/deployment.md).
+**Git workflow:** trunk-based — commit directly on `main`, no feature branches,
+no PRs. Every push to `main` is a production deploy to the LXC (once CI is
+green), so push only after the tests pass locally.
 
 ## Stack
 
@@ -189,10 +192,12 @@ npm run migrations:lock     # freeze the migration chain (commit the lock)
 npm run migration:renumber  # own unpushed migration → max(origin/main)+1
 npm run vendor:sync         # re-vendor browser libs after a devDependency bump
 npm run feature:new -- <id> # scaffold a frontend feature (--dry-run first)
+npm run init -- <slug> --title "…"  # rename a fresh clone into its own project
 ```
 
 Claude commands ([.claude/commands/](.claude/commands/)): `/feature` (new
 feature end to end), `/karte` (card/tab in an existing feature), `/migration`,
-`/regel` (new hard rule: gate test first), `/release`. Skill `css`
+`/regel` (new hard rule: gate test first), `/release`, `/projekt-init` (fresh
+clone → own project). Skill `css`
 ([.claude/skills/css/](.claude/skills/css/)): measure (`audit.mjs`) before CSS work. VS Code: tasks (`gate` is the default
 build task), debug profiles and test explorer in [.vscode/](.vscode/).

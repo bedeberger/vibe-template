@@ -12,7 +12,7 @@
 //      after each step — the "every migration ends with foreign_key_check"
 //      rule is enforced centrally there.
 
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import Database from 'better-sqlite3';
 import { createRequire } from 'node:module';
@@ -24,6 +24,7 @@ const { SQUASHED_SCHEMA } = require('../../db/squashed-schema/index.js');
 const db = new Database(':memory:');
 db.pragma('foreign_keys = ON');
 db.exec(SQUASHED_SCHEMA);
+after(() => db.close()); // unclosed handle aborts the process at exit (Node 24)
 
 const tables = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")
   .all().map((r) => r.name).filter((t) => t !== 'schema_version');

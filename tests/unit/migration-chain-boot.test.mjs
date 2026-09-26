@@ -15,8 +15,9 @@ import assert from 'node:assert';
 import Database from 'better-sqlite3';
 import migrations from '../../db/migrations.js';
 
-test('full migration chain applies cleanly with foreign_keys ON', () => {
+test('full migration chain applies cleanly with foreign_keys ON', (t) => {
   const db = new Database(':memory:');
+  t.after(() => db.close()); // unclosed handle aborts the process at exit (Node 24)
   db.pragma('foreign_keys = ON'); // prod-faithful — otherwise ALTER errors stay hidden
   assert.doesNotThrow(() => migrations.runMigrations(db, { info() {} }));
 

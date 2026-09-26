@@ -29,7 +29,14 @@ test('squashed schema matches the migration chain', () => {
   const chained = new Database(':memory:');
   migrations.runMigrations(chained, { info() {} });
 
-  assert.equal(schemaDump(chained), schemaDump(squashed));
+  try {
+    assert.equal(schemaDump(chained), schemaDump(squashed));
+  } finally {
+    // Close explicitly: an unclosed handle is destroyed after Node's env
+    // teardown at exit and aborts the process (better-sqlite3 11 / Node 24).
+    squashed.close();
+    chained.close();
+  }
 });
 
 test('SQUASHED_VERSION equals the highest migration number', () => {

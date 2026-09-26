@@ -2,12 +2,13 @@
 // user — create, run the stats job through the real queue, delete. Belongs here
 // and not in a harness because the assertion depends on the real backend.
 const { test, expect } = require('../e2e/_helpers/fixtures');
+const de = require('../../public/js/i18n/de.json');
 
 test('create, run stats, and delete a note', async ({ page }) => {
   await page.goto('/');
 
   // App becomes ready (i18n + data loaded). Seed note is visible.
-  await expect(page.locator('.site-title')).toHaveText('vibe-template');
+  await expect(page.locator('.site-title')).toHaveText(de.app.title);
   await expect(page.locator('.note-card').first()).toBeVisible();
 
   // Create a note.

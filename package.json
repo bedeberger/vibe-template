@@ -22,7 +22,8 @@
     "migrations:lock": "node scripts/migrations-lock.js --write",
     "migration:renumber": "node scripts/migration-renumber.js",
     "vendor:sync": "node scripts/vendor-sync.js",
-    "feature:new": "node scripts/feature-new.js"
+    "feature:new": "node scripts/feature-new.js",
+    "init": "node scripts/project-init.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.0",

@@ -27,6 +27,22 @@ npm start                   # → http://localhost:3000   (or: npm run dev)
 In `LOCAL_DEV_MODE` the auth guard auto-authenticates you as `DEV_USER_EMAIL`
 and a seed notebook with two notes is created on first boot. No login needed.
 
+## Start your own project
+
+Create a repo from this one (GitHub: *Use this template*, no template history),
+clone it, then give it its name:
+
+```bash
+npm install
+npm run init -- invoice-hub --title "Invoice Hub"   # --dry-run first to see the files
+```
+
+The slug (kebab-case) becomes package name, systemd unit, `/opt/<slug>` and the
+runner label; the title shows in the UI, browser tab and manifest. The script
+also resets `CHANGELOG.md` and the version to 0.1.0 and runs `npm run test:unit`.
+In Claude Code, `/projekt-init` runs it and walks through the rest (remote,
+`.env`, deploy variables, later replacing the `note` example).
+
 ## Project layout
 
 ```
@@ -91,6 +107,9 @@ hardened systemd unit, sudoers, GitHub runner); after that every green CI run on
 DB backup → migration dry run on a copy → rsync → restart → `/healthz` →
 rollback on failure. Step-by-step guide incl. the NPM proxy host:
 [docs/deployment.md](docs/deployment.md).
+
+**Git workflow:** work directly on `main`, no feature branches or PRs. A push
+to `main` is a production deploy, so run `npm test` before you push.
 
 ## License
 
