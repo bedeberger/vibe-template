@@ -2,11 +2,13 @@
 // Jobs API — enqueue background work and poll its status. The frontend POSTs to
 // start a job, then polls GET /api/jobs/:id until status is done|error.
 // Requiring a job module registers its runner with the queue; a new job type is
-// one file next to this one plus one entry in KNOWN_TYPES.
+// one file next to this one plus one entry in KNOWN_TYPES (enqueueable via the
+// API). A scheduled job type is only required here — the scheduler enqueues it.
 
 const express = require('express');
 const queue = require('./shared/queue');
 const { TYPE: NOTE_STATS } = require('./note-stats');
+require('./jobs-cleanup'); // scheduled (cron), not enqueueable via the API
 const { setContext } = require('../../lib/log-context');
 
 const router = express.Router();

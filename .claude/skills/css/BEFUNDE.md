@@ -1,16 +1,16 @@
-# CSS findings — the measurement log of the `css` skill
+# CSS-Befunde — das Messprotokoll des `css`-Skills
 
-**Numbers, dates and pointers only.** No pattern, no rationale, no design
-decision — those belong in [DESIGN.md](DESIGN.md) (a second catalog would be the
-wrong one). Measured with `node .claude/skills/css/audit.mjs`. One line per
-session in which something measurable moved. Newest on top.
+**Nur Zahlen, Daten und Verweise.** Kein Pattern, keine Begründung, keine
+Designentscheidung — die gehören in [DESIGN.md](DESIGN.md) (ein zweiter Katalog
+wäre der falsche). Gemessen mit `node .claude/skills/css/audit.mjs`. Eine Zeile
+pro Session, in der sich etwas Messbares bewegt hat. Neueste oben.
 
-| Date | Rule lines | Blocks | gzip (bare / on disk) | Orphaned tokens | Bodies ≥3× |
+| Datum | Regelzeilen | Blöcke | gzip (nackt / auf Disk) | Verwaiste Tokens | Körper ≥3× |
 |---|---|---|---|---|---|
 | 2026-09-25 | 1817 | 313 | 10,0 / 21,2 kB | 0 (+26 template reserve) | 0 |
 
-> **2026-09-25 — baseline.** Design system ported from schreibwerkstatt, notes
-> as the only feature. The 26 reserve tokens are the design scale the example
-> doesn't read yet (`TOKEN_RESERVE` in audit.mjs). Open lever: the 8× flex
-> cluster `flex/row/center/gap:--space-sm` — check it against `.row` before a
-> third feature copies it.
+> **2026-09-25 — Baseline.** Designsystem aus schreibwerkstatt portiert, Notizen
+> als einziges Feature. Die 26 Reserve-Tokens sind die Designskala, die das
+> Beispiel noch nicht liest (`TOKEN_RESERVE` in audit.mjs). Offener Hebel: der
+> 8×-Flex-Cluster `flex/row/center/gap:--space-sm` — gegen `.row` prüfen, bevor
+> ein drittes Feature ihn kopiert.

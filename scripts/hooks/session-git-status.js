@@ -6,9 +6,11 @@
 // checkout — foreign uncommitted work must not slip into your own commit, and
 // must never be "cleaned up" (no git stash / checkout -- / restore; those are
 // denied in .claude/settings.json). Clean tree → a one-line message.
+// Plus setup hints for a fresh clone (npm install, /projekt-init) — _setup.js.
 
 const { spawnSync } = require('node:child_process');
 const { ROOT } = require('./_rules.js');
+const { setupHints } = require('./_setup.js');
 
 const git = (args) => spawnSync('git', args, { cwd: ROOT, encoding: 'utf8' });
 
@@ -26,6 +28,9 @@ if (!lines) {
     + 'Vor eigenen Commits pruefen, was wirklich zu deiner Arbeit gehoert — kein git stash, kein '
     + 'git checkout -- <file> auf fremde Aenderungen.';
 }
+
+const hints = setupHints(ROOT);
+if (hints.length) context = `${hints.join('\n')}\n${context}`;
 
 process.stdout.write(JSON.stringify({
   hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: context },

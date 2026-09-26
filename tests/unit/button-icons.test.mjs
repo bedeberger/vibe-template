@@ -1,4 +1,4 @@
-// Guard for the action icon library (DESIGN.md → "Action icon library").
+// Guard for the action icon library (DESIGN.md → "Aktions-Icon-Bibliothek").
 // Binding frontend invariant: action buttons use sprite icons
 // (<svg class="icon"><use href="/icons.svg#…"/></svg>), never classic Unicode
 // glyphs as the icon (×, ✕, ↑, ↓, ‹ …). Red as soon as a feature introduces a
@@ -61,7 +61,7 @@ test('Buttons: keine Unicode-Glyphen als Icon-Inhalt', () => {
       }
     }
   }
-  assert.deepEqual(offenders, [], `Klassische Glyph-Buttons (DESIGN.md → Action icon library):\n  ${offenders.join('\n  ')}`);
+  assert.deepEqual(offenders, [], `Klassische Glyph-Buttons (DESIGN.md → Aktions-Icon-Bibliothek):\n  ${offenders.join('\n  ')}`);
 });
 
 test('jeder .icon-btn enthaelt ein Sprite-Icon (<svg class="icon"><use…>)', () => {

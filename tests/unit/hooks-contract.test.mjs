@@ -10,12 +10,15 @@
 //     reminder on a new migration / unlinked CSS file
 //   • session-git-status: valid SessionStart JSON; stop-run-unit-tests: honours
 //     stop_hook_active (no recursive test run)
+//   • _setup: a fresh clone (no node_modules, template name ≠ repo name) gets
+//     the npm install / /projekt-init hint; the set-up checkout stays silent
 //   • every command in .claude/settings.json points to an existing hook file.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
 
@@ -82,7 +85,7 @@ test('PostToolUse-Hooks: still auf sauberem Stand, Reminder bei neuer Migration/
   assert.match(mig.out, /migrations:lock/);
   const css = run('drift-reminders.js', { tool_name: 'Write', tool_input: { file_path: abs('public/css/components/probe.css'), content: 'x' } });
   assert.match(css.out, /index\.html/);
-  assert.match(css.out, /CSS file inventory/);
+  assert.match(css.out, /CSS-Inventar/);
 });
 
 test('SessionStart liefert valides JSON; Stop-Hook respektiert stop_hook_active', () => {
@@ -91,6 +94,24 @@ test('SessionStart liefert valides JSON; Stop-Hook respektiert stop_hook_active'
   assert.equal(JSON.parse(s.out).hookSpecificOutput.hookEventName, 'SessionStart');
   const stop = run('stop-run-unit-tests.js', { stop_hook_active: true });
   assert.deepEqual([stop.code, stop.out, stop.err], [0, '', '']);
+});
+
+test('_setup: frischer Klon bekommt npm-install- und /projekt-init-Hinweis', () => {
+  const { setupHints } = require('../../scripts/hooks/_setup.js');
+  const tmp = mkdtempSync(join(tmpdir(), 'vt-setup-'));
+  try {
+    writeFileSync(join(tmp, 'package.json'), JSON.stringify({ name: 'the-template' }));
+    const fresh = setupHints(tmp, 'invoice-hub');
+    assert.equal(fresh.length, 2);
+    assert.match(fresh[0], /npm install/);
+    assert.match(fresh[1], /\/projekt-init/);
+    mkdirSync(join(tmp, 'node_modules'));
+    writeFileSync(join(tmp, 'node_modules', '.package-lock.json'), '{}');
+    assert.deepEqual(setupHints(tmp, 'the-template'), []);
+    assert.deepEqual(setupHints(tmp, null), [], 'ohne origin kein Namens-Hinweis');
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
 });
 
 test('prompt-disambiguation: leere Tabelle schweigt, der Mechanismus greift', () => {

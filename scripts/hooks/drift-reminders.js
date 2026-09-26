@@ -11,7 +11,7 @@
 //   • public/css/**.css (new)      → <link> in index.html (or @import for tokens/) + DESIGN.md inventory row
 //   • public/partials/**.html (new, unwired) → wire it + check DESIGN.md for the pattern
 //   • routes/<x>.js (new, unmounted) → server.js app.use + features.js entry
-//   • public/icons.svg             → DESIGN.md "Shipped symbols" list
+//   • public/icons.svg             → DESIGN.md "Ausgelieferte Symbole" list
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -25,7 +25,7 @@ function remindersFor(rel) {
 
   const mig = rel.match(/^db\/migrations\/(\d{4}_[^/]+)\.js$/);
   if (mig) {
-    r.push(`db/migrations/${mig[1]}.js bearbeitet → vor dem Commit (CLAUDE.md "Add a feature" §5, docs/migrations.md):`,
+    r.push(`db/migrations/${mig[1]}.js bearbeitet → vor dem Commit (CLAUDE.md "Feature hinzufügen" §5, docs/migrations.md):`,
       '  • DDL in das passende Segment unter db/squashed-schema/ folden',
       '  • SQUASHED_VERSION in db/squashed-schema/index.js auf die neue Nummer bumpen',
       '  • jede *_id-Spalte als FK mit Index + bewusstem ON DELETE (schema-integrity.test)',
@@ -49,7 +49,7 @@ function remindersFor(rel) {
           + 'an ihrer Cascade-Position einhaengen (Reihenfolge = Cascade), Regeln in @layer components { … } wickeln.');
     }
     if (!read('DESIGN.md').includes(`\`${css[1]}\``)) {
-      r.push(`  • DESIGN.md → "CSS file inventory": Zeile fuer \`${css[1]}\` ergaenzen (sonst design-css-inventory-drift.test rot).`);
+      r.push(`  • DESIGN.md → "CSS-Inventar": Zeile fuer \`${css[1]}\` ergaenzen (sonst design-css-inventory-drift.test rot).`);
     }
   }
 
@@ -78,7 +78,7 @@ function remindersFor(rel) {
   }
 
   if (rel === 'public/icons.svg') {
-    r.push('public/icons.svg bearbeitet → neue Symbole in DESIGN.md → "Icon system" (Shipped symbols) listen, '
+    r.push('public/icons.svg bearbeitet → neue Symbole in DESIGN.md → "Icon-System" (Ausgelieferte Symbole) listen, '
       + 'viewBox 0 0 24 24, keine fill/stroke-Attribute (sonst icons-sprite.test rot).');
   }
 

@@ -9,10 +9,12 @@
 // suite. Green → exit 0, silent. Red → warning on stderr, but still exit 0
 // (NON-BLOCKING): parallel sessions may share one checkout, and a blocking
 // gate would lock one session for another's drift. CI is the binding gate.
-// test:unit is browserless (seconds), no e2e/smoke.
+// test:unit is browserless (seconds), no e2e/smoke. Without node_modules (fresh
+// clone before `npm install`) it is skipped — SessionStart names that step.
 
 const { spawnSync } = require('node:child_process');
 const { ROOT } = require('./_rules.js');
+const { hasDeps } = require('./_setup.js');
 
 let raw = '';
 process.stdin.setEncoding('utf8');
@@ -23,6 +25,8 @@ process.stdin.on('end', () => {
   try {
     if (JSON.parse(raw || '{}').stop_hook_active) process.exit(0);
   } catch { /* no/broken JSON → carry on */ }
+
+  if (!hasDeps(ROOT)) process.exit(0);
 
   const status = spawnSync('git', ['status', '--porcelain'], { cwd: ROOT, encoding: 'utf8' });
   if (status.status === 0 && !status.stdout.trim()) process.exit(0); // clean tree → nothing to check

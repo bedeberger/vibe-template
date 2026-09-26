@@ -5,7 +5,8 @@
 //
 // Lifecycle: queued → running → done | error. Status is persisted in the `jobs`
 // table so the frontend can poll. Dedup: createJob() returns the existing
-// active job instead of enqueuing a duplicate for the same (type, note_id).
+// active job instead of enqueuing a duplicate for the same (type, note_id) —
+// also for entity-less jobs (note_id NULL, e.g. scheduled housekeeping).
 
 const { db } = require('../../../db/schema');
 const { NOW_ISO_SQL } = require('../../../db/now');
@@ -26,7 +27,7 @@ const _insert = db.prepare(
 const _get = db.prepare('SELECT * FROM jobs WHERE id = ?');
 const _byNote = db.prepare('SELECT * FROM jobs WHERE note_id = ? ORDER BY created_at DESC');
 const _activeId = db.prepare(
-  "SELECT id FROM jobs WHERE type = ? AND note_id = ? AND status IN ('queued','running') ORDER BY id DESC"
+  "SELECT id FROM jobs WHERE type = ? AND note_id IS ? AND status IN ('queued','running') ORDER BY id DESC"
 );
 const _nextQueued = db.prepare("SELECT * FROM jobs WHERE status = 'queued' ORDER BY id LIMIT 1");
 const _setRunning = db.prepare(
@@ -37,6 +38,9 @@ const _setDone = db.prepare(
 );
 const _setError = db.prepare(
   `UPDATE jobs SET status = 'error', status_text = ?, finished_at = ${NOW_ISO_SQL}, updated_at = ${NOW_ISO_SQL} WHERE id = ?`
+);
+const _purgeFinished = db.prepare(
+  `DELETE FROM jobs WHERE status IN ('done','error') AND finished_at < strftime('%Y-%m-%dT%H:%M:%fZ','now', ?)`
 );
 
 function getJob(id) {
@@ -58,6 +62,12 @@ function createJob(type, noteId, statusText = 'queued') {
   const info = _insert.run(type, noteId, statusText);
   setImmediate(drainQueue);
   return getJob(info.lastInsertRowid);
+}
+
+// Delete finished jobs older than `days` (active ones are never touched).
+function purgeFinished(days) {
+  if (!Number.isInteger(days) || days < 1) throw new Error('days must be a positive integer');
+  return _purgeFinished.run(`-${days} days`).changes;
 }
 
 let _draining = false;
@@ -92,5 +102,6 @@ module.exports = {
   getJob,
   listJobs,
   findActiveJobId,
+  purgeFinished,
   drainQueue,
 };

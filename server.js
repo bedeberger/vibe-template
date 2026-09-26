@@ -35,7 +35,8 @@ const { runDevSeedIfNeeded } = require('./lib/dev-seed');
 
 const authRouter = require('./routes/auth');
 const notesRouter = require('./routes/notes');
-const jobsRouter = require('./routes/jobs'); // also registers the job runners
+const jobsRouter = require('./routes/jobs'); // also registers the job runners + schedules
+const scheduler = require('./routes/jobs/shared/scheduler');
 
 // ── Boot-time bootstrap (idempotent) ───────────────────────────────────────
 try { appSettings.bootstrapFromEnv(); } catch (e) { logger.warn(`settings bootstrap: ${e.message}`); }
@@ -123,7 +124,10 @@ app.use((req, res) => {
 
 const PORT = Number(process.env.PORT) || 3000;
 
+// The cron scheduler ticks only in a running server (never on import, so tests
+// stay deterministic); SCHEDULER=off disables it, e.g. on a second instance.
 function start() {
+  if (process.env.SCHEDULER !== 'off') scheduler.start();
   return app.listen(PORT, () => logger.info(`vibe-template läuft auf http://localhost:${PORT}`));
 }
 

@@ -27,6 +27,7 @@ Gib diese Punkte als kurze Liste aus. Erledige selbst nur, was lokal geht:
 - **Git-Remote**: `git remote -v`. Zeigt `origin` noch auf das Template-Repo, muss der User ein eigenes Repo anlegen und den Remote umstellen, sonst würde ein Push ins Template gehen. Weniger Aufwand: das Template auf GitHub als *Template repository* markieren und neue Projekte über *Use this template* anlegen (ohne Template-Historie).
 - **`.env`**: `cp .env.example .env` (lokal, `LOCAL_DEV_MODE=1` ist vorbelegt). Das darfst du selbst tun, falls `.env` fehlt.
 - **Deploy**: GitHub-Variable `APP_NAME=<slug>` (die Workflows haben ihn schon als Default, die Variable macht ihn explizit), dazu `DEPLOY_ENABLED` und LXC per `APP_NAME=<slug> REPO_SLUG=<owner>/<repo> bash scripts/prepare-lxc.sh`, siehe [docs/deployment.md](docs/deployment.md).
+- **Lizenz**: [LICENSE](LICENSE) nennt den Rechteinhaber des Templates (MIT). Für ein Kundenprojekt oder ein anderes Copyright anpassen oder ersetzen.
 - **Icon/Farben**: `public/icon.svg` und die `theme-color`/`background_color` sind die des Templates, siehe [DESIGN.md](DESIGN.md).
 
 ## 4. Beispiel-Domäne `note`/`notebook` ablösen (später, nicht jetzt)

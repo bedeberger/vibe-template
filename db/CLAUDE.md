@@ -1,41 +1,43 @@
-# DB rules (`db/`)
+# DB-Regeln (`db/`)
 
-Applies in addition to the root [CLAUDE.md](../CLAUDE.md). Mechanism (fresh vs.
-upgrade, squash, lock, renumber, rollback): [docs/migrations.md](../docs/migrations.md).
-New migration: `/migration`.
+Gilt zusätzlich zur Root-[CLAUDE.md](../CLAUDE.md). Mechanik (frisch vs.
+Upgrade, Squash, Lock, Renumber, Rollback): [docs/migrations.md](../docs/migrations.md).
+Neue Migration: `/migration`.
 
-- **One domain per file.** [connection.js](connection.js) (the one connection,
-  `PRAGMA foreign_keys = ON`, refuses the repo DB under `NODE_ENV=test`),
-  [now.js](now.js), [migrations.js](migrations.js) (runner),
-  [schema.js](schema.js) (boot: squash or chain), [squashed-schema/](squashed-schema/)
-  (one segment per domain), [migrations/](migrations/) (`000N_<name>.js`), then
-  one module per domain ([notes.js](notes.js)). Domain modules are reached only
-  through their facade in `lib/` — routes and jobs never import `db/<domain>.js`.
-- **Timestamps: ISO+Z.** Every `*_at` column stores ISO-8601 with `Z`. Defaults
-  `(strftime('%Y-%m-%dT%H:%M:%fZ','now'))`; in INSERT/UPDATE interpolate
-  `${NOW_ISO_SQL}` and list the column **explicitly** (don't rely on the default).
-  Never `datetime('now')`. **Why:** it has no Z — the browser parses it as local
-  time and shows the UTC clock under the app-timezone label.
+- **Eine Domäne pro Datei.** [connection.js](connection.js) (die eine Verbindung,
+  `PRAGMA foreign_keys = ON`, verweigert die Repo-DB unter `NODE_ENV=test`),
+  [now.js](now.js), [migrations.js](migrations.js) (Runner),
+  [schema.js](schema.js) (Boot: Squash oder Kette), [squashed-schema/](squashed-schema/)
+  (ein Segment pro Domäne), [migrations/](migrations/) (`000N_<name>.js`), dann
+  ein Modul pro Domäne ([notes.js](notes.js)). Domänenmodule werden nur über
+  ihre Facade in `lib/` erreicht — Routen und Jobs importieren nie `db/<domain>.js`.
+- **Timestamps: ISO+Z.** Jede `*_at`-Spalte speichert ISO-8601 mit `Z`. Defaults
+  `(strftime('%Y-%m-%dT%H:%M:%fZ','now'))`; in INSERT/UPDATE `${NOW_ISO_SQL}`
+  interpolieren und die Spalte **explizit** aufführen (nicht auf den Default
+  verlassen). Nie `datetime('now')`. **Warum:** es hat kein Z — der Browser
+  parst es als Lokalzeit und zeigt die UTC-Uhrzeit unter dem App-Zeitzonen-Label.
 
 ## Relationale Integrität
 
-- **Every `*_id` is a real FK** (`REFERENCES`); loose ids are forbidden.
-- **Every FK column is indexed** (`CREATE INDEX idx_<table>_<col>`).
-- **`ON DELETE` is a decision:** `CASCADE` for owned/derived rows (caches,
-  aggregates, children that are unreachable without their parent), `SET NULL`
-  for curated data that should survive its parent. **Never `SET NULL` on a
-  column a CHECK requires to be set** — the delete then aborts on every path
-  that touches the chain, and only at delete time.
-- **No snapshot columns** (`notebook_name` next to `notebook_id`): derive display
-  values by JOIN at read time. Exception: an audit name in a deletion log whose
-  referenced row is hard-deleted.
-- **Sentinel-free:** no `x_id = 0` / `'__all__'` as discriminator. Use an explicit
-  `kind TEXT NOT NULL CHECK(kind IN (…))` + NULL refs + a CHECK tying them together.
-- **Forward-only.** A migration that ever left your machine is never renumbered
-  or edited (the lock test fails, and prod would crash-loop). Fix forward with a
-  new migration.
-- **Recreate pattern** for adding an FK to an existing table (SQLite has no
-  `ADD CONSTRAINT`): clean orphans → `xxx_new` with final FKs + indexes →
-  `INSERT … SELECT` → `DROP` + `RENAME` → recreate indexes. `PRAGMA foreign_keys`
-  is a no-op inside the runner's transaction: check who points at the table by
-  FK first — a `CASCADE` child loses its rows on `DROP TABLE`.
+- **Jede `*_id` ist ein echter FK** (`REFERENCES`); lose Ids sind verboten.
+- **Jede FK-Spalte ist indiziert** (`CREATE INDEX idx_<table>_<col>`).
+- **`ON DELETE` ist eine Entscheidung:** `CASCADE` für eigene/abgeleitete Zeilen
+  (Caches, Aggregate, Kinder, die ohne ihren Parent unerreichbar sind), `SET NULL`
+  für kuratierte Daten, die ihren Parent überleben sollen. **Nie `SET NULL` auf
+  einer Spalte, die ein CHECK als gesetzt verlangt** — das Delete bricht dann auf
+  jedem Pfad ab, der die Kette berührt, und zwar erst zur Löschzeit.
+- **Keine Snapshot-Spalten** (`notebook_name` neben `notebook_id`): Anzeigewerte
+  beim Lesen per JOIN ableiten. Ausnahme: ein Audit-Name in einem Löschprotokoll,
+  dessen referenzierte Zeile hart gelöscht wird.
+- **Sentinel-frei:** kein `x_id = 0` / `'__all__'` als Diskriminator. Stattdessen
+  ein explizites `kind TEXT NOT NULL CHECK(kind IN (…))` + NULL-Refs + ein CHECK,
+  der beides verknüpft.
+- **Forward-only.** Eine Migration, die je deine Maschine verlassen hat, wird nie
+  umnummeriert oder editiert (der Lock-Test schlägt fehl, und Prod würde in einer
+  Crash-Loop landen). Vorwärts korrigieren mit einer neuen Migration.
+- **Recreate-Pattern**, um einer bestehenden Tabelle einen FK hinzuzufügen
+  (SQLite hat kein `ADD CONSTRAINT`): Waisen bereinigen → `xxx_new` mit finalen
+  FKs + Indizes → `INSERT … SELECT` → `DROP` + `RENAME` → Indizes neu anlegen.
+  `PRAGMA foreign_keys` ist innerhalb der Runner-Transaktion ein No-op: zuerst
+  prüfen, wer per FK auf die Tabelle zeigt — ein `CASCADE`-Kind verliert beim
+  `DROP TABLE` seine Zeilen.

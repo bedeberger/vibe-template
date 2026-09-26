@@ -345,7 +345,7 @@ console.log(`\nRohwerte   ${r.rohwerte.strayColor.length} Farbe(n) ausserhalb to
 for (const s of r.rohwerte.strayColor.slice(0, 12)) {
   console.log(`           ${s.value.padEnd(10)} ${s.file}`);
 }
-console.log('           Breakpoint-Literale (Skala: DESIGN.md → Mobile):');
+console.log('           Breakpoint-Literale (Skala: DESIGN.md → Mobile-Breakpoints):');
 for (const [bp, e] of Object.entries(r.rohwerte.breakpoints)) {
   console.log(`           ${bp.padEnd(8)} ${String(e.fundstellen).padStart(3)}× in ${e.dateien} Dateien`);
 }

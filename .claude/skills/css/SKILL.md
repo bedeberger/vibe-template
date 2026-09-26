@@ -1,103 +1,109 @@
 ---
 name: css
-description: CSS, tokens and styling in this repo — measure first, then decide where a declaration belongs (token / components / entities / utilities), plus the levers for lean CSS. Use for any work on public/css/**, a token, a breakpoint, a theme value, for "this looks the same everywhere, does it exist already?", for "why doesn't this rule win", and before bringing in a CSS library.
+description: CSS, Tokens und Styling in diesem Repo — zuerst messen, dann entscheiden, wohin eine Deklaration gehört (Token / components / entities / utilities), plus die Hebel für schlankes CSS. Verwenden für jede Arbeit an public/css/**, einem Token, einem Breakpoint, einem Theme-Wert, für "das sieht überall gleich aus, gibt es das schon?", für "warum gewinnt diese Regel nicht" und bevor eine CSS-Library reinkommt.
 ---
 
-# CSS in this template
+# CSS in diesem Template
 
-The design system is documented and gated. This skill adds **no** rules — it
-says how to work inside it without diluting it, and it **measures** instead of
-guessing.
+Das Designsystem ist dokumentiert und gegated. Dieser Skill fügt **keine** Regeln
+hinzu — er sagt, wie man darin arbeitet, ohne es zu verwässern, und er **misst**,
+statt zu raten.
 
-- **Patterns** live in [DESIGN.md](DESIGN.md). Look there, don't grep the CSS.
-- **Rules** live in [public/css/CLAUDE.md](public/css/CLAUDE.md) and the
-  root [CLAUDE.md](CLAUDE.md) ("Mechanisch durchgesetzt").
+- **Patterns** leben in [DESIGN.md](DESIGN.md). Dort nachsehen, nicht das CSS greppen.
+- **Regeln** leben in [public/css/CLAUDE.md](public/css/CLAUDE.md) und der
+  Root-[CLAUDE.md](CLAUDE.md) ("Mechanisch durchgesetzt").
 
-Nothing of that is repeated here. Documenting a pattern in this skill creates drift.
+Nichts davon wird hier wiederholt. Ein Pattern in diesem Skill zu dokumentieren
+erzeugt Drift.
 
-## 1. Measure first
+## 1. Zuerst messen
 
 ```bash
-node .claude/skills/css/audit.mjs          # overview
-node .claude/skills/css/audit.mjs --json   # machine-readable
+node .claude/skills/css/audit.mjs          # Übersicht
+node .claude/skills/css/audit.mjs --json   # maschinenlesbar
 ```
 
-Dependency-free, read-only. Shows size, bytes (raw + gzip, with and without
-comments), **orphaned tokens**, raw colour and breakpoint literals, the most
-frequent declaration clusters and **identical rule bodies** — exactly the
-places where a pattern is missing. Past runs: [BEFUNDE.md](.claude/skills/css/BEFUNDE.md) — read
-before, append after (→ §6).
+Ohne Abhängigkeiten, nur lesend. Zeigt Grösse, Bytes (roh + gzip, mit und ohne
+Kommentare), **verwaiste Tokens**, rohe Farb- und Breakpoint-Literale, die
+häufigsten Deklarations-Cluster und **identische Regelkörper** — genau die
+Stellen, an denen ein Pattern fehlt. Frühere Läufe: [BEFUNDE.md](.claude/skills/css/BEFUNDE.md) —
+vorher lesen, nachher ergänzen (→ §6).
 
-## 2. Where does a declaration belong
+## 2. Wohin gehört eine Deklaration
 
-First "yes" wins:
+Das erste "Ja" gewinnt:
 
-1. **A value more than one place shares?** → token in
+1. **Ein Wert, den mehr als eine Stelle teilt?** → Token in
    `public/css/tokens/<topic>.css` (colors · typography · spacing · motion ·
-   scale). Tokens stay **unlayered**; colours are one `light-dark()` each.
-2. **Used by several views?** → `public/css/components/` in `@layer components`.
-3. **Belongs to exactly one feature?** → `public/css/entities/<feature>.css`,
-   also `@layer components`, linked **after** the components — it wins by source
-   order within the layer, so an override never needs higher specificity or
-   `!important`. It declares only the deviation from the shared block.
-4. **A state/utility modifier above everything?** → `layout/utilities.css`
+   scale). Tokens bleiben **ohne Layer**; Farben sind je ein `light-dark()`.
+2. **Von mehreren Views genutzt?** → `public/css/components/` in `@layer components`.
+3. **Gehört zu genau einem Feature?** → `public/css/entities/<feature>.css`,
+   ebenfalls `@layer components`, **nach** den Komponenten verlinkt — es gewinnt
+   innerhalb des Layers über die Quellreihenfolge, ein Override braucht also nie
+   höhere Spezifität oder `!important`. Es deklariert nur die Abweichung vom
+   geteilten Block.
+4. **Ein Zustands-/Utility-Modifier über allem?** → `layout/utilities.css`
    (`@layer utilities`).
 
-**A rule doesn't win?** Almost always the layer or the link order is wrong, not
-the specificity. Layer order `base, components, utilities` is declared once in
-`tokens.css` (gated: `css-layers.test`).
+**Eine Regel gewinnt nicht?** Fast immer ist der Layer oder die Link-Reihenfolge
+falsch, nicht die Spezifität. Die Layer-Reihenfolge `base, components, utilities`
+ist einmal in `tokens.css` deklariert (gegated: `css-layers.test`).
 
-## 3. Hard-gated — not negotiable
+## 3. Hart gegated — nicht verhandelbar
 
-See the table "Mechanisch durchgesetzt" in the root CLAUDE.md (inline style
-blocked at edit time, layers, spacing scale, one selector per file, defined
-tokens, no dead classes, LOC caps, inventory drift). After CSS work:
-`npm run test:unit` (the Stop hook runs it anyway) and the **affected** e2e
-specs — once also at phone width (the DoD mobile check names them).
+Siehe die Tabelle "Mechanisch durchgesetzt" in der Root-CLAUDE.md (Inline-Style
+beim Editieren geblockt, Layer, Spacing-Skala, ein Selektor pro Datei, definierte
+Tokens, keine toten Klassen, LOC-Caps, Inventar-Drift). Nach CSS-Arbeit:
+`npm run test:unit` (der Stop-Hook führt ihn ohnehin aus) und die **betroffenen**
+E2E-Specs — einmal auch in Handybreite (der DoD-Mobile-Check nennt sie).
 
-## 4. Lean means: fewer places deciding the same thing
+## 4. Schlank heisst: weniger Stellen, die dasselbe entscheiden
 
-1. **Orphaned tokens** (audit "Tokens"): declared, read by nobody. Delete, or
-   declare as reserve in `TOKEN_RESERVE` of audit.mjs with a reason.
-2. **Identical rule bodies** from three occurrences on: a missing pattern → §5.
-3. **Flex clusters** (`display:flex; align-items:center; gap:…`): the layout
-   primitives (`.row`, `.form-stack`, DESIGN.md) absorb them — ordered in the
-   **markup**, not re-declared per feature.
-4. **`<link>` count** in index.html: one feature = one entity stylesheet. If it
-   grows without a new feature, a stylesheet is cut wrong.
+1. **Verwaiste Tokens** (Audit "Tokens"): deklariert, von niemandem gelesen.
+   Löschen oder mit Begründung als Reserve in `TOKEN_RESERVE` von audit.mjs
+   deklarieren.
+2. **Identische Regelkörper** ab drei Vorkommen: ein fehlendes Pattern → §5.
+3. **Flex-Cluster** (`display:flex; align-items:center; gap:…`): die
+   Layout-Primitive (`.row`, `.form-stack`, DESIGN.md) nehmen sie auf — im
+   **Markup** angeordnet, nicht pro Feature neu deklariert.
+4. **Anzahl `<link>`** in index.html: ein Feature = ein Entity-Stylesheet. Wächst
+   sie ohne neues Feature, ist ein Stylesheet falsch geschnitten.
 
-## 5. The rule of three — how to generalize
+## 5. Die Dreierregel — wie man generalisiert
 
-**Second occurrence: copying is fine. Third: generalize**, in this order:
+**Zweites Vorkommen: Kopieren ist in Ordnung. Drittes: generalisieren**, in
+dieser Reihenfolge:
 
-1. Look in DESIGN.md whether the pattern exists.
-2. Missing: **document it there first** (markup snippet + CSS file + use case).
-3. **Then build** it as a shared block in `components/` or as a token.
-4. **Then replace the old occurrences** — a generalization that keeps the
-   copies raised the number of places instead of lowering it.
-5. Does the pattern carry a contract one breaks by accident? Gate test via
+1. In DESIGN.md nachsehen, ob das Pattern existiert.
+2. Fehlt es: **zuerst dort dokumentieren** (Markup-Snippet + CSS-Datei +
+   Anwendungsfall).
+3. **Dann bauen** als geteilter Block in `components/` oder als Token.
+4. **Dann die alten Vorkommen ersetzen** — eine Generalisierung, die die Kopien
+   behält, hat die Zahl der Stellen erhöht statt gesenkt.
+5. Trägt das Pattern einen Vertrag, den man versehentlich bricht? Gate-Test via
    `/regel`.
 
-## 6. What the skill does with what it learns
+## 6. Was der Skill mit dem Gelernten macht
 
-- **Domain knowledge** (a pattern, a token, a design decision) → **DESIGN.md**,
-  never here.
-- **Procedural knowledge** (this skill was imprecise, a lever was missing) →
-  **edit this file.**
+- **Fachwissen** (ein Pattern, ein Token, eine Designentscheidung) →
+  **DESIGN.md**, nie hier.
+- **Verfahrenswissen** (dieser Skill war unpräzise, ein Hebel fehlte) →
+  **diese Datei editieren.**
 
-After a CSS session where something measurable happened: run the audit again,
-add one line to [BEFUNDE.md](.claude/skills/css/BEFUNDE.md) (date, core numbers, what moved, which
-lever stays open). A number that stays interesting becomes a gate test in
-`tests/unit/` — the skill is the precursor of a gate, not its replacement.
+Nach einer CSS-Session, in der sich etwas Messbares getan hat: Audit erneut
+ausführen, eine Zeile in [BEFUNDE.md](.claude/skills/css/BEFUNDE.md) ergänzen
+(Datum, Kernzahlen, was sich bewegt hat, welcher Hebel offen bleibt). Eine Zahl,
+die interessant bleibt, wird ein Gate-Test in `tests/unit/` — der Skill ist die
+Vorstufe eines Gates, nicht sein Ersatz.
 
-## 7. Before a foreign CSS library
+## 7. Vor einer fremden CSS-Library
 
-1. **Needs a build step?** Out — "no bundler" is an architecture invariant
-   (Tailwind, SCSS frameworks, PostCSS token systems).
-2. **Brings a second token system?** Every value would have two sources.
-3. **Claims element selectors** (`button`, `table`, `input`)? It fights
-   `@layer base`.
-4. **What exactly does it replace**, measured by the audit? One that doesn't
-   replace documented patterns comes **in addition**.
-5. And it must be **self-hosted** (committed under `public/vendor/` with licence) —
-   no CDN.
+1. **Braucht sie einen Build-Schritt?** Raus — "kein Bundler" ist eine
+   Architektur-Invariante (Tailwind, SCSS-Frameworks, PostCSS-Token-Systeme).
+2. **Bringt sie ein zweites Token-System mit?** Jeder Wert hätte zwei Quellen.
+3. **Beansprucht sie Element-Selektoren** (`button`, `table`, `input`)? Sie
+   kämpft gegen `@layer base`.
+4. **Was genau ersetzt sie**, gemessen am Audit? Eine, die keine dokumentierten
+   Patterns ersetzt, kommt **zusätzlich**.
+5. Und sie muss **self-hosted** sein (committet unter `public/vendor/` mit
+   Lizenz) — kein CDN.

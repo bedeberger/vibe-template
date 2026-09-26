@@ -1,94 +1,105 @@
 # vibe-template
 
-Self-hosted SPA template: **Node + Express**, **better-sqlite3** (local-first),
-**Alpine.js** frontend with **no build step** (native ESM). The example
-domain entity is **`note`** (owned by a **`notebook`**) — replace it with your
-real entity, keeping the patterns below.
+Self-hosted SPA-Template: **Node + Express**, **better-sqlite3** (local-first),
+**Alpine.js**-Frontend **ohne Build-Schritt** (natives ESM). Die
+Beispiel-Domänenentität ist **`note`** (gehört zu einem **`notebook`**) — durch
+die echte Entität ersetzen, die Patterns unten beibehalten.
 
-**This file is a map, not a manual.** It carries only what must hold *before* a
-file is opened. Directory-local rules live in a `CLAUDE.md` in that directory
-and load automatically when you work there ("Wo die Regeln liegen"); deeper
-topics live in [docs/](docs/). A rule stands in exactly **one** place. Every
-`CLAUDE.md` describes the **current** state only — no history, no "used to be";
-`git log` is the history. **Why:** this file is paid on every call, a nested one
-only when needed.
+**Diese Datei ist ein Wegweiser, kein Handbuch.** Sie trägt nur, was gelten muss,
+*bevor* eine Datei geöffnet wird. Verzeichnislokale Regeln stehen in einer
+`CLAUDE.md` in diesem Verzeichnis und laden automatisch, wenn dort gearbeitet
+wird ("Wo die Regeln liegen"); tiefere Themen stehen in [docs/](docs/). Eine
+Regel steht an genau **einer** Stelle. Jede `CLAUDE.md` beschreibt nur den
+**aktuellen** Stand — keine Historie, kein "früher war"; `git log` ist die
+Historie. **Warum:** diese Datei wird bei jedem Aufruf bezahlt, eine
+verschachtelte nur bei Bedarf.
 
-**Local start:** `npm install && npm run dev` (→ http://localhost:3000,
-`LOCAL_DEV_MODE=1`: login bypassed, seed data). Tests: `npm test`.
-**Production:** one LXC behind Nginx Proxy Manager, deployed by a self-hosted
-runner after green CI on `main` — [docs/deployment.md](docs/deployment.md).
-**Git workflow:** trunk-based — commit directly on `main`, no feature branches,
-no PRs. Every push to `main` is a production deploy to the LXC (once CI is
-green), so push only after the tests pass locally.
+**Lokaler Start:** `npm install && npm run dev` (→ http://localhost:3000,
+`LOCAL_DEV_MODE=1`: Login umgangen, Seed-Daten). Tests: `npm test`.
+**Produktion:** ein LXC hinter Nginx Proxy Manager, deployt von einem
+self-hosted Runner nach grüner CI auf `main` — [docs/deployment.md](docs/deployment.md).
+**Git-Workflow:** trunk-based — direkt auf `main` committen, keine
+Feature-Branches, keine PRs. Jeder Push auf `main` ist ein Produktions-Deploy
+auf den LXC (sobald die CI grün ist), also erst pushen, wenn die Tests lokal
+grün sind.
 
 ## Stack
 
-- **Server:** Express, one fixed port. All HTTP wiring (setup, auth guard,
-  `/healthz`, route mounting) lives in [server.js](server.js). Under
-  `NODE_ENV=production` it refuses to boot with `LOCAL_DEV_MODE=1` or a short
-  `SESSION_SECRET`, sets the cookie `Secure` and trusts one proxy hop.
-- **DB:** SQLite via better-sqlite3, `PRAGMA foreign_keys = ON`, numbered
-  forward-only migrations with a squashed fast path and a frozen lock register.
-- **Frontend:** vanilla SPA + Alpine.js, no bundler; third-party code committed
-  in `public/vendor/`. **Styling:** plain CSS, token system, `@layer` cascade,
-  design system in [DESIGN.md](DESIGN.md).
-- **Auth:** session guard on every route except the public ones. OIDC
-  (provider-agnostic) + `LOCAL_DEV_MODE` bypass.
-- **Logging:** Winston with a per-request/job context tag, self-rotating file.
-- **Tests:** unit + integration (`node --test`), e2e harnesses + real-app e2e
+- **Server:** Express, ein fester Port. Die gesamte HTTP-Verdrahtung (Setup,
+  Auth-Guard, `/healthz`, Route-Mounting) lebt in [server.js](server.js). Unter
+  `NODE_ENV=production` verweigert er den Boot mit `LOCAL_DEV_MODE=1` oder einem
+  kurzen `SESSION_SECRET`, setzt das Cookie `Secure` und vertraut einem
+  Proxy-Hop.
+- **DB:** SQLite via better-sqlite3, `PRAGMA foreign_keys = ON`, nummerierte
+  forward-only-Migrationen mit einem gesquashten Schnellpfad und einem
+  eingefrorenen Lock-Register.
+- **Frontend:** Vanilla-SPA + Alpine.js, kein Bundler; Drittcode committet in
+  `public/vendor/`. **Styling:** reines CSS, Token-System, `@layer`-Cascade,
+  Designsystem in [DESIGN.md](DESIGN.md).
+- **Auth:** Session-Guard auf jeder Route ausser den öffentlichen. OIDC
+  (anbieterunabhängig) + `LOCAL_DEV_MODE`-Bypass.
+- **Logging:** Winston mit einem Kontext-Tag pro Request/Job, selbstrotierende
+  Datei.
+- **Tests:** Unit + Integration (`node --test`), E2E-Harnesses + Real-App-E2E
   (Playwright) — [docs/testing.md](docs/testing.md).
-- **No AI** in this template. The job queue is generic — that is where AI calls
-  would live (never synchronously in a request).
+- **Keine AI** in diesem Template. Die Job-Queue ist generisch — dort würden
+  AI-Aufrufe leben (nie synchron in einem Request).
+- **Cron:** Scheduler im Prozess, reiht nur Jobs ein, rechnet in `app.timezone`
+  — [routes/jobs/CLAUDE.md](routes/jobs/CLAUDE.md#zeitgesteuerte-jobs-cron).
 
 ## Harte Regeln (immer gültig)
 
-- **Domänen-Facade als einziger Eintrittspunkt.** A domain is reached only
-  through its facade in `lib/` ([lib/note-store.js](lib/note-store.js)). No raw
-  SQL against `notes`/`notebooks` from routes or jobs. **Why:** one place for
-  invariants, validation and future caching.
-- **Langläufer nur via Job-Queue.** Anything that would noticeably block a
-  request runs as a job type in [routes/jobs/](routes/jobs/) (dedup, status,
-  lifecycle centralized). Details: [routes/jobs/CLAUDE.md](routes/jobs/CLAUDE.md).
-- **UI-Strings nur in `public/js/i18n/{de,en}.json`.** No hardcoded text in
-  HTML/JS/Alpine templates (incl. `aria-label`, placeholders, tooltips); always
-  `t('area.field')`. A new string goes into **both** locales in the same change
-  (de = fallback). Exception: Winston logs stay German, they aren't user-facing.
-- **Self-hosted, alles aus dem eigenen Origin.** No CDN, no external font/script;
-  vendored files are versioned + licensed and change only via
-  `npm run vendor:sync`. The CSP stays `'self'`. Details: [public/CLAUDE.md](public/CLAUDE.md).
-- **`x-html` nur mit vorab-escaptem Content** (`escHtml()`), no runtime
-  sanitizer. **Why:** one auditable escape invariant.
-- **Relationale Integrität.** Every `*_id` is a real FK, indexed, with a
-  deliberate `ON DELETE`; no snapshot columns; migrations forward-only, a
-  released one is never renumbered or edited. Details: [db/CLAUDE.md](db/CLAUDE.md).
-- **DB-Timestamps: ISO+Z via `NOW_ISO_SQL`**, never `datetime('now')`. Display
-  only via `tzOpts()`/`formatDate` (frontend) and [lib/local-date.js](lib/local-date.js)
-  (server). **Why:** `datetime('now')` has no Z and shows the UTC clock under
-  the local label.
-- **Feature-Registry ist SSoT, Features haben eine feste Anatomie.** Every nav
-  entry is a registry entry ([public/js/app/features.js](public/js/app/features.js))
-  with a feature card, domain module, partial, entity CSS, harness + spec —
-  generated by `npm run feature:new`, gated by `feature-registry.test`. The root
-  is the shell only. Details: [DESIGN.md → Feature anatomy](DESIGN.md#feature-anatomy).
-- **DESIGN.md-Pattern-Katalog vor neuer UI prüfen.** Reuse; if the pattern is
-  missing, document it there first, then build.
-- **Styles nur in `public/css/`**, tokens instead of raw values, every file in a
-  layer. Details: [public/css/CLAUDE.md](public/css/CLAUDE.md).
-- **State explizit deklariert** — root in `app-state.js`, cards as initial
-  fields (incl. every field their domain module assigns); no lazy `this._x`.
-- **File-Limits / Modularität.** JS (browser **and** server) > 600 LOC, HTML
-  partials > 250, CSS > 600 → split into a `<name>/` subfolder with a facade.
-  Ratchet-gated by `loc-limits.test`.
-- **Logging-Kontext.** Every route fills `[scope|user|entity|jobId]` via
-  `setContext` ([lib/log-context.js](lib/log-context.js)); jobs get it from the
-  queue. **Why:** one searchable trace per request and the job it spawns.
+- **Domänen-Facade als einziger Eintrittspunkt.** Eine Domäne wird nur über
+  ihre Facade in `lib/` erreicht ([lib/note-store.js](lib/note-store.js)). Kein
+  Roh-SQL gegen `notes`/`notebooks` aus Routen oder Jobs. **Warum:** ein Ort für
+  Invarianten, Validierung und künftiges Caching.
+- **Langläufer nur via Job-Queue.** Alles, was einen Request spürbar blockieren
+  würde, läuft als Job-Typ in [routes/jobs/](routes/jobs/) (Dedup, Status,
+  Lifecycle zentral). Details: [routes/jobs/CLAUDE.md](routes/jobs/CLAUDE.md).
+- **UI-Strings nur in `public/js/i18n/{de,en}.json`.** Kein hartkodierter Text in
+  HTML/JS/Alpine-Templates (inkl. `aria-label`, Placeholder, Tooltips); immer
+  `t('area.field')`. Ein neuer String kommt in derselben Änderung in **beide**
+  Locales (de = Fallback). Ausnahme: Winston-Logs bleiben deutsch, sie sind
+  nicht nutzerseitig.
+- **Self-hosted, alles aus dem eigenen Origin.** Kein CDN, kein externer
+  Font/kein externes Script; vendorte Dateien sind versioniert + lizenziert und
+  ändern sich nur via `npm run vendor:sync`. Die CSP bleibt `'self'`. Details:
+  [public/CLAUDE.md](public/CLAUDE.md).
+- **`x-html` nur mit vorab-escaptem Content** (`escHtml()`), kein
+  Runtime-Sanitizer. **Warum:** eine einzige auditierbare Escape-Invariante.
+- **Relationale Integrität.** Jede `*_id` ist ein echter FK, indiziert, mit
+  bewusstem `ON DELETE`; keine Snapshot-Spalten; Migrationen forward-only, eine
+  veröffentlichte wird nie umnummeriert oder editiert. Details: [db/CLAUDE.md](db/CLAUDE.md).
+- **DB-Timestamps: ISO+Z via `NOW_ISO_SQL`**, nie `datetime('now')`. Anzeige
+  nur via `tzOpts()`/`formatDate` (Frontend) und [lib/local-date.js](lib/local-date.js)
+  (Server). **Warum:** `datetime('now')` hat kein Z und zeigt die UTC-Uhrzeit
+  unter dem lokalen Label.
+- **Feature-Registry ist SSoT, Features haben eine feste Anatomie.** Jeder
+  Nav-Eintrag ist ein Registry-Eintrag ([public/js/app/features.js](public/js/app/features.js))
+  mit Feature-Karte, Fachmodul, Partial, Entity-CSS, Harness + Spec — generiert
+  von `npm run feature:new`, gegated durch `feature-registry.test`. Die Root ist
+  nur die Shell. Details: [DESIGN.md → Feature-Anatomie](DESIGN.md#feature-anatomie).
+- **DESIGN.md-Pattern-Katalog vor neuer UI prüfen.** Wiederverwenden; fehlt das
+  Pattern, zuerst dort dokumentieren, dann bauen.
+- **Styles nur in `public/css/`**, Tokens statt Rohwerte, jede Datei in einem
+  Layer. Details: [public/css/CLAUDE.md](public/css/CLAUDE.md).
+- **State explizit deklariert** — Root in `app-state.js`, Karten als
+  Initialfelder (inkl. jedes Felds, das ihr Fachmodul zuweist); kein lazy
+  `this._x`.
+- **File-Limits / Modularität.** JS (Browser **und** Server) > 600 LOC,
+  HTML-Partials > 250, CSS > 600 → in einen `<name>/`-Unterordner mit Facade
+  aufteilen. Per Ratchet gegated durch `loc-limits.test`.
+- **Logging-Kontext.** Jede Route füllt `[scope|user|entity|jobId]` via
+  `setContext` ([lib/log-context.js](lib/log-context.js)); Jobs bekommen ihn von
+  der Queue. **Warum:** ein durchsuchbarer Trace pro Request und dem Job, den er
+  auslöst.
 
 ## Mechanisch durchgesetzt — nicht auswendig lernen
 
 Hooks ([.claude/settings.json](.claude/settings.json), [scripts/hooks/](scripts/hooks/))
-warn/block at edit time; the unit guards in [tests/unit/](tests/unit/) are the
-binding gate (CI). Rule logic shared in [scripts/hooks/_rules.js](scripts/hooks/_rules.js).
-A hook warns, it doesn't teach: the alternative stands in the rule's full text.
+warnen/blocken beim Editieren; die Unit-Guards in [tests/unit/](tests/unit/) sind
+das verbindliche Gate (CI). Regellogik geteilt in [scripts/hooks/_rules.js](scripts/hooks/_rules.js).
+Ein Hook warnt, er lehrt nicht: die Alternative steht im Volltext der Regel.
 
 | Regel | Durchsetzung | Wo |
 |---|---|---|
@@ -115,18 +126,18 @@ A hook warns, it doesn't teach: the alternative stands in the rule's full text.
 
 ## Definition of Done
 
-A change is done when its **kind** of code brings its **kind** of evidence in
-the same change set. The Stop hook (`session-stop-check.js`, table in
-[scripts/hooks/_dod.js](scripts/hooks/_dod.js)) reminds once per criterion and
-session; the binding gate is CI. Deliberately without a need (pure refactoring,
-desktop-only)? Say so and stop.
+Eine Änderung ist fertig, wenn ihre **Art** von Code ihre **Art** von Nachweis
+im selben Change-Set mitbringt. Der Stop-Hook (`session-stop-check.js`, Tabelle
+in [scripts/hooks/_dod.js](scripts/hooks/_dod.js)) erinnert einmal pro Kriterium
+und Session; das verbindliche Gate ist die CI. Bewusst ohne Bedarf (reines
+Refactoring, nur Desktop)? Das sagen und aufhören.
 
-| Changed | Needs |
+| Geändert | Braucht |
 |---|---|
 | `db/`, `lib/`, `routes/`, `server.js` | Unit-Tests (tests/unit/) + Integration-Tests (tests/integration/) + Doku (docs/ bzw. README/CLAUDE/DESIGN) |
 | `public/` (HTML/JS) | E2E/Smoke (tests/e2e/ bzw. tests/e2e-app/) + Doku (docs/ bzw. README/CLAUDE/DESIGN) |
-| `public/` (HTML/JS/CSS) | mobile check — the hook names the specs that test the spot at phone width, or says there are none |
-| `db/migrations/` | additionally Dev-Seed (lib/dev-seed.js) — a new table without data looks like a working view with nothing in it |
+| `public/` (HTML/JS/CSS) | Mobile-Check — der Hook nennt die Specs, die die Stelle in Handybreite testen, oder sagt, dass es keine gibt |
+| `db/migrations/` | zusätzlich Dev-Seed (lib/dev-seed.js) — eine neue Tabelle ohne Daten sieht aus wie eine funktionierende View, in der nichts steht |
 
 ## Wo die Regeln liegen
 
@@ -135,7 +146,7 @@ desktop-only)? Say so and stop.
 | [db/CLAUDE.md](db/CLAUDE.md) | Modul-Aufteilung, Timestamps, FK-Pflicht + ON-DELETE-Wahl, Sentinel-Freiheit, forward-only, Recreate-Pattern |
 | [lib/CLAUDE.md](lib/CLAUDE.md) | Facade-Vertrag, Log-Kontext, Server-Datum, Dev-Seed |
 | [routes/CLAUDE.md](routes/CLAUDE.md) | dünne Routen, Validierung + Statuscodes, Log-Kontext, Mounting + öffentliche Pfade |
-| [routes/jobs/CLAUDE.md](routes/jobs/CLAUDE.md) | neuen Job-Typ anlegen, Dedup, i18n-Status, Fehler |
+| [routes/jobs/CLAUDE.md](routes/jobs/CLAUDE.md) | neuen Job-Typ anlegen, Dedup, i18n-Status, Fehler, Cron-Zeitpläne |
 | [public/CLAUDE.md](public/CLAUDE.md) | Self-hosting/Vendor, Registry, Partials + Karten, State, `x-html`, `api()` + 401, Datum |
 | [public/css/CLAUDE.md](public/css/CLAUDE.md) | Tokens + Layer, Farben/Dark-Mode, Fonts + Icons, Karten-Akzent + Innenraum, Besitzer-Regel, neue CSS-Datei |
 | [tests/CLAUDE.md](tests/CLAUDE.md) | die vier Schichten, Temp-DB, Console-Guard, Harness vs. App, Mutationsprüfung |
@@ -143,61 +154,62 @@ desktop-only)? Say so and stop.
 
 ## Doku-Index
 
-Read the doc **before** changing something in its area.
-[deployment.md](docs/deployment.md) LXC, runners, Nginx Proxy Manager, deploy +
-rollback, operations · [migrations.md](docs/migrations.md) squash, lock,
-renumber, pending count · [testing.md](docs/testing.md) which suite when,
-harness, console guard, traps · [DESIGN.md](DESIGN.md) UI pattern catalog + CSS
-inventory.
+Die Doku **vor** einer Änderung in ihrem Bereich lesen.
+[deployment.md](docs/deployment.md) LXC, Runner, Nginx Proxy Manager, Deploy +
+Rollback, Betrieb · [migrations.md](docs/migrations.md) Squash, Lock,
+Renumber, Pending-Zähler · [testing.md](docs/testing.md) welche Suite wann,
+Harness, Console-Guard, Fallen · [DESIGN.md](DESIGN.md) UI-Muster-Katalog +
+CSS-Inventar.
 
-## Add a feature
+## Feature hinzufügen
 
-`/feature` walks through it. In short:
+`/feature` führt durch. Kurzfassung:
 
-1. **Frontend skeleton:** `npm run feature:new -- <id> --label-de … --label-en …
-   --icon …` — card, domain module, partial, entity CSS, harness + spec, and
-   every registration (registry, card inventory, links, DESIGN.md inventory,
-   i18n in both locales). A card inside an existing feature instead: `/karte`.
-2. **i18n:** every further string in both `de.json` and `en.json`.
-3. **Backend (data):** domain DB module in `db/`, **facade** in `lib/`, router in
-   `routes/` (imports the facade only), mounted in [server.js](server.js).
-4. **Backend (long op):** `routes/jobs/<type>.js` (registers its runner), listed
-   in [routes/jobs/index.js](routes/jobs/index.js), enqueued via
-   `queue.createJob(type, entityId)`.
-5. **Migration:** `/migration` — `db/migrations/000N_*.js`, fold into the
-   matching `db/squashed-schema/` segment, bump `SQUASHED_VERSION`,
-   `npm run squash:check`, `npm run migrations:lock` (same commit). Colliding
-   number after a rebase: `npm run migration:renumber`.
-6. **Frontend:** fill the generated domain module + card + partial
-   ([DESIGN.md → Feature anatomy](DESIGN.md#feature-anatomy)), CSS per
+1. **Frontend-Gerüst:** `npm run feature:new -- <id> --label-de … --label-en …
+   --icon …` — Karte, Fachmodul, Partial, Entity-CSS, Harness + Spec und jede
+   Registrierung (Registry, Karten-Inventar, Links, DESIGN.md-Inventar, i18n in
+   beiden Locales). Stattdessen eine Karte in einem bestehenden Feature: `/karte`.
+2. **i18n:** jeder weitere String in `de.json` und `en.json`.
+3. **Backend (Daten):** Domänen-DB-Modul in `db/`, **Facade** in `lib/`, Router
+   in `routes/` (importiert nur die Facade), gemountet in [server.js](server.js).
+4. **Backend (lange Operation):** `routes/jobs/<type>.js` (registriert seinen
+   Runner), eingetragen in [routes/jobs/index.js](routes/jobs/index.js),
+   eingereiht via `queue.createJob(type, entityId)`.
+5. **Migration:** `/migration` — `db/migrations/000N_*.js`, in das passende
+   `db/squashed-schema/`-Segment folden, `SQUASHED_VERSION` erhöhen,
+   `npm run squash:check`, `npm run migrations:lock` (derselbe Commit).
+   Kollidierende Nummer nach einem Rebase: `npm run migration:renumber`.
+6. **Frontend:** das generierte Fachmodul + Karte + Partial füllen
+   ([DESIGN.md → Feature-Anatomie](DESIGN.md#feature-anatomie)), CSS gemäss
    [public/css/CLAUDE.md](public/css/CLAUDE.md).
-7. **Tests:** unit (facade, pure helpers), integration (API), the generated
-   harness spec + its mocks in `tests/server.js`, `npm run test:smoke`. New
-   guard tests: `/regel` (mutation-check once; shared rule logic in
+7. **Tests:** Unit (Facade, reine Helfer), Integration (API), die generierte
+   Harness-Spec + ihre Mocks in `tests/server.js`, `npm run test:smoke`. Neue
+   Guard-Tests: `/regel` (einmal mutationsprüfen; geteilte Regellogik in
    `scripts/hooks/_rules.js`).
 
-## Commands
+## Befehle
 
 ```bash
 npm run dev                 # LOCAL_DEV_MODE=1 + node --watch
-npm start                   # plain server
-npm test                    # unit + integration + e2e + e2e-app
-npm run test:unit           # incl. all static guards
+npm start                   # schlichter Server
+npm test                    # Unit + Integration + E2E + E2E-App
+npm run test:unit           # inkl. aller statischen Guards
 npm run test:integration
-npm run test:e2e            # fixture harnesses (mock server)
-npm run test:e2e-app        # real app; test:smoke = only the smoke spec
-npm run db:migrate          # apply pending migrations standalone
-npm run squash:check        # schema-drift gate only
-npm run migrations:lock     # freeze the migration chain (commit the lock)
-npm run migration:renumber  # own unpushed migration → max(origin/main)+1
-npm run vendor:sync         # re-vendor browser libs after a devDependency bump
-npm run feature:new -- <id> # scaffold a frontend feature (--dry-run first)
-npm run init -- <slug> --title "…"  # rename a fresh clone into its own project
+npm run test:e2e            # Fixture-Harnesses (Mock-Server)
+npm run test:e2e-app        # echte App; test:smoke = nur die Smoke-Spec
+npm run db:migrate          # ausstehende Migrationen eigenständig anwenden
+npm run squash:check        # nur das Schema-Drift-Gate
+npm run migrations:lock     # Migrationskette einfrieren (Lock committen)
+npm run migration:renumber  # eigene ungepushte Migration → max(origin/main)+1
+npm run vendor:sync         # Browser-Libs nach devDependency-Bump neu vendoren
+npm run feature:new -- <id> # Frontend-Feature scaffolden (zuerst --dry-run)
+npm run init -- <slug> --title "…"  # frischen Klon zum eigenen Projekt umbenennen
 ```
 
-Claude commands ([.claude/commands/](.claude/commands/)): `/feature` (new
-feature end to end), `/karte` (card/tab in an existing feature), `/migration`,
-`/regel` (new hard rule: gate test first), `/release`, `/projekt-init` (fresh
-clone → own project). Skill `css`
-([.claude/skills/css/](.claude/skills/css/)): measure (`audit.mjs`) before CSS work. VS Code: tasks (`gate` is the default
-build task), debug profiles and test explorer in [.vscode/](.vscode/).
+Claude-Befehle ([.claude/commands/](.claude/commands/)): `/feature` (neues
+Feature end to end), `/karte` (Karte/Tab in einem bestehenden Feature),
+`/migration`, `/regel` (neue harte Regel: Gate-Test zuerst), `/release`,
+`/projekt-init` (frischer Klon → eigenes Projekt). Skill `css`
+([.claude/skills/css/](.claude/skills/css/)): vor CSS-Arbeit messen
+(`audit.mjs`). VS Code: Tasks (`gate` ist der Default-Build-Task),
+Debug-Profile und Test-Explorer in [.vscode/](.vscode/).

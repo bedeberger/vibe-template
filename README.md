@@ -1,116 +1,122 @@
 # vibe-template
 
-A self-hosted SPA starter built on a deliberately small, dependency-light stack:
+Selbst gehostetes SPA-Grundgerüst auf einem bewusst kleinen Stack mit wenigen
+Abhängigkeiten:
 
-- **Node + Express** — single server, one port, all wiring in `server.js`.
-- **better-sqlite3** — local-first SQLite, `foreign_keys = ON`, numbered
-  forward-only migrations with a squashed fast path and a frozen lock register.
-- **Alpine.js, no build step** — native ESM, Alpine vendored from node_modules.
-- **Plain CSS** — design-token system, `@layer` cascade, no inline styles.
-- **Auth** — session guard everywhere; OIDC in prod, `LOCAL_DEV_MODE` bypass locally.
-- **Winston logging**, **i18n (de/en)**, **a generic background-job queue**.
+- **Node + Express** — ein Server, ein Port, die ganze Verdrahtung in `server.js`.
+- **better-sqlite3** — lokal-zuerst SQLite, `foreign_keys = ON`, nummerierte
+  Forward-only-Migrationen mit Squash-Schnellpfad und eingefrorenem Lock-Register.
+- **Alpine.js, kein Build-Schritt** — natives ESM, Alpine aus node_modules vendort.
+- **Plain CSS** — Token-System, `@layer`-Kaskade, keine Inline-Styles.
+- **Auth** — Session-Guard überall; OIDC in Prod, lokal `LOCAL_DEV_MODE`-Bypass.
+- **Winston-Logging**, **i18n (de/en)**, **eine generische Hintergrund-Job-Queue**
+  mit **Cron-Scheduler** (reiht Jobs zeitgesteuert ein, in der App-Zeitzone).
 
-The example domain is a **note** (owned by a **notebook**). Replace it with your
-own entity — the patterns (facade, job queue, migrations, registry, tokens) are
-the point. See [CLAUDE.md](CLAUDE.md) for the architecture rules.
+Die Beispiel-Domäne ist eine **Note** (gehört zu einem **Notebook**). Ersetze sie
+durch die eigene Entität — es geht um die Muster (Facade, Job-Queue, Migrationen,
+Registry, Tokens). Die Architekturregeln stehen in [CLAUDE.md](CLAUDE.md).
 
-## Quick start
+## Schnellstart
 
 ```bash
 git clone <this repo>
 cd vibe-template
-cp .env.example .env        # LOCAL_DEV_MODE=1 is already set for local use
+cp .env.example .env        # LOCAL_DEV_MODE=1 ist für lokal bereits gesetzt
 npm install
-npm start                   # → http://localhost:3000   (or: npm run dev)
+npm start                   # → http://localhost:3000   (oder: npm run dev)
 ```
 
-In `LOCAL_DEV_MODE` the auth guard auto-authenticates you as `DEV_USER_EMAIL`
-and a seed notebook with two notes is created on first boot. No login needed.
+Im `LOCAL_DEV_MODE` meldet dich der Auth-Guard automatisch als `DEV_USER_EMAIL`
+an, und beim ersten Start entsteht ein Seed-Notebook mit zwei Notes. Kein Login
+nötig.
 
-## Start your own project
+## Eigenes Projekt starten
 
-Create a repo from this one (GitHub: *Use this template*, no template history),
-clone it, then give it its name:
+Ein Repo aus diesem erstellen (GitHub: *Use this template*, ohne
+Template-Historie), klonen, dann benennen:
 
 ```bash
 npm install
-npm run init -- invoice-hub --title "Invoice Hub"   # --dry-run first to see the files
+npm run init -- invoice-hub --title "Invoice Hub"   # zuerst --dry-run, zeigt die Dateien
 ```
 
-The slug (kebab-case) becomes package name, systemd unit, `/opt/<slug>` and the
-runner label; the title shows in the UI, browser tab and manifest. The script
-also resets `CHANGELOG.md` and the version to 0.1.0 and runs `npm run test:unit`.
-In Claude Code, `/projekt-init` runs it and walks through the rest (remote,
-`.env`, deploy variables, later replacing the `note` example).
+Der Slug (kebab-case) wird Paketname, systemd-Unit, `/opt/<slug>` und
+Runner-Label; der Titel erscheint in der UI, im Browser-Tab und im Manifest. Das
+Skript setzt ausserdem `CHANGELOG.md` und die Version auf 0.1.0 zurück und führt
+`npm run test:unit` aus. In Claude Code führt `/projekt-init` es aus und begleitet
+durch den Rest (Remote, `.env`, Deploy-Variablen, später Ablösen des
+`note`-Beispiels).
 
-## Project layout
+## Projektstruktur
 
 ```
-server.js          Express setup, auth guard, /healthz, route mounting
+server.js          Express-Setup, Auth-Guard, /healthz, Routen-Mounting
 db/                connection · now · migrations/ · migrations.lock.json · schema · squashed-schema/ · <domain>
-lib/               domain facades, auth, settings, logging context, local date, dev seed
-routes/            HTTP handlers (call facades, never raw SQL)
-routes/jobs/       one file per background-job type + shared/queue.js
-public/            SPA: index.html (shell), partials/<feature>.html, css/ (tokens + layers,
-                   entities/<feature>.css), fonts/, icons.svg, vendor/ (committed builds + LICENSES)
-public/js/         app.js (boot) · app/ (registry, card inventory, router, feature host, state) ·
-                   cards/ (feature cards + lifecycle) · <feature>/ (domain modules) · i18n/
+lib/               Domänen-Facades, Auth, Settings, Log-Kontext, lokales Datum, Dev-Seed
+routes/            HTTP-Handler (rufen Facades, nie Roh-SQL)
+routes/jobs/       eine Datei je Hintergrund-Job-Typ (+ optional Cron-Zeitplan) + shared/queue.js, shared/scheduler.js
+public/            SPA: index.html (Shell), partials/<feature>.html, css/ (Tokens + Layer,
+                   entities/<feature>.css), fonts/, icons.svg, vendor/ (committete Builds + LICENSES)
+public/js/         app.js (Boot) · app/ (Registry, Karten-Inventar, Router, Feature-Host, State) ·
+                   cards/ (Feature-Karten + Lifecycle) · <feature>/ (Fachmodule) · i18n/
 scripts/           migrate · migrations-lock · migration-renumber · pending-migrations ·
                    vendor-sync · feature-new (+ templates/feature/) · with-env · prepare-lxc.sh · hooks/
-tests/             unit · integration · e2e (fixture harnesses) · e2e-app (real app) · fixtures
+tests/             unit · integration · e2e (Fixture-Harnesses) · e2e-app (echte App) · fixtures
 docs/              deployment · migrations · testing
-.github/workflows/ ci (tests) · deploy (self-hosted LXC runner)
-.claude/           commands (/feature · /karte · /migration · /regel · /release) · skills (css) · settings (hooks)
+.github/workflows/ ci (Tests) · deploy (self-hosted LXC-Runner)
+.claude/           commands (/feature · /karte · /migration · /regel · /release) · skills (css) · settings (Hooks)
 ```
 
-A new frontend feature: `npm run feature:new -- <id>` (anatomy: DESIGN.md →
-Feature anatomy). Rules live next to the code: a `CLAUDE.md` in `db/`, `lib/`, `routes/`,
-`routes/jobs/`, `public/`, `public/css/` and `tests/` (loaded automatically by
-Claude Code when working there); the root [CLAUDE.md](CLAUDE.md) is the map.
+Ein neues Frontend-Feature: `npm run feature:new -- <id>` (Anatomie: DESIGN.md →
+Feature-Anatomie). Die Regeln liegen beim Code: je ein `CLAUDE.md` in `db/`,
+`lib/`, `routes/`, `routes/jobs/`, `public/`, `public/css/` und `tests/` (lädt
+Claude Code automatisch, wenn dort gearbeitet wird); das Root-[CLAUDE.md](CLAUDE.md)
+ist die Karte.
 
-## Configuration
+## Konfiguration
 
-All config is via environment (`.env`, see `.env.example`):
+Die ganze Konfiguration läuft über die Umgebung (`.env`, siehe `.env.example`):
 
-| Var | Purpose |
+| Var | Zweck |
 | --- | --- |
-| `PORT` | Server port (default 3000) |
-| `SESSION_SECRET` | Signs session cookies — set a random value in prod |
-| `DB_PATH` | SQLite file path (default `./app.db`) |
-| `LOG_PATH` / `LOG_LEVEL` | Log file (default `./app.log`, self-rotating 5 MB × 5) / Winston level |
-| `NODE_ENV` | `production` → Secure cookie, `trust proxy`, boot refuses `LOCAL_DEV_MODE` and a short `SESSION_SECRET` (set by the systemd unit) |
-| `APP_TIMEZONE` | IANA tz for date display (seeds `app.timezone`) |
-| `LOCAL_DEV_MODE` | `1` = bypass OIDC + seed data (local only) |
-| `DEV_USER_EMAIL` | Identity used in dev mode |
-| `ADMIN_EMAIL` | Gets `global_role=admin` at boot |
-| `OIDC_ISSUER` / `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` / `OIDC_REDIRECT_URI` | OIDC login (prod) |
+| `PORT` | Server-Port (Standard 3000) |
+| `SESSION_SECRET` | Signiert die Session-Cookies — in Prod einen Zufallswert setzen |
+| `DB_PATH` | Pfad der SQLite-Datei (Standard `./app.db`) |
+| `LOG_PATH` / `LOG_LEVEL` | Log-Datei (Standard `./app.log`, rotiert selbst 5 MB × 5) / Winston-Level |
+| `NODE_ENV` | `production` → Secure-Cookie, `trust proxy`, Boot verweigert `LOCAL_DEV_MODE` und ein kurzes `SESSION_SECRET` (setzt die systemd-Unit) |
+| `APP_TIMEZONE` | IANA-Zeitzone für die Datumsanzeige (Seed für `app.timezone`) |
+| `LOCAL_DEV_MODE` | `1` = OIDC umgehen + Seed-Daten (nur lokal) |
+| `DEV_USER_EMAIL` | Identität im Dev-Modus |
+| `ADMIN_EMAIL` | Erhält beim Boot `global_role=admin` |
+| `OIDC_ISSUER` / `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` / `OIDC_REDIRECT_URI` | OIDC-Login (Prod) |
 
 ## Tests
 
 ```bash
-npm test                 # all layers
-npm run test:unit        # pure logic, facades, static guards (migrations, CSS, i18n, LOC, vendor …)
-npm run test:integration # HTTP API + job queue against a temp DB
-npm run test:e2e         # Playwright: fixture harnesses against a mock server
-npm run test:e2e-app     # Playwright: the real app (smoke + behaviour)
-npm run test:smoke       # only the registry-driven smoke
+npm test                 # alle Schichten
+npm run test:unit        # reine Logik, Facades, statische Guards (Migrationen, CSS, i18n, LOC, Vendor …)
+npm run test:integration # HTTP-API + Job-Queue gegen eine Temp-DB
+npm run test:e2e         # Playwright: Fixture-Harnesses gegen einen Mock-Server
+npm run test:e2e-app     # Playwright: die echte App (Smoke + Verhalten)
+npm run test:smoke       # nur der Registry-getriebene Smoke
 ```
 
-First time: `npx playwright install chromium`. Concept: [docs/testing.md](docs/testing.md).
+Beim ersten Mal: `npx playwright install chromium`. Konzept: [docs/testing.md](docs/testing.md).
 
 ## Deployment (self-hosted)
 
-One LXC container (Ubuntu 24.04, Proxmox) behind **Nginx Proxy Manager**.
-[scripts/prepare-lxc.sh](scripts/prepare-lxc.sh) provisions it (Node, users,
-hardened systemd unit, sudoers, GitHub runner); after that every green CI run on
-`main` deploys automatically ([.github/workflows/deploy.yml](.github/workflows/deploy.yml)):
-DB backup → migration dry run on a copy → rsync → restart → `/healthz` →
-rollback on failure. Step-by-step guide incl. the NPM proxy host:
+Ein LXC-Container (Ubuntu 24.04, Proxmox) hinter **Nginx Proxy Manager**.
+[scripts/prepare-lxc.sh](scripts/prepare-lxc.sh) richtet ihn ein (Node, Benutzer,
+gehärtete systemd-Unit, sudoers, GitHub-Runner); danach deployt jeder grüne
+CI-Lauf auf `main` automatisch ([.github/workflows/deploy.yml](.github/workflows/deploy.yml)):
+DB-Backup → Migrations-Probelauf auf einer Kopie → rsync → Restart → `/healthz` →
+Rollback bei Fehler. Schritt-für-Schritt-Anleitung inkl. NPM-Proxy-Host:
 [docs/deployment.md](docs/deployment.md).
 
-**Git workflow:** work directly on `main`, no feature branches or PRs. A push
-to `main` is a production deploy, so run `npm test` before you push.
+**Git-Workflow:** direkt auf `main` arbeiten, keine Feature-Branches oder PRs.
+Ein Push auf `main` ist ein Produktions-Deploy, also vor dem Push `npm test`
+laufen lassen.
 
-## License
+## Lizenz
 
-MIT — see [LICENSE](LICENSE).
+MIT — siehe [LICENSE](LICENSE).

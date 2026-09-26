@@ -2,13 +2,13 @@
 // Navigation, lazy partial loading, hash routes (#<id>[/<sub>]) and the smoke
 // test all read from here. Do NOT hand-maintain parallel lists.
 // See CLAUDE.md → Harte Regeln: "Feature-Registry ist SSoT"; anatomy of a
-// feature: DESIGN.md → "Feature anatomy". New feature: `npm run feature:new`.
+// feature: DESIGN.md → "Feature-Anatomie". New feature: `npm run feature:new`.
 //
 // Each feature:
 //   id        stable key: hash route (#notes), host <section data-feature>,
 //             file stem (cards/<id>-card.js, partials/<id>.html,
 //             css/entities/<id>.css, js/<id>/)
-//   icon      symbol id in the sprite public/icons.svg (DESIGN.md → Icons)
+//   icon      symbol id in the sprite public/icons.svg (DESIGN.md → Icon-System)
 //   labelKey  i18n key of the nav label
 //   card      Alpine.data name of the feature card (x-data at the partial root),
 //             registered in js/app/register-cards.js

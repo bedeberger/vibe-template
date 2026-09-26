@@ -1,41 +1,44 @@
-# CSS rules (`public/css/`)
+# CSS-Regeln (`public/css/`)
 
-Applies in addition to [public/CLAUDE.md](../CLAUDE.md). Pattern catalog + CSS
-file inventory: [DESIGN.md](../../DESIGN.md).
+Gilt zusätzlich zu [public/CLAUDE.md](../CLAUDE.md). Pattern-Katalog +
+CSS-Inventar: [DESIGN.md](../../DESIGN.md).
 
-- **Styles only here.** No inline `style` attributes, no `<style>` blocks. Only
-  exception: a runtime custom property in Alpine **object** form
-  (`:style="{ '--progress': pct + '%' }"` → CSSOM, CSP-safe); never string-form
-  `:style`.
-- **Tokens** live in [tokens/](tokens/) (`colors`, `typography`, `spacing`,
-  `motion`, `scale` = z-index stack), imported by the facade
-  [tokens.css](tokens.css), which declares `@layer base, components, utilities`.
-  Tokens and `@font-face` stay unlayered; **every other file wraps its rules in a
-  layer**. Components consume tokens — never raw hex/rgb, never raw `rem`/`px`
-  spacing (`em` is exempt: font-relative is a different statement).
-- **Colours:** one `light-dark(light, dark)` declaration per token. Dark mode
-  follows the OS; `data-theme="light|dark"` on `<html>` forces it.
+- **Styles nur hier.** Keine Inline-`style`-Attribute, keine `<style>`-Blöcke.
+  Einzige Ausnahme: eine Runtime-Custom-Property in Alpine-**Objekt**-Form
+  (`:style="{ '--progress': pct + '%' }"` → CSSOM, CSP-sicher); nie `:style` in
+  String-Form.
+- **Tokens** leben in [tokens/](tokens/) (`colors`, `typography`, `spacing`,
+  `motion`, `scale` = z-index-Stack), importiert von der Facade
+  [tokens.css](tokens.css), die `@layer base, components, utilities` deklariert.
+  Tokens und `@font-face` bleiben ohne Layer; **jede andere Datei packt ihre
+  Regeln in einen Layer**. Komponenten konsumieren Tokens — nie rohe Hex/RGB,
+  nie rohe `rem`/`px`-Abstände (`em` ist ausgenommen: schriftrelativ ist eine
+  andere Aussage).
+- **Farben:** eine `light-dark(light, dark)`-Deklaration pro Token. Dark-Mode
+  folgt dem OS; `data-theme="light|dark"` auf `<html>` erzwingt ihn.
 - **Fonts** self-hosted in `public/fonts/` (Inter = UI, Source Serif 4 =
-  titles/reading; keep `OFL.txt`). **Icons** only from the Lucide sprite
+  Titel/Lesetext; `OFL.txt` behalten). **Icons** nur aus dem Lucide-Sprite
   `public/icons.svg` (`<svg class="icon"><use href="/icons.svg#name"/></svg>`),
-  no Unicode glyphs as icons.
-- **Karten-Akzent.** Accent = `--card-accent-<key>-base` in `tokens/colors.css`
-  (dark derived via OKLCH) + `.card--<key>` in [card-accents.css](card-accents.css);
-  feature CSS only consumes `var(--card-accent)`.
-- **Karten-Innenraum: spacing belongs to the flow, not the block.** Inside a
-  card use `.card-section` + `--card-gap-section`/`--card-gap-tight` from
-  [components/card-form/card-blocks.css](components/card-form/card-blocks.css);
-  hints carry no own margin; no feature-own rebuild of a card block — a deviation
-  declares only the deviation. **Why:** tokens alone don't give the same layout,
-  named blocks do.
-- **Besitzer-Regel:** a class used by several cards lives in `card-blocks.css` /
-  `status-msg.css`, not in the feature file that needed it first — otherwise the
-  look depends on the load order of two unrelated files.
-- **One selector per file** — no duplicate definition of the same selector in
-  one file (a variant gets a modifier class). Same selector in a different
-  `@media`/`@layer` scope is fine.
-- **Mobile per component**, in the component's own file (no central mobile.css):
-  media query OR container query for a rule, not both.
-- **New CSS file** → right subfolder, `<link>` in [public/index.html](../index.html)
-  in cascade order, **the same `<link>` in every `tests/fixtures/*-harness.html`**,
-  and a row in DESIGN.md "CSS file inventory". Split at 600 LOC.
+  keine Unicode-Glyphen als Icons.
+- **Karten-Akzent.** Akzent = `--card-accent-<key>-base` in `tokens/colors.css`
+  (Dark via OKLCH abgeleitet) + `.card--<key>` in [card-accents.css](card-accents.css);
+  Feature-CSS konsumiert nur `var(--card-accent)`.
+- **Karten-Innenraum: Abstand gehört zum Fluss, nicht zum Block.** Innerhalb
+  einer Karte `.card-section` + `--card-gap-section`/`--card-gap-tight` aus
+  [components/card-form/card-blocks.css](components/card-form/card-blocks.css)
+  verwenden; Hinweise tragen keinen eigenen Margin; kein feature-eigener
+  Nachbau eines Kartenblocks — eine Abweichung deklariert nur die Abweichung.
+  **Warum:** Tokens allein ergeben nicht dasselbe Layout, benannte Blöcke schon.
+- **Besitzer-Regel:** eine Klasse, die mehrere Karten nutzen, lebt in
+  `card-blocks.css` / `status-msg.css`, nicht in der Feature-Datei, die sie
+  zuerst brauchte — sonst hängt der Look von der Ladereihenfolge zweier
+  unabhängiger Dateien ab.
+- **Ein Selektor pro Datei** — keine doppelte Definition desselben Selektors in
+  einer Datei (eine Variante bekommt eine Modifier-Klasse). Derselbe Selektor in
+  einem anderen `@media`/`@layer`-Scope ist in Ordnung.
+- **Mobile pro Komponente**, in der eigenen Datei der Komponente (keine zentrale
+  mobile.css): Media-Query ODER Container-Query für eine Regel, nicht beides.
+- **Neue CSS-Datei** → richtiger Unterordner, `<link>` in
+  [public/index.html](../index.html) in Cascade-Reihenfolge, **derselbe `<link>`
+  in jedem `tests/fixtures/*-harness.html`** und eine Zeile in DESIGN.md
+  "CSS-Inventar". Split bei 600 LOC.

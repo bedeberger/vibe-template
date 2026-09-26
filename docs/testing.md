@@ -1,121 +1,129 @@
 # Tests
 
-Four suites, sequential via `npm test`. First-time setup: `npx playwright install chromium`.
+Vier Suites, nacheinander via `npm test`. Einmalige Einrichtung: `npx playwright install chromium`.
 
-| Suite | Runner | Path | Command | Character |
+| Suite | Runner | Pfad | Befehl | Charakter |
 | --- | --- | --- | --- | --- |
-| Unit | `node --test` | [tests/unit/](../tests/unit/) | `npm run test:unit` | pure logic, facades against a temp DB, **static guards**; parallel (concurrency 4), no browser |
-| Integration | `node --test` | [tests/integration/](../tests/integration/) | `npm run test:integration` | the HTTP API end to end against a temp DB, real job queue |
-| E2E | Playwright | [tests/e2e/](../tests/e2e/) | `npm run test:e2e` | **fixture harnesses** (real partial + real component) against the mock server [tests/server.js](../tests/server.js) |
-| E2E-App | Playwright | [tests/e2e-app/](../tests/e2e-app/) | `npm run test:e2e-app` (`test:smoke` = only the smoke spec) | the **real** app (`node server.js`, `LOCAL_DEV_MODE`, fresh seeded DB) |
+| Unit | `node --test` | [tests/unit/](../tests/unit/) | `npm run test:unit` | reine Logik, Facades gegen eine Temp-DB, **statische Guards**; parallel (Concurrency 4), kein Browser |
+| Integration | `node --test` | [tests/integration/](../tests/integration/) | `npm run test:integration` | die HTTP-API durchgehend gegen eine Temp-DB, echte Job-Queue |
+| E2E | Playwright | [tests/e2e/](../tests/e2e/) | `npm run test:e2e` | **Fixture-Harnesses** (echtes Partial + echte Komponente) gegen den Mock-Server [tests/server.js](../tests/server.js) |
+| E2E-App | Playwright | [tests/e2e-app/](../tests/e2e-app/) | `npm run test:e2e-app` (`test:smoke` = nur die Smoke-Spec) | die **echte** App (`node server.js`, `LOCAL_DEV_MODE`, frische geseedete DB) |
 
-Unit and integration run under `NODE_ENV=test` ([scripts/with-env.js](../scripts/with-env.js)):
-[db/connection.js](../db/connection.js) then refuses to open anything without an
-explicit `DB_PATH`, so no test can touch the repo `app.db`.
+Unit und Integration laufen unter `NODE_ENV=test` ([scripts/with-env.js](../scripts/with-env.js)):
+[db/connection.js](../db/connection.js) verweigert dann, irgendetwas ohne
+explizites `DB_PATH` zu öffnen, also kann kein Test die Repo-`app.db` berühren.
 
-## Which suite when?
+## Welche Suite wann?
 
-**Unit** — pure functions, validators, the domain facade (own temp DB, see
-[note-store.test.js](../tests/unit/note-store.test.js)), and the **static
-guards**: migration lock/drift/chain, deploy contract, vendor integrity,
-harness CSS parity, LOC limits, CSS/i18n/icon/markup rules. A guard is a test
-that reads the source tree and fails on a rule violation — cheap, runs on every
-push, and it is where a hard rule from CLAUDE.md becomes mechanical.
+**Unit** — reine Funktionen, Validatoren, die Domänen-Facade (eigene Temp-DB,
+siehe [note-store.test.js](../tests/unit/note-store.test.js)) und die
+**statischen Guards**: Migrations-Lock/-Drift/-Kette, Deploy-Vertrag,
+Vendor-Integrität, Harness-CSS-Parität, LOC-Limits, CSS-/i18n-/Icon-/Markup-Regeln.
+Ein Guard ist ein Test, der den Quellbaum liest und bei einer Regelverletzung
+fehlschlägt — billig, läuft bei jedem Push, und dort wird eine harte Regel aus
+CLAUDE.md mechanisch.
 
-**Integration** — the API and job pipeline end to end: HTTP → route → facade →
-DB → queue. Bootstrap via [tests/integration/_helpers/setup.js](../tests/integration/_helpers/setup.js):
+**Integration** — API und Job-Pipeline durchgehend: HTTP → Route → Facade →
+DB → Queue. Bootstrap via [tests/integration/_helpers/setup.js](../tests/integration/_helpers/setup.js):
 
 ```js
 const { bootstrap } = require('./_helpers/setup');
-const ctx = bootstrap({ LOCAL_DEV_MODE: '1' });   // BEFORE any app require
+const ctx = bootstrap({ LOCAL_DEV_MODE: '1' });   // VOR jedem App-require
 test.before(ctx.start);
 test.after(ctx.stop);
 const res = await fetch(ctx.url('/api/notebooks'));
 ```
 
-It puts the throwaway DB on `/dev/shm` when available (`TEST_TMPDIR` overrides)
-and sets `LOCAL_DEV_MODE=0` unless you pass it — the auth guard is armed by
-default ([healthz.test.js](../tests/integration/healthz.test.js) relies on that).
+Die Wegwerf-DB liegt auf `/dev/shm`, wenn vorhanden (`TEST_TMPDIR` übersteuert),
+und `LOCAL_DEV_MODE=0` wird gesetzt, sofern nicht übergeben — der Auth-Guard ist
+standardmässig scharf ([healthz.test.js](../tests/integration/healthz.test.js)
+verlässt sich darauf).
 
-**E2E (fixture harness)** — DOM/module logic of one feature in isolation:
-load on open, rendering, escape invariant of `x-html` sinks, add/edit/delete
-round trips, job polling, events. One harness per feature
-(`tests/fixtures/<id>-harness.html`, created by `npm run feature:new`) calls
-`mountFeature('<id>')` from [tests/fixtures/_harness.js](../tests/fixtures/_harness.js):
-the **real** card inventory, the **real** lazy partial loader and i18n, under a
-minimal stub root instead of the app shell. [tests/server.js](../tests/server.js)
-serves `public/` at `/`, `tests/` at `/tests/`, and deterministic API mocks with
-seed data (inspect `GET /__mock/state`, reset `POST /__mock/reset` in
-`beforeEach`). Reference: [notes-harness.html](../tests/fixtures/notes-harness.html) +
+**E2E (Fixture-Harness)** — DOM-/Modul-Logik eines Features isoliert: Laden beim
+Öffnen, Rendering, Escape-Invariante der `x-html`-Senken, Hinzufügen-/Bearbeiten-/
+Löschen-Roundtrips, Job-Polling, Events. Ein Harness je Feature
+(`tests/fixtures/<id>-harness.html`, erzeugt von `npm run feature:new`) ruft
+`mountFeature('<id>')` aus [tests/fixtures/_harness.js](../tests/fixtures/_harness.js):
+das **echte** Karten-Inventar, der **echte** Lazy-Partial-Loader und i18n, unter
+einem minimalen Stub-Root statt der App-Shell. [tests/server.js](../tests/server.js)
+liefert `public/` unter `/`, `tests/` unter `/tests/` und deterministische
+API-Mocks mit Seed-Daten (ansehen `GET /__mock/state`, zurücksetzen
+`POST /__mock/reset` in `beforeEach`). Referenz: [notes-harness.html](../tests/fixtures/notes-harness.html) +
 [notes-card.spec.js](../tests/e2e/notes-card.spec.js).
 
-- A harness links **the same stylesheets in the same order** as
-  [public/index.html](../public/index.html) — gated by
+- Ein Harness bindet **dieselben Stylesheets in derselben Reihenfolge** ein wie
+  [public/index.html](../public/index.html) — gegatet durch
   [harness-css-parity.test.mjs](../tests/unit/harness-css-parity.test.mjs).
-  New CSS file → both places.
-- A harness needs thinner data than production? Make the **harness**
-  production-like, don't ignore the resulting error.
+  Neue CSS-Datei → beide Orte.
+- Braucht ein Harness dünnere Daten als die Produktion? Den **Harness**
+  produktionsnah machen, den entstehenden Fehler nicht ignorieren.
 
-**E2E-App (real app)**:
+**E2E-App (echte App)**:
 
-- [smoke.spec.js](../tests/e2e-app/smoke.spec.js) boots the SPA and opens
-  **every feature from the registry** ([features.js](../public/js/app/features.js),
-  read at runtime — a new feature is in the smoke automatically): nav click →
-  host visible → the lazily loaded partial mounted its card → hash route; plus a
-  deep link. A phone-viewport pass (360 px) asserts no horizontal overflow per
-  feature — the spec the DoD hook names as mobile coverage. Pure "renders without an error" — no behaviour assertions there.
-- Behaviour specs whose assertion depends on the **real backend, the complete
-  template tree or the full CSS** (layout heights, overlay geometry) go next to
-  it — e.g. [notes.spec.js](../tests/e2e-app/notes.spec.js).
-- **Decision rule:** does the assertion hang on the complete CSS or on
-  template + store + backend together? → `tests/e2e-app/`. Pure DOM/module
-  logic? → harness in `tests/e2e/` (faster, isolated).
-- The boot sequence is SSoT in [tests/e2e-app/_helpers/app.js](../tests/e2e-app/_helpers/app.js)
-  (`bootApp`, `waitBooted`) — never copied per spec.
+- [smoke.spec.js](../tests/e2e-app/smoke.spec.js) bootet die SPA und öffnet
+  **jedes Feature aus der Registry** ([features.js](../public/js/app/features.js),
+  zur Laufzeit gelesen — ein neues Feature ist automatisch im Smoke): Nav-Klick →
+  Host sichtbar → das lazy geladene Partial hat seine Karte gemountet →
+  Hash-Route; dazu ein Deep-Link. Ein Durchgang im Phone-Viewport (360 px) prüft je
+  Feature, dass nichts horizontal überläuft — die Spec, die der DoD-Hook als
+  Mobile-Abdeckung nennt. Reines "rendert ohne Fehler" — dort keine
+  Verhaltens-Assertions.
+- Verhaltens-Specs, deren Assertion am **echten Backend, am vollständigen
+  Template-Baum oder am vollen CSS** hängt (Layout-Höhen, Overlay-Geometrie),
+  gehören daneben — z. B. [notes.spec.js](../tests/e2e-app/notes.spec.js).
+- **Entscheidungsregel:** hängt die Assertion am vollständigen CSS oder an
+  Template + Store + Backend zusammen? → `tests/e2e-app/`. Reine DOM-/Modul-Logik?
+  → Harness in `tests/e2e/` (schneller, isoliert).
+- Die Boot-Sequenz ist SSoT in [tests/e2e-app/_helpers/app.js](../tests/e2e-app/_helpers/app.js)
+  (`bootApp`, `waitBooted`) — nie je Spec kopiert.
 
-## Console-error guard
+## Console-Error-Guard
 
-Every Playwright spec imports `test`/`expect` from
-[tests/e2e/_helpers/fixtures.js](../tests/e2e/_helpers/fixtures.js) instead of
-`@playwright/test`. An auto fixture attaches
-[console-guard.js](../tests/e2e/_helpers/console-guard.js): `pageerror`,
-`console.error` and Alpine warnings (`Alpine Expression Error`/`Alpine Warn`)
-collected during the test turn it red.
+Jede Playwright-Spec importiert `test`/`expect` aus
+[tests/e2e/_helpers/fixtures.js](../tests/e2e/_helpers/fixtures.js) statt aus
+`@playwright/test`. Eine Auto-Fixture hängt
+[console-guard.js](../tests/e2e/_helpers/console-guard.js) an: `pageerror`,
+`console.error` und Alpine-Warnungen (`Alpine Expression Error`/`Alpine Warn`),
+die während des Tests anfallen, färben ihn rot.
 
-**Why:** Alpine does not throw template expression errors — it logs them and
-re-throws asynchronously. Without the guard a typo in a template is a green
-test with a broken UI.
+**Warum:** Alpine wirft bei Fehlern in Template-Ausdrücken nicht — es loggt sie
+und wirft asynchron erneut. Ohne den Guard ist ein Tippfehler im Template ein
+grüner Test mit kaputter UI.
 
-- Negative test that provokes an error on purpose: `consoleGuard.skip()`.
-- Known, expected message: `consoleGuard.ignore(/regex/)`. The default allowlist
-  covers network noise (401/403/404, missing mock route, ResizeObserver loop).
+- Negativtest, der absichtlich einen Fehler provoziert: `consoleGuard.skip()`.
+- Bekannte, erwartete Meldung: `consoleGuard.ignore(/regex/)`. Die
+  Standard-Allowlist deckt Netzwerkrauschen ab (401/403/404, fehlende Mock-Route,
+  ResizeObserver-Loop).
 
-## Rules
+## Regeln
 
-- **New UI feature ⇒ `npm run test:smoke`** — only this layer catches swallowed
-  Alpine errors and a forgotten registration.
-- **New geometry/layout test: mutation-check it once.** Break the behaviour on
-  purpose (no-op the function, kill the CSS property), run the suite, see it
-  red, revert. A test that was never red is no safety net. Same for a new guard:
-  violate the rule once, see it fail.
-- **Fix the bug, not the test.** A red test after a UI change: find the cause,
-  don't weaken the assertion.
-- `node --test` without `--test-concurrency` is **not** sequential (default:
-  cores − 1). The scripts pin 4. Each file has its own temp DB, so files don't
-  lock each other; the cap protects the runner from I/O overload. Race in a set
-  of files? `node --test --test-concurrency=1 "tests/integration/*.test.js"`.
+- **Neues UI-Feature ⇒ `npm run test:smoke`** — nur diese Schicht fängt
+  verschluckte Alpine-Fehler und eine vergessene Registrierung.
+- **Neuer Geometrie-/Layout-Test: einmal mutationsprüfen.** Das Verhalten
+  absichtlich brechen (Funktion zum No-op machen, CSS-Property entfernen), die
+  Suite laufen lassen, rot sehen, zurücknehmen. Ein Test, der nie rot war, ist
+  kein Sicherheitsnetz. Dasselbe für einen neuen Guard: die Regel einmal
+  verletzen, scheitern sehen.
+- **Den Bug fixen, nicht den Test.** Ein roter Test nach einer UI-Änderung: die
+  Ursache finden, die Assertion nicht aufweichen.
+- `node --test` ohne `--test-concurrency` ist **nicht** sequenziell (Standard:
+  Kerne − 1). Die Skripte fixieren 4. Jede Datei hat ihre eigene Temp-DB, Dateien
+  sperren sich also nicht gegenseitig; die Obergrenze schützt den Runner vor
+  I/O-Überlast. Race in einer Gruppe von Dateien?
+  `node --test --test-concurrency=1 "tests/integration/*.test.js"`.
 
-## Common traps
+## Häufige Fallen
 
-- **Playwright can't find Chromium:** `npx playwright install chromium`.
-- **Test opens the repo DB** → `DB_PATH missing` error: set the temp DB before
-  the first `require` (unit: like note-store.test.js; integration: `bootstrap()`).
-- **Port in use:** e2e uses 3210, e2e-app 3211; locally an already running
-  server on that port is reused (`reuseExistingServer`), in CI never.
+- **Playwright findet Chromium nicht:** `npx playwright install chromium`.
+- **Test öffnet die Repo-DB** → Fehler `DB_PATH missing`: die Temp-DB vor dem
+  ersten `require` setzen (Unit: wie note-store.test.js; Integration:
+  `bootstrap()`).
+- **Port belegt:** e2e nutzt 3210, e2e-app 3211; lokal wird ein bereits laufender
+  Server auf diesem Port wiederverwendet (`reuseExistingServer`), in CI nie.
 
 ## CI
 
-[.github/workflows/ci.yml](../.github/workflows/ci.yml) runs audit + gitleaks →
-migration gates → unit → integration → e2e → e2e-app in one job; the Playwright
-report is uploaded on failure. Where it runs (GitHub-hosted or the LXC runner):
-[deployment.md](deployment.md).
+[.github/workflows/ci.yml](../.github/workflows/ci.yml) führt audit + gitleaks →
+Migrations-Gates → Unit → Integration → E2E → E2E-App in einem Job aus; der
+Playwright-Report wird bei Fehler hochgeladen. Wo es läuft (GitHub-hosted oder
+der LXC-Runner): [deployment.md](deployment.md).

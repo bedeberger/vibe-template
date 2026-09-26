@@ -1,222 +1,229 @@
-# DESIGN.md — UI pattern catalog
+# DESIGN.md — UI-Musterkatalog
 
-The single reference for UI patterns. **Before building a new component, check
-here.** Reuse an existing pattern; if it is missing, document it here first
-(section per the template below), then build it. See CLAUDE.md → Harte Regeln:
-"DESIGN.md-Pattern-Katalog vor neuer UI prüfen".
+Die eine Referenz für UI-Muster. **Vor jeder neuen Komponente hier
+nachsehen.** Ein bestehendes Muster wiederverwenden; fehlt es, zuerst hier
+dokumentieren (Abschnitt nach der Vorlage unten), dann bauen. Siehe
+CLAUDE.md → Harte Regeln: "DESIGN.md-Pattern-Katalog vor neuer UI prüfen".
 
-The design system is **paper/ink editorial**: warm paper desk, white cards with
-a thin accent band, ink-black text, Inter for UI, Source Serif 4 for titles and
-reading text, square badges, hairline borders, very little shadow. Only
-patterns whose CSS ships in `public/css/` are listed here.
+Das Design-System ist **Papier/Tinte, editorial**: warmer Papier-Schreibtisch,
+weisse Karten mit schmalem Akzentband, tintenschwarzer Text, Inter für die UI,
+Source Serif 4 für Titel und Lesetext, eckige Badges, Haarlinien-Rahmen, kaum
+Schatten. Aufgeführt sind nur Muster, deren CSS in `public/css/` ausgeliefert
+wird.
 
-## Contents
+## Inhalt
 
-- [Doc template](#doc-template-pflicht-für-neue-sections) ·
-  [Token-Pflicht](#token-pflicht-no-ad-hoc-values) ·
-  [Cascade layers](#cascade-layers) ·
-  [Dark mode](#dark-mode) · [Mobile breakpoints](#mobile-breakpoints) ·
-  [Motion](#motion) · [Z-index stack](#z-index-stack)
-- [App shell](#app-shell) · [Row / list header / table scroll](#row--list-header--table-scroll)
-- [Card](#card-card) · [Card interior](#card-interior) · [Heading hierarchy](#heading-hierarchy)
-- [Buttons](#buttons) · [Badges](#badges) · [Action icon library](#action-icon-library-verbindlich) · [Icon system](#icon-system-lucide-sprite) ·
-  [Icon button](#icon-button-icon-btn) · [Close button](#close-button) ·
+- [Doku-Vorlage](#doku-vorlage-pflicht-für-neue-abschnitte) ·
+  [Token-Pflicht](#token-pflicht-keine-ad-hoc-werte) ·
+  [Cascade-Layer](#cascade-layer) ·
+  [Dark Mode](#dark-mode) · [Mobile-Breakpoints](#mobile-breakpoints) ·
+  [Bewegung](#bewegung) · [Z-Index-Stapel](#z-index-stapel)
+- [App-Shell](#app-shell) · [Zeile / Listenkopf / Tabellen-Scroll](#zeile--listenkopf--tabellen-scroll)
+- [Karte](#karte-card) · [Karten-Innenraum](#karten-innenraum) · [Überschriften-Hierarchie](#überschriften-hierarchie)
+- [Buttons](#buttons) · [Badges](#badges) · [Aktions-Icon-Bibliothek](#aktions-icon-bibliothek-verbindlich) · [Icon-System](#icon-system-lucide-sprite) ·
+  [Icon-Button](#icon-button-icon-btn) · [Schliessen-Button](#schliessen-button) ·
   [Tooltip](#tooltip-data-tip)
-- [Forms](#forms) · [Toggle switch](#toggle-switch) · [Tabs](#tabs--mode-toggle)
-- [Status / loading / empty / error](#status--loading--empty--error) ·
-  [Confirm dialog](#confirm-dialog-modal) · [Danger zone](#danger-zone) ·
-  [Job toast](#job-toast) · [Session banner](#session-banner)
-- [Feature anatomy](#feature-anatomy) · [Entity card (notes)](#entity-card-notes) · [Naming](#naming) ·
-  [CSS file inventory](#css-file-inventory)
+- [Formulare](#formulare) · [Schalter (Toggle)](#schalter-toggle) · [Tabs](#tabs--modus-umschalter)
+- [Status / Laden / Leer / Fehler](#status--laden--leer--fehler) ·
+  [Bestätigungsdialog](#bestätigungsdialog-modal) · [Gefahrenzone](#gefahrenzone) ·
+  [Job-Toast](#job-toast) · [Sitzungs-Banner](#sitzungs-banner)
+- [Feature-Anatomie](#feature-anatomie) · [Entity-Karte (Notizen)](#entity-karte-notizen) · [Benennung](#benennung) ·
+  [CSS-Inventar](#css-inventar)
 
 ---
 
-## Doc template (Pflicht für neue Sections)
+## Doku-Vorlage (Pflicht für neue Abschnitte)
 
-Every pattern section follows this order — otherwise similar sections are not
-comparable at a glance.
+Jeder Muster-Abschnitt folgt dieser Reihenfolge — sonst sind ähnliche
+Abschnitte nicht auf einen Blick vergleichbar.
 
 ```markdown
-## <Pattern name>
+## <Mustername>
 
-**Use:** One sentence: what it is and when it applies.
+**Einsatz:** Ein Satz: was es ist und wann es gilt.
 
-**Markup:** (optional, when non-trivial)
+**Markup:** (optional, wenn nicht trivial)
 \`\`\`html
 <div class="…">…</div>
 \`\`\`
 
-**Classes** [css/path.css](public/css/path.css):
-- `.foo` — purpose
-- `.foo--variant` — modifier purpose
+**Klassen** [css/path.css](public/css/path.css):
+- `.foo` — Zweck
+- `.foo--variant` — Zweck des Modifiers
 
-**Rules:** (optional — anti-patterns, hard constraints)
+**Regeln:** (optional — Anti-Patterns, harte Vorgaben)
 
-**Examples:** [partial.html](public/partials/partial.html)
+**Beispiele:** [partial.html](public/partials/partial.html)
 ```
 
-Order is fixed: **Use → Markup → Classes → Rules → Examples**. A section
-without a `**Use:**` line has no reason to be in the catalog.
+Die Reihenfolge ist fest: **Einsatz → Markup → Klassen → Regeln → Beispiele**.
+Ein Abschnitt ohne `**Einsatz:**`-Zeile hat im Katalog nichts verloren.
 
 ---
 
-## Token-Pflicht (no ad-hoc values)
+## Token-Pflicht (keine Ad-hoc-Werte)
 
-All visual values are custom properties in [public/css/tokens/](public/css/tokens/),
-imported by the facade [public/css/tokens.css](public/css/tokens.css) (the only
-token `<link>`). Components consume tokens; raw hex/rgb for themed values is
-forbidden. A raw value is acceptable only when no token fits — and a value used
-a second time becomes a token. New token → the matching module; no extra
-`<link>` needed.
+Alle visuellen Werte sind Custom Properties in [public/css/tokens/](public/css/tokens/),
+importiert von der Facade [public/css/tokens.css](public/css/tokens.css) (der
+einzige Token-`<link>`). Komponenten konsumieren Tokens; rohes Hex/RGB für
+themenabhängige Werte ist verboten. Ein Rohwert ist nur zulässig, wenn kein
+Token passt — und ein zum zweiten Mal verwendeter Wert wird zum Token. Neuer
+Token → das passende Modul; kein zusätzlicher `<link>` nötig.
 
-| Area | Tokens (module) | Use |
+| Bereich | Tokens (Modul) | Einsatz |
 |---|---|---|
-| **Text colours** | `--color-text`, `--color-muted`, `--color-subtle`, `--color-faint`, `--color-text-inverse` (colors) | Body / secondary / tertiary (AA) / decorative only (never readable text) / on dark fills. |
-| **Surfaces** | `--color-bg` (paper desk), `--color-surface` (cards), `--color-card-bg`, `--color-neutral-bg`, `--color-tooltip-bg` | |
-| **Lines + washes** | `--color-border`, `--color-border-input`, `--color-border-focus`, `--color-hover`, `--color-hover-light`, `--color-hover-strong`, `--color-tag-bg`, `--icon-ghost-fill(-hover)` | Borders are alpha on the ground, so they work on any surface. |
-| **Brand** | `--color-primary(-hover/-light)`, `--color-on-primary`, `--color-accent` (+ `-bg/-text/-hover/-soft`), `--color-on-accent`, `--color-running` | Primary = brand blue (CTA, active state). Accent = feather gold (selection, highlights). |
-| **Status** | `--color-ok-{bg,text,border}`, `--color-warn-{bg,text}`, `--color-err-{bg,text,border,light,hover}`, `--color-pending`, `--color-success(-hover)` | Operational status only (banners, validation, jobs). Never a card accent. |
-| **Card accent** | `--card-accent-<key>-base` → `--card-accent-<key>` → `.card--<key>` | See [Card](#card-card). |
-| **Shadow** | `--shadow-sm` (sheet lift), `--shadow-md` (popover, tooltip, toast), `--shadow-lg` (modal), `--shadow-inset-top` (motion) | Cards are flat — no shadow. |
-| **Spacing** | `--space-xs` 4 · `--space-sm` 8 · `--space-md` 12 · `--space-lg` 16 · `--space-xl` 24 · `--space-2xl` 32, plus `--space-1/2xs/3/5/6/10/14/18/20` (spacing); `--space-page-end` 56 (body bottom padding) | 4px grid; in-between steps only for dense rows. Raw rem/px in margin/padding/gap is gated by `spacing-scale.test.mjs`. |
-| **Card rhythm** | `--card-gap-section` (16), `--card-gap-tight` (8) | The only two gaps inside a card body — see [Card interior](#card-interior). |
-| **Padding** | `--pad-btn-compact`, `--pad-badge`, `--pad-detail` | Recurring cell sizes. |
-| **Border width** | `--border-thin` (0.5px), `--border-thick` (2px) | Only the deviations are tokens; the 1px default stays literal (`1px solid var(--color-border)`). |
-| **Radius** | `--radius-sm` 0 (badges, tags) · `--radius-md` 3px (inputs, buttons) · `--radius-lg` 6px (cards) · `--radius-xl` 10px (modal) | Editorial-square leitmotif. |
-| **Font** | `--font-sans` (Inter, UI), `--font-serif` (Source Serif 4, titles + reading), `--font-mono` (typography) | |
-| **Font size** | `--font-size-micro` 10 · `xs` 11 · `mini` 12 · `sm` 13 · `base` 14 · `md` 15 · `reading` 16 · `lg` 18 · `xl` 22 · `2xl` 26 · `3xl` 30; `--font-em-80/85/90` | xs–md = UI; lg = card title; 2xl/3xl = page/site title. |
-| **Weight / line height** | `--fw-regular/medium/semibold/bold`; `--lh-tight` 1.2 · `--lh-base` 1.45 · `--lh-relaxed` 1.6 | |
-| **Controls** | `--size-default-padding-y`, `--size-compact-font-size`, `--size-compact-padding`, `--icon-size-action` | Same height for controls in one row. |
-| **Motion** | `--transition-fast/base/slow/emphasized`, `--ease-out` (motion) | See [Motion](#motion). |
-| **Opacity** | `--opacity-disabled` 0.6 · `muted` 0.5 · `hint` 0.4 · `faint` 0.35 · `strong` 0.75 | |
-| **Z-index** | `--z-*` (scale) | See [Z-index stack](#z-index-stack). |
+| **Textfarben** | `--color-text`, `--color-muted`, `--color-subtle`, `--color-faint`, `--color-text-inverse` (colors) | Fliesstext / sekundär / tertiär (AA) / nur dekorativ (nie lesbarer Text) / auf dunklen Flächen. |
+| **Flächen** | `--color-bg` (Papier-Schreibtisch), `--color-surface` (Karten), `--color-card-bg`, `--color-neutral-bg`, `--color-tooltip-bg` | |
+| **Linien + Tönungen** | `--color-border`, `--color-border-input`, `--color-border-focus`, `--color-hover`, `--color-hover-light`, `--color-hover-strong`, `--color-tag-bg`, `--icon-ghost-fill(-hover)` | Rahmen sind Alpha auf dem Grund und funktionieren darum auf jeder Fläche. |
+| **Marke** | `--color-primary(-hover/-light)`, `--color-on-primary`, `--color-accent` (+ `-bg/-text/-hover/-soft`), `--color-on-accent`, `--color-running` | Primary = Markenblau (CTA, aktiver Zustand). Accent = Federgold (Auswahl, Hervorhebungen). |
+| **Status** | `--color-ok-{bg,text,border}`, `--color-warn-{bg,text}`, `--color-err-{bg,text,border,light,hover}`, `--color-pending`, `--color-success(-hover)` | Nur für Betriebsstatus (Banner, Validierung, Jobs). Nie ein Karten-Akzent. |
+| **Karten-Akzent** | `--card-accent-<key>-base` → `--card-accent-<key>` → `.card--<key>` | Siehe [Karte](#karte-card). |
+| **Schatten** | `--shadow-sm` (Blatt-Anhebung), `--shadow-md` (Popover, Tooltip, Toast), `--shadow-lg` (Modal), `--shadow-inset-top` (motion) | Karten sind flach — kein Schatten. |
+| **Abstände** | `--space-xs` 4 · `--space-sm` 8 · `--space-md` 12 · `--space-lg` 16 · `--space-xl` 24 · `--space-2xl` 32, dazu `--space-1/2xs/3/5/6/10/14/18/20` (spacing); `--space-page-end` 56 (unteres Body-Padding) | 4px-Raster; Zwischenstufen nur für dichte Zeilen. Rohe rem/px in margin/padding/gap sperrt `spacing-scale.test.mjs`. |
+| **Karten-Rhythmus** | `--card-gap-section` (16), `--card-gap-tight` (8) | Die einzigen zwei Abstände in einem Karten-Body — siehe [Karten-Innenraum](#karten-innenraum). |
+| **Padding** | `--pad-btn-compact`, `--pad-badge`, `--pad-detail` | Wiederkehrende Zellgrössen. |
+| **Rahmenbreite** | `--border-thin` (0.5px), `--border-thick` (2px) | Nur die Abweichungen sind Tokens; der 1px-Standard bleibt literal (`1px solid var(--color-border)`). |
+| **Radius** | `--radius-sm` 0 (Badges, Tags) · `--radius-md` 3px (Inputs, Buttons) · `--radius-lg` 6px (Karten) · `--radius-xl` 10px (Modal) | Leitmotiv: editorial-eckig. |
+| **Schrift** | `--font-sans` (Inter, UI), `--font-serif` (Source Serif 4, Titel + Lesetext), `--font-mono` (typography) | |
+| **Schriftgrösse** | `--font-size-micro` 10 · `xs` 11 · `mini` 12 · `sm` 13 · `base` 14 · `md` 15 · `reading` 16 · `lg` 18 · `xl` 22 · `2xl` 26 · `3xl` 30; `--font-em-80/85/90` | xs–md = UI; lg = Kartentitel; 2xl/3xl = Seiten-/Site-Titel. |
+| **Gewicht / Zeilenhöhe** | `--fw-regular/medium/semibold/bold`; `--lh-tight` 1.2 · `--lh-base` 1.45 · `--lh-relaxed` 1.6 | |
+| **Bedienelemente** | `--size-default-padding-y`, `--size-compact-font-size`, `--size-compact-padding`, `--icon-size-action` | Gleiche Höhe für Bedienelemente in einer Zeile. |
+| **Bewegung** | `--transition-fast/base/slow/emphasized`, `--ease-out` (motion) | Siehe [Bewegung](#bewegung). |
+| **Deckkraft** | `--opacity-disabled` 0.6 · `muted` 0.5 · `hint` 0.4 · `faint` 0.35 · `strong` 0.75 | |
+| **Z-Index** | `--z-*` (scale) | Siehe [Z-Index-Stapel](#z-index-stapel). |
 
-**Focus ring:** no global `:focus-visible` rule — the browser default outline
-stays. Components with their own focus signal (border colour, tint) set
-`outline: none` without `!important`; list-like controls (`.nav-item`,
-`.tabs-btn`) define an explicit `:focus-visible` outline.
-
----
-
-## Cascade layers
-
-`@layer base, components, utilities;` is declared **once**, in
-[tokens.css](public/css/tokens.css) — utilities beat components beat base at
-equal specificity. Tokens and `@font-face` stay **unlayered** (custom
-properties are global and do not compete in the cascade).
-
-**Every other CSS file wraps its rules in a layer** — an unlayered rule beats
-every layered rule regardless of specificity, and the bug only shows when a
-targeted override silently fails. `layout/base.css` writes `base`; everything
-else writes `components` (plus `utilities` in `layout/utilities.css`). Within a
-layer, link order in [index.html](public/index.html) decides — feature/entity
-CSS loads last and may override generic classes by source order.
-
-**Selector unique per file:** never define the same selector twice in one file
-(the second block silently merges with the first). Deliberate variation uses a
-modifier class, or a different `@media`/`@layer` scope.
+**Fokusring:** keine globale `:focus-visible`-Regel — die Standard-Outline des
+Browsers bleibt. Komponenten mit eigenem Fokussignal (Rahmenfarbe, Tönung)
+setzen `outline: none` ohne `!important`; listenartige Bedienelemente
+(`.nav-item`, `.tabs-btn`) definieren eine explizite `:focus-visible`-Outline.
 
 ---
 
-## Dark mode
+## Cascade-Layer
 
-**Use:** every colour follows the theme automatically.
+`@layer base, components, utilities;` wird **einmal** deklariert, in
+[tokens.css](public/css/tokens.css) — utilities schlägt components schlägt base
+bei gleicher Spezifität. Tokens und `@font-face` bleiben **ohne Layer** (Custom
+Properties sind global und konkurrieren nicht in der Cascade).
 
-Each colour token is declared **once** with `light-dark(<light>, <dark>)` in
-[tokens/colors.css](public/css/tokens/colors.css). `:root { color-scheme: light dark }`
-follows the OS; `<html data-theme="light|dark">` forces a theme (hook for a
-future toggle — flipping the attribute is all it takes).
+**Jede andere CSS-Datei legt ihre Regeln in einen Layer** — eine Regel ohne
+Layer schlägt jede Regel mit Layer, unabhängig von der Spezifität, und der Bug
+zeigt sich erst, wenn ein gezielter Override still versagt. `layout/base.css`
+schreibt `base`; alles andere schreibt `components` (dazu `utilities` in
+`layout/utilities.css`). Innerhalb eines Layers entscheidet die Link-Reihenfolge
+in [index.html](public/index.html) — Feature-/Entity-CSS lädt zuletzt und darf
+generische Klassen über die Quellreihenfolge überschreiben.
 
-**Rules:**
-- Colours, backgrounds, borders, shadows only via tokens — no hex/rgb in
-  component CSS, no per-component `[data-theme]` or `prefers-color-scheme`
-  overrides.
-- New hue/surface/border → one token with both halves in `colors.css`.
-- Card accents: only the light `-base` hue is hand-picked; the dark value is
-  derived with OKLCH relative colour syntax (`--accent-dark-lift/-chroma/-floor`).
-- Checklist per new class: dark text contrast ≥ 4.5:1 on `--color-surface`;
-  borders visible; SVG icons use `currentColor`.
+**Selektor pro Datei eindeutig:** denselben Selektor nie zweimal in einer Datei
+definieren (der zweite Block verschmilzt still mit dem ersten). Gewollte
+Variation nutzt eine Modifier-Klasse oder einen anderen `@media`/`@layer`-Scope.
 
 ---
 
-## Mobile breakpoints
+## Dark Mode
 
-**Use:** every new component ships its mobile behaviour in the same commit, in
-the same file (no central `mobile.css`).
+**Einsatz:** jede Farbe folgt automatisch dem Theme.
 
-Custom properties do not work inside `@media`, so the values are literal —
-choose **only** from this ladder:
+Jeder Farb-Token wird **einmal** mit `light-dark(<light>, <dark>)` in
+[tokens/colors.css](public/css/tokens/colors.css) deklariert. `:root { color-scheme: light dark }`
+folgt dem Betriebssystem; `<html data-theme="light|dark">` erzwingt ein Theme
+(Hook für einen künftigen Umschalter — das Attribut umzuschalten genügt).
 
-| Value | Role |
+**Regeln:**
+- Farben, Hintergründe, Rahmen, Schatten nur über Tokens — kein Hex/RGB im
+  Komponenten-CSS, keine komponentenweisen `[data-theme]`- oder
+  `prefers-color-scheme`-Overrides.
+- Neuer Farbton/neue Fläche/neuer Rahmen → ein Token mit beiden Hälften in
+  `colors.css`.
+- Karten-Akzente: nur der helle `-base`-Farbton wird von Hand gewählt; der
+  dunkle Wert wird mit OKLCH Relative Color Syntax abgeleitet
+  (`--accent-dark-lift/-chroma/-floor`).
+- Checkliste pro neuer Klasse: dunkler Textkontrast ≥ 4.5:1 auf
+  `--color-surface`; Rahmen sichtbar; SVG-Icons nutzen `currentColor`.
+
+---
+
+## Mobile-Breakpoints
+
+**Einsatz:** jede neue Komponente liefert ihr mobiles Verhalten im selben
+Commit mit, in derselben Datei (kein zentrales `mobile.css`).
+
+Custom Properties funktionieren in `@media` nicht, darum sind die Werte literal
+— **nur** aus dieser Leiter wählen:
+
+| Wert | Rolle |
 |---|---|
-| `480px` | phone-small — hard reflow (`.row` stacks) |
-| `600px` | phone-large — **default mobile breakpoint** |
-| `768px` | tablet — form fields go to 16px (no iOS focus zoom) |
-| `960px` | desktop — [twocolumn.css](public/css/layout/twocolumn.css) switches to sidebar + main |
+| `480px` | kleines Smartphone — harter Umbruch (`.row` stapelt) |
+| `600px` | grosses Smartphone — **Standard-Mobile-Breakpoint** |
+| `768px` | Tablet — Formularfelder auf 16px (kein iOS-Fokus-Zoom) |
+| `960px` | Desktop — [twocolumn.css](public/css/layout/twocolumn.css) wechselt auf Sidebar + Main |
 
-Documented deviation: `700px` for card headers/action bars (card-shell,
-card-actions) that must reflow before tablet width.
+Dokumentierte Abweichung: `700px` für Kartenköpfe/Aktionsleisten (card-shell,
+card-actions), die vor der Tablet-Breite umbrechen müssen.
 
-- `max-width: 959.98px` next to `min-width: 960px` is deliberate (fractional
-  viewports under zoom), not a typo.
-- `max-width: N` and `min-width: N` both match at exactly N — a pair uses
-  `N` / `N+1` (or the `.98` trick).
-- Touch: `@media (pointer: coarse)` grows icon-only buttons to ≥ 40px.
-
----
-
-## Motion
-
-**Use:** entrances of cards, popovers, toasts. Three mechanics — no new motion
-vocabulary.
-
-1. **Card entrance `cardFadeIn`** ([card-shell.css](public/css/components/card-form/card-shell.css),
-   `--transition-emphasized` = 0.3s `--ease-out`, translateY 8px → 0). Comes
-   with `.card` automatically. **Never add `x-transition` to a `.card`** —
-   translate × scale compete and it wobbles; new card = `x-show` + `x-cloak` only.
-   The animation uses `backwards` (not `both`) so no transform lingers.
-2. **Popover/menu entrance via `@starting-style`** — opacity only (no
-   transform, measurements stay correct).
-3. **Toast** — `jobToastFadeIn` (160ms fade + slide).
-
-**Hover** has two sanctioned mechanics: (A) alpha wash (`--color-hover`,
-`color-mix` tints — buttons, rows, ghost icon buttons); (B) edge/fill flip to a
-neighbouring surface token (outlined `.icon-btn`, `.card` border towards accent).
-
-**Reduced motion** ([tokens/motion.css](public/css/tokens/motion.css)): transition
-tokens drop to `0s` and all animations become instant globally — nothing to do
-per component. Never define a transition token as `--x: var(--x)` (invalid →
-falls back to 0s everywhere).
+- `max-width: 959.98px` neben `min-width: 960px` ist Absicht (gebrochene
+  Viewport-Breiten beim Zoomen), kein Tippfehler.
+- `max-width: N` und `min-width: N` greifen beide bei genau N — ein Paar nutzt
+  `N` / `N+1` (oder den `.98`-Trick).
+- Touch: `@media (pointer: coarse)` vergrössert Icon-only-Buttons auf ≥ 40px.
 
 ---
 
-## Z-index stack
+## Bewegung
 
-**Use:** every positioned layer takes a token from
-[tokens/scale.css](public/css/tokens/scale.css); `position: fixed` without a
-token is a bug.
+**Einsatz:** Einblendungen von Karten, Popovers, Toasts. Drei Mechaniken —
+kein neues Bewegungsvokabular.
 
-| Token | Value | Use |
+1. **Karten-Einblendung `cardFadeIn`** ([card-shell.css](public/css/components/card-form/card-shell.css),
+   `--transition-emphasized` = 0.3s `--ease-out`, translateY 8px → 0). Kommt
+   automatisch mit `.card`. **Nie `x-transition` an eine `.card` hängen** —
+   Translate × Scale konkurrieren und es wackelt; neue Karte = nur `x-show` +
+   `x-cloak`. Die Animation nutzt `backwards` (nicht `both`), damit kein
+   Transform hängen bleibt.
+2. **Popover-/Menü-Einblendung über `@starting-style`** — nur Opacity (kein
+   Transform, Messungen bleiben korrekt).
+3. **Toast** — `jobToastFadeIn` (160ms Einblenden + Gleiten).
+
+**Hover** hat zwei zulässige Mechaniken: (A) Alpha-Tönung (`--color-hover`,
+`color-mix`-Tönungen — Buttons, Zeilen, Ghost-Icon-Buttons); (B) Rand-/Füllwechsel
+auf einen benachbarten Flächen-Token (umrandeter `.icon-btn`, `.card`-Rahmen
+Richtung Akzent).
+
+**Reduzierte Bewegung** ([tokens/motion.css](public/css/tokens/motion.css)): die
+Transition-Tokens fallen auf `0s` und alle Animationen werden global sofort —
+pro Komponente ist nichts zu tun. Einen Transition-Token nie als
+`--x: var(--x)` definieren (ungültig → fällt überall auf 0s zurück).
+
+---
+
+## Z-Index-Stapel
+
+**Einsatz:** jede positionierte Ebene nimmt einen Token aus
+[tokens/scale.css](public/css/tokens/scale.css); `position: fixed` ohne Token
+ist ein Bug.
+
+| Token | Wert | Einsatz |
 |---|---|---|
-| `--z-base` | 1 | in-flow anchors |
-| `--z-sticky` | 100 | sticky sidebar, sticky list headers |
-| `--z-header` | 200 | sticky card/toolbar headers |
-| `--z-popover` | 1000 | tooltip, dropdowns |
-| `--z-overlay` | 2000 | non-modal fullscreen overlays |
-| `--z-modal` | 9500 | backdrop of a non-`<dialog>` overlay |
-| `--z-banner` | 10000 | session banner |
-| `--z-modal-front` | 11000 | modal panel above banners |
-| `--z-toast` | 12000 | toast, skip link |
+| `--z-base` | 1 | Anker im Fluss |
+| `--z-sticky` | 100 | Sticky-Sidebar, Sticky-Listenköpfe |
+| `--z-header` | 200 | Sticky-Karten-/Toolbar-Köpfe |
+| `--z-popover` | 1000 | Tooltip, Dropdowns |
+| `--z-overlay` | 2000 | nicht-modale Vollbild-Overlays |
+| `--z-modal` | 9500 | Backdrop eines Overlays ohne `<dialog>` |
+| `--z-banner` | 10000 | Sitzungs-Banner |
+| `--z-modal-front` | 11000 | Modal-Panel über Bannern |
+| `--z-toast` | 12000 | Toast, Skip-Link |
 
-A native `<dialog>` opened with `showModal()` lives in the top layer and needs
-no z-index. A stacking violation is fixed in the table, not patched locally.
+Ein natives `<dialog>`, geöffnet mit `showModal()`, lebt im Top Layer und
+braucht keinen Z-Index. Ein Stapelverstoss wird in der Tabelle behoben, nicht
+lokal geflickt.
 
 ---
 
-## App shell
+## App-Shell
 
-**Use:** the frame of [index.html](public/index.html): skip link, session
-banner, header row, two-column layout with the feature nav.
+**Einsatz:** der Rahmen von [index.html](public/index.html): Skip-Link,
+Sitzungs-Banner, Kopfzeile, zweispaltiges Layout mit der Feature-Navigation.
 
 **Markup:**
 ```html
@@ -243,42 +250,42 @@ banner, header row, two-column layout with the feature nav.
         </template>
       </nav>
     </aside>
-    <main id="main-content" class="layout-main">…views…</main>
+    <main id="main-content" class="layout-main">…Ansichten…</main>
   </div>
 </div>
 ```
 
-**Classes:**
-- [layout/base.css](public/css/layout/base.css): `.skip-link`, `.site-title`, `.site-logo`; element defaults (`html` paper desk with vignette + grain, `body` column max-width 860 → 1600px ≥ 960px, `h1`, `a`, `kbd`, `code`, `::selection`, `[x-cloak]`).
+**Klassen:**
+- [layout/base.css](public/css/layout/base.css): `.skip-link`, `.site-title`, `.site-logo`; Element-Standards (`html` Papier-Schreibtisch mit Vignette + Körnung, `body`-Spalte max-width 860 → 1600px ab 960px, `h1`, `a`, `kbd`, `code`, `::selection`, `[x-cloak]`).
 - [layout/layout-base.css](public/css/layout/layout-base.css): `.site-header-row`, `.site-header-center`, `.site-header-aside`, `.site-header-user`, `.subtitle`, `.login-shell`, `.login-btn`.
-- [layout/twocolumn.css](public/css/layout/twocolumn.css): `.layout` (grid ≥ 960px, `--sidebar-w`, default 240px), `.layout--no-sidebar`, `.layout-sidebar` (sticky, own scroll on desktop), `.layout-main` (`min-width: 0`).
-- [layout/app-nav.css](public/css/layout/app-nav.css): `.app-nav`, `.nav-item` (`[aria-current="page"]` = accent border + soft accent fill). Below 960px the nav becomes a horizontal strip.
+- [layout/twocolumn.css](public/css/layout/twocolumn.css): `.layout` (Grid ab 960px, `--sidebar-w`, Standard 240px), `.layout--no-sidebar`, `.layout-sidebar` (sticky, eigener Scroll auf Desktop), `.layout-main` (`min-width: 0`).
+- [layout/app-nav.css](public/css/layout/app-nav.css): `.app-nav`, `.nav-item` (`[aria-current="page"]` = Akzentrahmen + sanfte Akzentfüllung). Unter 960px wird die Navigation zu einem horizontalen Streifen.
 
-**Rules:**
-- Nav entries come **only** from the feature registry
-  ([features.js](public/js/app/features.js), `icon` = sprite id). Never
-  hand-write a `.nav-item`.
-- `h1` is reserved for the site title (one per page).
-
----
-
-## Row / list header / table scroll
-
-**Use:** small layout utilities for rows of inputs/buttons, title+action lines
-and wide tables.
-
-**Classes** [layout/utilities.css](public/css/layout/utilities.css):
-- `.row` — flex row, children grow, buttons keep their width; ≤ 480px inputs go full width.
-- `.list-header` (+ `.list-header--between`, `.list-header--wrap`) — title + actions line; stacks ≤ 600px.
-- `.table-scroll` — wrapper that scrolls a wide `<table>` horizontally.
-- `.tabular-nums`, `.display-contents`, `.visually-hidden` (screen-reader-only text).
+**Regeln:**
+- Navigationseinträge kommen **nur** aus der Feature-Registry
+  ([features.js](public/js/app/features.js), `icon` = Sprite-ID). Nie ein
+  `.nav-item` von Hand schreiben.
+- `h1` ist für den Site-Titel reserviert (einer pro Seite).
 
 ---
 
-## Card (`.card`)
+## Zeile / Listenkopf / Tabellen-Scroll
 
-**Use:** every main view block — a feature view, a list item with its own
-actions, the sidebar nav.
+**Einsatz:** kleine Layout-Utilities für Zeilen aus Inputs/Buttons,
+Titel+Aktion-Zeilen und breite Tabellen.
+
+**Klassen** [layout/utilities.css](public/css/layout/utilities.css):
+- `.row` — Flex-Zeile, Kinder wachsen, Buttons behalten ihre Breite; ≤ 480px gehen Inputs auf volle Breite.
+- `.list-header` (+ `.list-header--between`, `.list-header--wrap`) — Zeile aus Titel + Aktionen; stapelt ≤ 600px.
+- `.table-scroll` — Wrapper, der eine breite `<table>` horizontal scrollt.
+- `.tabular-nums`, `.display-contents`, `.visually-hidden` (Text nur für Screenreader).
+
+---
+
+## Karte (`.card`)
+
+**Einsatz:** jeder Hauptblock einer Ansicht — eine Feature-Ansicht, ein
+Listeneintrag mit eigenen Aktionen, die Sidebar-Navigation.
 
 **Markup:**
 ```html
@@ -289,66 +296,67 @@ actions, the sidebar nav.
       <h2 class="card-title" x-text="t('…')"></h2>
       <div class="card-subline"><span class="card-timestamp">…</span></div>
     </div>
-    <div class="card-actions">…icon buttons…</div>
+    <div class="card-actions">…Icon-Buttons…</div>
   </div>
-  …card body (see Card interior)…
+  …Karten-Body (siehe Karten-Innenraum)…
 </div>
 ```
 
-**Classes** [card-form/card-shell.css](public/css/components/card-form/card-shell.css):
-- `.card` — flat surface: hairline border, 2px accent band on top, faint accent wash into the surface, accent-tinted hover border, `cardFadeIn` entrance.
-- `.card-header` — flex row with bottom rule; `--subline` for title + meta line (top-aligned).
-- `.card-header-titlebar` — column: optional `.card-eyebrow`, `.card-title`, optional `.card-subline`.
-- `.card-title` — serif, `--font-size-lg`, tinted 30% towards the accent.
-- `.card-eyebrow` — tracked caps context label above the title.
-- `.card-subline`, `.card-timestamp` — meta line (timestamp, spinner, links).
-- `.card-header-aside` — right side for badges/status (not for buttons).
-- `.card-actions` ([card-actions.css](public/css/components/card-form/card-actions.css)) — right side for action buttons; `--grouped` + `.action-sep` for semantic bundles; `.action-group` (`display: contents`) wraps one bundle without breaking the flex row.
-- `.card-toolbar` — action row in the card **body**.
+**Klassen** [card-form/card-shell.css](public/css/components/card-form/card-shell.css):
+- `.card` — flache Fläche: Haarlinien-Rahmen, 2px-Akzentband oben, schwache Akzent-Tönung in die Fläche, akzentgetönter Hover-Rahmen, Einblendung `cardFadeIn`.
+- `.card-header` — Flex-Zeile mit unterer Linie; `--subline` für Titel + Metazeile (oben ausgerichtet).
+- `.card-header-titlebar` — Spalte: optional `.card-eyebrow`, `.card-title`, optional `.card-subline`.
+- `.card-title` — Serif, `--font-size-lg`, 30% Richtung Akzent getönt.
+- `.card-eyebrow` — gesperrtes Versal-Kontextlabel über dem Titel.
+- `.card-subline`, `.card-timestamp` — Metazeile (Zeitstempel, Spinner, Links).
+- `.card-header-aside` — rechte Seite für Badges/Status (nicht für Buttons).
+- `.card-actions` ([card-actions.css](public/css/components/card-form/card-actions.css)) — rechte Seite für Aktions-Buttons; `--grouped` + `.action-sep` für semantische Bündel; `.action-group` (`display: contents`) umschliesst ein Bündel, ohne die Flex-Zeile zu brechen.
+- `.card-toolbar` — Aktionszeile im Karten-**Body**.
 
-**Accent per card (SSoT):**
-- Hue in [tokens/colors.css](public/css/tokens/colors.css): one
-  `--card-accent-<key>-base` + one mapped `--card-accent-<key>: light-dark(base, oklch(from base …))`
-  line (copy the neighbour line).
+**Akzent pro Karte (SSoT):**
+- Farbton in [tokens/colors.css](public/css/tokens/colors.css): eine
+  `--card-accent-<key>-base`- + eine gemappte `--card-accent-<key>: light-dark(base, oklch(from base …))`-Zeile
+  (Nachbarzeile kopieren).
 - Mapping `.card--<key> { --card-accent: var(--card-accent-<key>); }` in
   [card-accents.css](public/css/card-accents.css).
-- `card--<key>` on the card root. Band, wash and title tint follow
-  automatically; feature CSS only *consumes* `var(--card-accent)`.
-- Shipped keys: `nav` (sidebar), `notes` (example entity).
+- `card--<key>` an der Karten-Wurzel. Band, Tönung und Titelfarbe folgen
+  automatisch; Feature-CSS *konsumiert* nur `var(--card-accent)`.
+- Ausgelieferte Keys: `nav` (Sidebar), `notes` (Beispiel-Entity).
 
-**Rules:**
-- Animation only via CSS — no `x-transition` on `.card`.
-- Header buttons: `.card-actions` with `icon-btn icon-btn--ghost`. Never put
-  buttons directly in `.card-header-aside` (its gap is for status clusters).
-- Mobile (≤ 700px): a header **with** titlebar stays one line (actions
-  anchored top-right, title wraps); a header without titlebar stacks.
-- Card content uses the full card width — no artificial `max-width` on lists
-  (reading-width is only for lead paragraphs: `.card-hint--lead`).
+**Regeln:**
+- Animation nur über CSS — kein `x-transition` an `.card`.
+- Kopf-Buttons: `.card-actions` mit `icon-btn icon-btn--ghost`. Buttons nie
+  direkt in `.card-header-aside` (dessen Gap ist für Status-Cluster).
+- Mobile (≤ 700px): ein Kopf **mit** Titelleiste bleibt einzeilig (Aktionen
+  oben rechts verankert, Titel bricht um); ein Kopf ohne Titelleiste stapelt.
+- Karteninhalt nutzt die volle Kartenbreite — kein künstliches `max-width` auf
+  Listen (Lesebreite nur für Einleitungsabsätze: `.card-hint--lead`).
 
-**Examples:** [notes.html](public/partials/notes.html)
+**Beispiele:** [notes.html](public/partials/notes.html)
 
 ---
 
-## Card interior
+## Karten-Innenraum
 
-**Use:** everything INSIDE a `.card` below the header. `.card` owns frame,
-accent and header; [card-form/card-blocks.css](public/css/components/card-form/card-blocks.css)
-owns the vocabulary of the body.
+**Einsatz:** alles INNERHALB einer `.card` unter dem Kopf. `.card` besitzt
+Rahmen, Akzent und Kopf; [card-form/card-blocks.css](public/css/components/card-form/card-blocks.css)
+besitzt das Vokabular des Bodys.
 
-**Why this is a pattern, not taste:** tokens alone do not produce the same
-organisation — they only guarantee an *arbitrary* gap is picked from a list.
-As long as every block brings its own margin, the visible gap between two
-blocks is the sum of colliding margins and changes whenever a block slips in.
+**Warum das ein Muster ist und keine Geschmacksfrage:** Tokens allein erzeugen
+nicht dieselbe Ordnung — sie garantieren nur, dass ein *beliebiger* Abstand aus
+einer Liste gewählt wird. Solange jeder Block seinen eigenen Margin mitbringt,
+ist der sichtbare Abstand zwischen zwei Blöcken die Summe kollidierender
+Margins und ändert sich, sobald ein Block dazwischenrutscht.
 
-**Rhythm — two steps, nothing more:**
+**Rhythmus — zwei Stufen, nicht mehr:**
 
-| Token | Value | For |
+| Token | Wert | Für |
 |---|---|---|
-| `--card-gap-section` | 16px | between two independent blocks |
-| `--card-gap-tight` | 8px | within a block (title → content, bar → status line) |
+| `--card-gap-section` | 16px | zwischen zwei unabhängigen Blöcken |
+| `--card-gap-tight` | 8px | innerhalb eines Blocks (Titel → Inhalt, Leiste → Statuszeile) |
 
-Blocks get `.card-section`; the **adjacent-sibling selector** sets the gap, not
-the block:
+Blöcke bekommen `.card-section`; der **Nachbar-Selektor** setzt den Abstand,
+nicht der Block:
 
 ```html
 <div class="card-section">
@@ -359,61 +367,67 @@ the block:
   <p class="card-hint" x-text="t('…')"></p>
 </div>
 <div class="card-section">…</div>
-<div class="card-section card-section--tight">…belongs to the block above…</div>
+<div class="card-section card-section--tight">…gehört zum Block darüber…</div>
 ```
 
-`+` instead of `margin-bottom` + `:last-child`: blocks hang on `x-show`, and a
-`display:none` element still counts for `:last-child`. With `+` the following
-**visible** block carries the gap; a hidden neighbour creates none.
+`+` statt `margin-bottom` + `:last-child`: Blöcke hängen an `x-show`, und ein
+Element mit `display:none` zählt für `:last-child` trotzdem mit. Mit `+` trägt
+der nächste **sichtbare** Block den Abstand; ein versteckter Nachbar erzeugt
+keinen.
 
-**Building blocks:**
+**Bausteine:**
 
-| Class | Role | Modifiers |
+| Klasse | Rolle | Modifier |
 |---|---|---|
-| `.card-section` | block in the body | `--tight` |
-| `.card-section-head` | title left, actions/counter right | `--baseline`, `--flush` |
-| `.card-section-title` | tracked caps line above a section | — |
-| `.card-hint` | grey explanatory sentence | `--sm`, `--right`, `--warn`, `--lead` (60ch) |
-| `.card-status` | loading / empty / error line | `--error` |
-| `.muted-msg` | muted state message | `.muted-msg--sm`, `.muted-msg--block`, `.muted-msg--spaced` |
-| `.progress-bar-wrap` + `.progress-bar` | job progress | — |
-| `.filter-bar` (+ `.filter-search-input`, `.filter-toggle`, `.filter-count`) | list filter row | `.filter-bar--inline` (inside a `.card-toolbar`), `.filter-search-input--wide` |
+| `.card-section` | Block im Body | `--tight` |
+| `.card-section-head` | Titel links, Aktionen/Zähler rechts | `--baseline`, `--flush` |
+| `.card-section-title` | gesperrte Versalzeile über einem Abschnitt | — |
+| `.card-hint` | grauer Erklärsatz | `--sm`, `--right`, `--warn`, `--lead` (60ch) |
+| `.card-status` | Zeile für Laden / Leer / Fehler | `--error` |
+| `.muted-msg` | gedämpfte Zustandsmeldung | `.muted-msg--sm`, `.muted-msg--block`, `.muted-msg--spaced` |
+| `.progress-bar-wrap` + `.progress-bar` | Job-Fortschritt | — |
+| `.filter-bar` (+ `.filter-search-input`, `.filter-toggle`, `.filter-count`) | Filterzeile einer Liste | `.filter-bar--inline` (in einer `.card-toolbar`), `.filter-search-input--wide` |
 
-`.card-hint` **explains** (stays under its element); `.muted-msg` **reports a
-state** ("no entries") where the missing content would be.
+`.card-hint` **erklärt** (steht unter seinem Element); `.muted-msg` **meldet
+einen Zustand** ("keine Einträge") dort, wo der fehlende Inhalt stünde.
 
-**Rules (Karten-Innenraum):**
-1. **A hint brings no spacing** (`margin: 0`). The gap comes from the flow.
-2. **No feature-own rebuild** of these blocks (`.xyz-hint`, `.abc-section-head`
-   are the anti-pattern). A deviation is declared by the feature class **next
-   to** the generic one and contains only the deviation.
-3. **Toolbars:** own horizontal geometry yes, own vertical spacing no —
-   `--card-gap-section` below, nothing above (the header provides it).
-4. **Spacing from the token scale**, never raw `rem`/`px` (`em` is exempt —
-   font-relative is a different, deliberate statement).
-5. **Besitzer-Regel (owner rule):** a class name used by several cards lives in
-   `card-blocks.css` / `status-msg.css` — not in the feature file that happened
-   to need it first. Otherwise its look depends on the load order of two
-   unrelated files.
+**Regeln (Karten-Innenraum):**
+1. **Ein Hinweis bringt keinen Abstand mit** (`margin: 0`). Der Abstand kommt
+   aus dem Fluss.
+2. **Kein feature-eigener Nachbau** dieser Blöcke (`.xyz-hint`,
+   `.abc-section-head` sind das Anti-Pattern). Eine Abweichung wird über die
+   Feature-Klasse **neben** der generischen deklariert und enthält nur die
+   Abweichung.
+3. **Toolbars:** eigene horizontale Geometrie ja, eigener vertikaler Abstand
+   nein — `--card-gap-section` darunter, nichts darüber (das liefert der Kopf).
+4. **Abstände aus der Token-Skala**, nie rohe `rem`/`px` (`em` ist ausgenommen
+   — schriftrelativ ist eine andere, bewusste Aussage).
+5. **Besitzer-Regel:** ein Klassenname, den mehrere Karten nutzen, lebt in
+   `card-blocks.css` / `status-msg.css` — nicht in der Feature-Datei, die ihn
+   zufällig zuerst brauchte. Sonst hängt sein Aussehen von der Ladereihenfolge
+   zweier unabhängiger Dateien ab.
 
 ---
 
-## Heading hierarchy
+## Überschriften-Hierarchie
 
-**Use:** consistent heading levels without fighting a global heading cascade.
+**Einsatz:** konsistente Überschriftenebenen, ohne gegen eine globale
+Überschriften-Cascade anzukämpfen.
 
-- `h1.site-title` — the app/site title, once per page.
-- `.card-title` — card title (`h2` for a view card, `h3` for list-item cards).
-- `.card-section-title` — section label inside a card (`h3`/`h4`, caps).
-- `.card-eyebrow` — context label above a card title (not a heading element).
+- `h1.site-title` — der App-/Site-Titel, einmal pro Seite.
+- `.card-title` — Kartentitel (`h2` für eine Ansichtskarte, `h3` für
+  Listeneintrags-Karten).
+- `.card-section-title` — Abschnittslabel in einer Karte (`h3`/`h4`, Versalien).
+- `.card-eyebrow` — Kontextlabel über einem Kartentitel (kein
+  Überschriftenelement).
 
-No bare `<h2>`–`<h6>` inside cards without one of these classes.
+Keine nackten `<h2>`–`<h6>` in Karten ohne eine dieser Klassen.
 
 ---
 
 ## Buttons
 
-**Use:** every clickable action that is not icon-only.
+**Einsatz:** jede klickbare Aktion, die nicht Icon-only ist.
 
 **Markup:**
 ```html
@@ -422,164 +436,171 @@ No bare `<h2>`–`<h6>` inside cards without one of these classes.
 <button type="button" class="danger" x-text="t('…')"></button>
 ```
 
-**Classes** [buttons-badges.css](public/css/components/buttons-badges.css):
-- `button` (element default) — secondary: transparent, hairline, hover wash, `:active` scale 0.98, `:disabled` `--opacity-hint`.
-- `.primary` — the ONE main CTA per card (brand blue). `.success` — confirming action. `.danger` — destructive, outlined red.
-- `.btn-compact` — compact size (pairs with other compact controls).
-- `.btn-count` — counter inside a button. `.btn-group` — button row.
-- Icon + label: [icons.css](public/css/components/icons.css) makes `button:has(> .icon)` an inline-flex with gap.
+**Klassen** [buttons-badges.css](public/css/components/buttons-badges.css):
+- `button` (Element-Standard) — sekundär: transparent, Haarlinie, Hover-Tönung, `:active` Scale 0.98, `:disabled` `--opacity-hint`.
+- `.primary` — der EINE Haupt-CTA pro Karte (Markenblau). `.success` — bestätigende Aktion. `.danger` — destruktiv, rot umrandet.
+- `.btn-compact` — kompakte Grösse (passt zu anderen kompakten Bedienelementen).
+- `.btn-count` — Zähler in einem Button. `.btn-group` — Button-Zeile.
+- Icon + Label: [icons.css](public/css/components/icons.css) macht `button:has(> .icon)` zu einem Inline-Flex mit Gap.
 
-**Rules:**
-- Variants are classes on `<button>`, never a re-definition. A link that acts
-  like a button is either an `.icon-btn` or a `<form>` + `<button>` (see
-  [login.html](public/login.html)).
-- `button:active { transform }` *replaces* any own transform: an absolutely
-  centred button needs its own `:active` rule (`translateY(-50%) scale(0.98)`)
-  or `transform: none`.
-- One row = one control size (all default or all compact).
+**Regeln:**
+- Varianten sind Klassen auf `<button>`, nie eine Neudefinition. Ein Link, der
+  sich wie ein Button verhält, ist entweder ein `.icon-btn` oder ein `<form>` +
+  `<button>` (siehe [login.html](public/login.html)).
+- `button:active { transform }` *ersetzt* jedes eigene Transform: ein absolut
+  zentrierter Button braucht eine eigene `:active`-Regel
+  (`translateY(-50%) scale(0.98)`) oder `transform: none`.
+- Eine Zeile = eine Grösse der Bedienelemente (alle Standard oder alle kompakt).
 
 ---
 
 ## Badges
 
-**Use:** small inline status or classification labels.
+**Einsatz:** kleine Inline-Labels für Status oder Klassifizierung.
 
-**Classes** [buttons-badges.css](public/css/components/buttons-badges.css):
-- `.badge` + `.badge-ok` / `.badge-warn` / `.badge-err` — operational status.
-- `.badge` + `.badge-neutral` — value-free classification or a count (not a status).
+**Klassen** [buttons-badges.css](public/css/components/buttons-badges.css):
+- `.badge` + `.badge-ok` / `.badge-warn` / `.badge-err` — Betriebsstatus.
+- `.badge` + `.badge-neutral` — wertfreie Klassifizierung oder eine Anzahl (kein Status).
 
-**Rules:** square (`border-radius: 0`) — never pills. Status badges use the
-status tokens, never the card accent.
+**Regeln:** eckig (`border-radius: 0`) — nie Pills. Status-Badges nutzen die
+Status-Tokens, nie den Karten-Akzent.
 
 ---
 
-## Action icon library (verbindlich)
+## Aktions-Icon-Bibliothek (verbindlich)
 
-**Use:** the **binding** vocabulary for action buttons across the app. Every
-new feature uses it — no parallel button inventions. Goal: one consistent,
-"real app" frontend. Gated by the icon guard tests below (`npm run test:unit`).
+**Einsatz:** das **verbindliche** Vokabular für Aktions-Buttons in der ganzen
+App. Jedes neue Feature nutzt es — keine parallelen Button-Erfindungen. Ziel:
+ein konsistentes Frontend, das wie eine "echte App" wirkt. Gesichert durch die
+Icon-Guard-Tests unten (`npm run test:unit`).
 
-**Building blocks:**
-- [Icon system](#icon-system-lucide-sprite) — Lucide sprite `<svg class="icon"><use href="/icons.svg#name"/></svg>`. The **only** icon source.
-- [Icon button](#icon-button-icon-btn) — `.icon-btn` (outlined) / `.icon-btn--ghost` (soft until hover) for icon-only actions; `.icon-btn--success` / `.icon-btn--danger` for the confirming / destructive signal.
-- [Close button](#close-button) — `.btn-close` primitive, `.btn-card-close` alone in a card header.
-- `.action-sep` — the only divider between action bundles.
-- [Tooltip](#tooltip-data-tip) — `data-tip` (mandatory on icon-only) + `aria-label`.
+**Bausteine:**
+- [Icon-System](#icon-system-lucide-sprite) — Lucide-Sprite `<svg class="icon"><use href="/icons.svg#name"/></svg>`. Die **einzige** Icon-Quelle.
+- [Icon-Button](#icon-button-icon-btn) — `.icon-btn` (umrandet) / `.icon-btn--ghost` (zurückhaltend bis Hover) für Icon-only-Aktionen; `.icon-btn--success` / `.icon-btn--danger` für das bestätigende / destruktive Signal.
+- [Schliessen-Button](#schliessen-button) — Primitive `.btn-close`, `.btn-card-close` allein in einem Kartenkopf.
+- `.action-sep` — der einzige Trenner zwischen Aktionsbündeln.
+- [Tooltip](#tooltip-data-tip) — `data-tip` (Pflicht bei Icon-only) + `aria-label`.
 
-**Rules (verbindlich):**
-- **Icon-only** for: toolbars, header action clusters (`.card-actions`),
-  close, inline item actions (delete/remove), toasts. Mandatory: `data-tip`
-  **and** `aria-label` (the label lives in the tooltip), `type="button"`,
-  `aria-hidden="true"` on the inner `<svg>`.
-- **Icon + label** stays for primary form actions (Save in a form footer) and
-  prominent text navigation. Consistency there comes from [Buttons](#buttons),
-  not from icon-only. A labelled button inside `.card-actions` carries
-  `data-label-ok` to say "deliberately labelled".
-- **Close = always `x`** (sprite), never `×` / `&#x2715;` / a text "Close".
-- **Destructive** (delete) = `trash`; **remove / chip / dismiss** = `x` —
-  different semantics than closing.
-- **Bundle divider = `.action-sep`.** When an icon row splits semantically
-  (edit/run ↔ delete), only `<span class="action-sep" aria-hidden="true"></span>`
-  separates the bundles — never a border hack or `<hr>` per feature.
-- **One glyph size** for icon-only action/close buttons: `.icon` is `1em` and
-  would drift with every button's font-size, so
-  [icon-btn.css](public/css/components/icon-btn.css) normalises the glyph to
+**Regeln (verbindlich):**
+- **Icon-only** für: Toolbars, Aktions-Cluster im Kopf (`.card-actions`),
+  Schliessen, Inline-Aktionen an Einträgen (löschen/entfernen), Toasts.
+  Pflicht: `data-tip` **und** `aria-label` (das Label lebt im Tooltip),
+  `type="button"`, `aria-hidden="true"` am inneren `<svg>`.
+- **Icon + Label** bleibt für primäre Formularaktionen (Speichern im
+  Formular-Fuss) und prominente Textnavigation. Konsistenz kommt dort aus
+  [Buttons](#buttons), nicht aus Icon-only. Ein beschrifteter Button in
+  `.card-actions` trägt `data-label-ok` für "bewusst beschriftet".
+- **Schliessen = immer `x`** (Sprite), nie `×` / `&#x2715;` / ein Text
+  "Schliessen".
+- **Destruktiv** (löschen) = `trash`; **entfernen / Chip / verwerfen** = `x` —
+  andere Semantik als Schliessen.
+- **Bündel-Trenner = `.action-sep`.** Wenn sich eine Icon-Zeile semantisch
+  teilt (bearbeiten/ausführen ↔ löschen), trennt nur
+  `<span class="action-sep" aria-hidden="true"></span>` die Bündel — nie ein
+  Rahmen-Hack oder `<hr>` pro Feature.
+- **Eine Glyphengrösse** für Icon-only-Aktions-/Schliessen-Buttons: `.icon` ist
+  `1em` und würde mit der Schriftgrösse jedes Buttons wandern, darum
+  normalisiert [icon-btn.css](public/css/components/icon-btn.css) die Glyphe auf
   `var(--icon-size-action)` ([tokens/typography.css](public/css/tokens/typography.css)),
-  desktop and mobile (where the tap target grows to 40px, the glyph does not).
-  A new icon-only close/action class goes into BOTH selector lists there.
-- **Reactive icons** via `<use :href="…">`, never `x-text` (it kills the SVG).
-- **Forbidden:** Unicode glyphs as a button's icon content (`× ✕ ↑ ↓ ← → ⤢ ⛶ ▾ …`).
-- **New action** → check/extend the [icon map](#icon-system-lucide-sprite)
-  first, add the symbol to [public/icons.svg](public/icons.svg) if missing.
+  auf Desktop und Mobile (wo das Tap-Target auf 40px wächst, die Glyphe nicht).
+  Eine neue Icon-only-Schliessen-/Aktionsklasse kommt dort in BEIDE
+  Selektorlisten.
+- **Reaktive Icons** über `<use :href="…">`, nie `x-text` (das zerstört das SVG).
+- **Verboten:** Unicode-Glyphen als Icon-Inhalt eines Buttons (`× ✕ ↑ ↓ ← → ⤢ ⛶ ▾ …`).
+- **Neue Aktion** → zuerst die [Icon-Zuordnung](#icon-system-lucide-sprite)
+  prüfen/erweitern, das Symbol bei Bedarf in [public/icons.svg](public/icons.svg)
+  ergänzen.
 
-**Guard tests:**
-- [button-icons.test.mjs](tests/unit/button-icons.test.mjs) — over all
-  `public/**/*.html`: (1) no button whose content is a Unicode glyph icon;
-  (2) every `.icon-btn` contains `<svg class="icon"><use…>`; (3) every button
-  in a `.card-actions` row is an icon button **or** carries `data-label-ok`
-  (`.tabs-btn` mode toggles are exempt).
+**Guard-Tests:**
+- [button-icons.test.mjs](tests/unit/button-icons.test.mjs) — über alle
+  `public/**/*.html`: (1) kein Button, dessen Inhalt ein Unicode-Glyphen-Icon
+  ist; (2) jedes `.icon-btn` enthält `<svg class="icon"><use…>`; (3) jeder
+  Button in einer `.card-actions`-Zeile ist ein Icon-Button **oder** trägt
+  `data-label-ok` (`.tabs-btn`-Modus-Umschalter sind ausgenommen).
 - [action-icons-tripwire.test.mjs](tests/unit/action-icons-tripwire.test.mjs) —
-  every icon-only `.icon-btn` / `.btn-card-close` / `.btn-close`: `type="button"`
-  (on `<button>`), `aria-label`, `data-tip` (not on `.btn-close`, whose host
-  names it), `aria-hidden="true"` svg.
+  jedes Icon-only-`.icon-btn` / `.btn-card-close` / `.btn-close`: `type="button"`
+  (an `<button>`), `aria-label`, `data-tip` (nicht an `.btn-close`, das sein
+  Host benennt), `aria-hidden="true"`-SVG.
 - [icon-size-consistency.test.mjs](tests/unit/icon-size-consistency.test.mjs) —
-  coarse-pointer tap-target set ⊆ glyph-normalisation set in `icon-btn.css`.
-- [icons-sprite.test.mjs](tests/unit/icons-sprite.test.mjs) — unique symbol
-  ids, every `#name` reference (and every feature-registry `icon`) exists, no
-  query string on `/icons.svg`, the list below == the sprite.
+  Menge der Coarse-Pointer-Tap-Targets ⊆ Menge der Glyphen-Normalisierung in
+  `icon-btn.css`.
+- [icons-sprite.test.mjs](tests/unit/icons-sprite.test.mjs) — eindeutige
+  Symbol-IDs, jede `#name`-Referenz (und jedes `icon` der Feature-Registry)
+  existiert, kein Query-String an `/icons.svg`, die Liste unten == der Sprite.
 
 ---
 
-## Icon system (Lucide sprite)
+## Icon-System (Lucide-Sprite)
 
-**Use:** single source of truth for UI icons — the Lucide set (ISC,
-[lucide.dev](https://lucide.dev)) as a static SVG sprite. No icon JS, no
-Unicode glyphs as icons.
+**Einsatz:** Single Source of Truth für UI-Icons — das Lucide-Set (ISC,
+[lucide.dev](https://lucide.dev)) als statischer SVG-Sprite. Kein Icon-JS,
+keine Unicode-Glyphen als Icons.
 
 **Markup:**
 ```html
 <svg class="icon" aria-hidden="true"><use href="/icons.svg#pencil"/></svg>
 <svg class="icon" aria-hidden="true"><use :href="open ? '/icons.svg#chevron-up' : '/icons.svg#chevron-down'"/></svg>
 ```
-Never `x-text` on an icon button with two states — `x-text` sets
-`textContent` and kills the SVG. Bind `<use :href="…">` reactively, or use
-two `<template x-if>` branches.
+Nie `x-text` an einem Icon-Button mit zwei Zuständen — `x-text` setzt
+`textContent` und zerstört das SVG. `<use :href="…">` reaktiv binden oder zwei
+`<template x-if>`-Zweige nutzen.
 
-**Sprite** [public/icons.svg](public/icons.svg) — one `<symbol id="<lucide-name>" viewBox="0 0 24 24">`
-per icon; licence text in [public/icons.LICENSE.txt](public/icons.LICENSE.txt).
-Stroke/fill are **not** set on the paths — they inherit from the `.icon` class
-on the consuming `<svg>` (shadow-tree cascade). Served as `/icons.svg#name`
-without a query string (every `?v=` variant is its own URL and its own fetch).
+**Sprite** [public/icons.svg](public/icons.svg) — ein `<symbol id="<lucide-name>" viewBox="0 0 24 24">`
+pro Icon; Lizenztext in [public/icons.LICENSE.txt](public/icons.LICENSE.txt).
+Stroke/Fill sind **nicht** an den Pfaden gesetzt — sie erben von der
+`.icon`-Klasse am konsumierenden `<svg>` (Shadow-Tree-Cascade). Ausgeliefert
+als `/icons.svg#name` ohne Query-String (jede `?v=`-Variante ist eine eigene
+URL und ein eigener Fetch).
 
-**Classes** [icons.css](public/css/components/icons.css):
-- `.icon` — `1em` square, `fill: none`, `stroke: currentColor`, `stroke-width: 2`, round caps/joins, `vertical-align: -0.125em`, `pointer-events: none`; size follows the parent `font-size`.
-- `.icon--sm` — 14px with a heavier stroke (the only size variant — any other size belongs on the parent).
-- `button:has(> .icon)` — icon + label buttons become `inline-flex` with a gap.
-- `--icon-chevron-right`, `--icon-check`, `--icon-image` — mask data-URLs for CSS pseudo-icons (`.card-form-saved::before`).
+**Klassen** [icons.css](public/css/components/icons.css):
+- `.icon` — `1em`-Quadrat, `fill: none`, `stroke: currentColor`, `stroke-width: 2`, runde Enden/Ecken, `vertical-align: -0.125em`, `pointer-events: none`; die Grösse folgt der `font-size` des Elternelements.
+- `.icon--sm` — 14px mit kräftigerem Strich (die einzige Grössenvariante — jede andere Grösse gehört ans Elternelement).
+- `button:has(> .icon)` — Buttons mit Icon + Label werden `inline-flex` mit Gap.
+- `--icon-chevron-right`, `--icon-check`, `--icon-image` — Masken-Data-URLs für CSS-Pseudo-Icons (`.card-form-saved::before`).
 
-**Shipped symbols** (Lucide names; the gate compares this list with the sprite):
+**Ausgelieferte Symbole** (Lucide-Namen; das Gate vergleicht diese Liste mit dem Sprite):
 <!-- icon-list:start -->
-- Chevrons + arrows: `chevron-right`, `chevron-left`, `chevron-down`, `chevron-up`, `chevron-last`, `arrow-right`, `arrow-left`, `arrow-up`, `arrow-down`
-- Core actions: `check`, `x`, `plus`, `minus`, `pencil`, `trash`, `search`, `copy`, `download`, `external-link`, `share-2`, `unlink`, `undo`, `redo`, `rotate-cw`, `rotate-ccw`, `more-horizontal`, `grip-vertical`, `pin`, `archive`, `lock`, `lock-open`, `log-out`
-- Status + media controls: `circle`, `square`, `alert-triangle`, `circle-help`, `loader`, `activity`, `play`, `pause`, `zap`
+- Chevrons + Pfeile: `chevron-right`, `chevron-left`, `chevron-down`, `chevron-up`, `chevron-last`, `arrow-right`, `arrow-left`, `arrow-up`, `arrow-down`
+- Kernaktionen: `check`, `x`, `plus`, `minus`, `pencil`, `trash`, `search`, `copy`, `download`, `external-link`, `share-2`, `unlink`, `undo`, `redo`, `rotate-cw`, `rotate-ccw`, `more-horizontal`, `grip-vertical`, `pin`, `archive`, `lock`, `lock-open`, `log-out`
+- Status + Mediensteuerung: `circle`, `square`, `alert-triangle`, `circle-help`, `loader`, `activity`, `play`, `pause`, `zap`
 - Viewport: `focus`, `maximize-2`, `minimize-2`, `scan`, `move-horizontal`, `separator-horizontal`
-- Text + editor: `heading`, `pilcrow`, `quote`, `spell-check`, `message-square`, `lightbulb`, `mic`, `headphones`, `radio`
-- Files + structure: `file-text`, `file-plus`, `folder-plus`, `list`, `list-tree`, `book-open`, `scroll`, `image`, `package`, `calendar`
-- People + places: `user`, `users`, `map-pin`, `compass`, `landmark`, `mountain`, `plane`, `truck`
-- Themes + misc (no fixed meaning yet): `heart`, `heart-crack`, `heart-handshake`, `heart-off`, `baby`, `skull`, `swords`, `git-fork`, `trophy`, `banknote`, `bomb`, `cpu`, `scale`, `laptop-minimal`, `smartphone`, `puzzle`
+- Text + Editor: `heading`, `pilcrow`, `quote`, `spell-check`, `message-square`, `lightbulb`, `mic`, `headphones`, `radio`
+- Dateien + Struktur: `file-text`, `file-plus`, `folder-plus`, `list`, `list-tree`, `book-open`, `scroll`, `image`, `package`, `calendar`
+- Personen + Orte: `user`, `users`, `map-pin`, `compass`, `landmark`, `mountain`, `plane`, `truck`
+- Themen + Diverses (noch ohne feste Bedeutung): `heart`, `heart-crack`, `heart-handshake`, `heart-off`, `baby`, `skull`, `swords`, `git-fork`, `trophy`, `banknote`, `bomb`, `cpu`, `scale`, `laptop-minimal`, `smartphone`, `puzzle`
 <!-- icon-list:end -->
 
-**Icon map (verbindlich — one icon per action):**
+**Icon-Zuordnung (verbindlich — ein Icon pro Aktion):**
 
-| Action | Icon |
+| Aktion | Icon |
 |---|---|
-| Close / dismiss / remove chip | `x` |
-| Delete (destructive) | `trash` |
-| Edit | `pencil` |
-| Add / create | `plus` (new file / folder: `file-plus` / `folder-plus`) |
-| Save / confirm | `check` |
-| Search | `search` |
-| Copy / share / open externally | `copy` / `share-2` / `external-link` |
-| Export / download | `download` |
-| Undo / redo | `undo` / `redo` |
-| Run / recompute a job | `activity` (stats) or `rotate-cw` (re-run / reload) |
-| Play / pause / stop | `play` / `pause` / `square` |
-| Overflow menu | `more-horizontal` |
-| Drag handle | `grip-vertical` |
-| Pin / archive | `pin` / `archive` |
-| Lock / unlock | `lock` / `lock-open` |
-| Zoom in / out, fit to view | `plus` / `minus`, `scan` |
-| Fullscreen on / off | `maximize-2` / `minimize-2` |
-| Expand / collapse (all) | `chevron-down` / `chevron-up` |
-| Warning / help | `alert-triangle` / `circle-help` |
-| Loading | `loader` (static glyph; the spinner is `.spinner`) |
-| Sign out | `log-out` |
+| Schliessen / verwerfen / Chip entfernen | `x` |
+| Löschen (destruktiv) | `trash` |
+| Bearbeiten | `pencil` |
+| Hinzufügen / erstellen | `plus` (neue Datei / neuer Ordner: `file-plus` / `folder-plus`) |
+| Speichern / bestätigen | `check` |
+| Suchen | `search` |
+| Kopieren / teilen / extern öffnen | `copy` / `share-2` / `external-link` |
+| Exportieren / herunterladen | `download` |
+| Rückgängig / wiederholen | `undo` / `redo` |
+| Job ausführen / neu berechnen | `activity` (Statistik) oder `rotate-cw` (erneut ausführen / neu laden) |
+| Abspielen / pausieren / stoppen | `play` / `pause` / `square` |
+| Überlauf-Menü | `more-horizontal` |
+| Ziehgriff | `grip-vertical` |
+| Anheften / archivieren | `pin` / `archive` |
+| Sperren / entsperren | `lock` / `lock-open` |
+| Hinein- / herauszoomen, an Ansicht anpassen | `plus` / `minus`, `scan` |
+| Vollbild ein / aus | `maximize-2` / `minimize-2` |
+| Aufklappen / zuklappen (alle) | `chevron-down` / `chevron-up` |
+| Warnung / Hilfe | `alert-triangle` / `circle-help` |
+| Laden | `loader` (statische Glyphe; der Spinner ist `.spinner`) |
+| Abmelden | `log-out` |
 
-New actions extend this table **and** the sprite.
+Neue Aktionen erweitern diese Tabelle **und** den Sprite.
 
-**Mask variant for CSS pseudo-elements:** where an icon is drawn from CSS
-(rotating disclosure marker, `.card-form-saved::before`), use the
-`--icon-…` custom properties from `icons.css`:
+**Masken-Variante für CSS-Pseudo-Elemente:** wo ein Icon aus CSS gezeichnet
+wird (drehender Aufklapp-Marker, `.card-form-saved::before`), die
+`--icon-…`-Custom-Properties aus `icons.css` nutzen:
 ```css
 .my-thing::before {
   content: '';
@@ -590,31 +611,32 @@ New actions extend this table **and** the sprite.
           mask: var(--icon-chevron-right) center / contain no-repeat;
 }
 ```
-Add a mask to `:root` there once it is needed a second time.
+Eine Maske dort in `:root` ergänzen, sobald sie ein zweites Mal gebraucht wird.
 
-**Allowed Unicode (not icons):** mathematical/typographic characters in
-running text (`·`, `–`, `∑`).
+**Erlaubtes Unicode (keine Icons):** mathematische/typografische Zeichen im
+Fliesstext (`·`, `–`, `∑`).
 
-**Rules:**
-- **No icon library via `<script>`** (Lucide JS, icon fonts) — the sprite needs
-  no JS and no build step.
-- **New icon:** copy the Lucide paths from [lucide.dev](https://lucide.dev) into
-  a `<symbol id="<lucide-name>" viewBox="0 0 24 24">` in the fitting group of
-  the sprite — no `fill`/`stroke` on the symbol (inheritance only works when
-  the properties sit on the consuming `<svg>`) — and add the name to the list
-  above (the sprite gate fails otherwise).
-- **`aria-hidden="true"`** on every decorative icon; icon-only buttons carry
-  `aria-label` on the **button**, not the SVG.
-- **No hex colour / inline stroke** — colour comes from the parent's `color`.
-- Size follows the parent `font-size` (`1em`); a fixed size is a class on the
-  parent in `public/css/`, never a `style` attribute.
+**Regeln:**
+- **Keine Icon-Bibliothek über `<script>`** (Lucide JS, Icon-Fonts) — der Sprite
+  braucht kein JS und keinen Build-Schritt.
+- **Neues Icon:** die Lucide-Pfade von [lucide.dev](https://lucide.dev) in ein
+  `<symbol id="<lucide-name>" viewBox="0 0 24 24">` in der passenden Gruppe des
+  Sprites kopieren — kein `fill`/`stroke` am Symbol (die Vererbung funktioniert
+  nur, wenn die Eigenschaften am konsumierenden `<svg>` sitzen) — und den Namen
+  in die Liste oben aufnehmen (sonst schlägt das Sprite-Gate fehl).
+- **`aria-hidden="true"`** an jedem dekorativen Icon; Icon-only-Buttons tragen
+  `aria-label` am **Button**, nicht am SVG.
+- **Keine Hex-Farbe / kein Inline-Stroke** — die Farbe kommt aus `color` des
+  Elternelements.
+- Die Grösse folgt der `font-size` des Elternelements (`1em`); eine feste Grösse
+  ist eine Klasse am Elternelement in `public/css/`, nie ein `style`-Attribut.
 
 ---
 
-## Icon button (`.icon-btn`)
+## Icon-Button (`.icon-btn`)
 
-**Use:** SSoT for every icon-only button (header actions, toolbars, sign-out).
-Works on `<button>` and `<a>`.
+**Einsatz:** SSoT für jeden Icon-only-Button (Kopf-Aktionen, Toolbars,
+Abmelden). Funktioniert an `<button>` und `<a>`.
 
 **Markup:**
 ```html
@@ -627,63 +649,66 @@ Works on `<button>` and `<a>`.
 </div>
 ```
 
-**Classes** [icon-btn.css](public/css/components/icon-btn.css):
-- `.icon-btn` — outlined square (28px min) — canvas/viewport toolbars; `[aria-pressed="true"]` = active toggle.
-- `.icon-btn--ghost` — soft chip until hover — **default for header clusters**; `.is-active` / `[aria-pressed="true"]` = primary tint.
-- `.icon-btn--success` / `.icon-btn--danger` — confirming / destructive hover signal.
-- `.icon-btn-badge-wrap` + `.icon-btn-badge` — count badge on the corner.
-- `.action-sep` ([card-actions.css](public/css/components/card-form/card-actions.css)) — the only divider between action bundles.
+**Klassen** [icon-btn.css](public/css/components/icon-btn.css):
+- `.icon-btn` — umrandetes Quadrat (mind. 28px) — Canvas-/Viewport-Toolbars; `[aria-pressed="true"]` = aktiver Umschalter.
+- `.icon-btn--ghost` — zurückhaltender Chip bis Hover — **Standard für Kopf-Cluster**; `.is-active` / `[aria-pressed="true"]` = Primary-Tönung.
+- `.icon-btn--success` / `.icon-btn--danger` — bestätigendes / destruktives Hover-Signal.
+- `.icon-btn-badge-wrap` + `.icon-btn-badge` — Zähl-Badge an der Ecke.
+- `.action-sep` ([card-actions.css](public/css/components/card-form/card-actions.css)) — der einzige Trenner zwischen Aktionsbündeln.
 
-**Rules:**
-- Tooltip (`data-tip`) **and** `aria-label` are mandatory on icon-only buttons.
-- Glyph size is normalised to `--icon-size-action`; a new icon-only close/action
-  class is added to both selector lists in `icon-btn.css` (glyph size +
-  coarse-pointer tap target).
-- No parallel icon-button base class per feature; tweaks via a scoping class.
+**Regeln:**
+- Tooltip (`data-tip`) **und** `aria-label` sind an Icon-only-Buttons Pflicht.
+- Die Glyphengrösse ist auf `--icon-size-action` normalisiert; eine neue
+  Icon-only-Schliessen-/Aktionsklasse kommt in beide Selektorlisten in
+  `icon-btn.css` (Glyphengrösse + Coarse-Pointer-Tap-Target).
+- Keine parallele Icon-Button-Basisklasse pro Feature; Anpassungen über eine
+  Scoping-Klasse.
 
 ---
 
-## Close button
+## Schliessen-Button
 
-**Use:** closing a panel, dialog or toast — always the `x` icon.
+**Einsatz:** ein Panel, einen Dialog oder einen Toast schliessen — immer das
+`x`-Icon.
 
-**Classes:**
-- `.btn-close` ([btn-close.css](public/css/components/btn-close.css)) — the primitive: borderless, centred icon; vary via `--close-size` / `--close-pad`.
-- `.btn-card-close` ([card-actions.css](public/css/components/card-form/card-actions.css)) — a close button standing **alone** in a card header (anchored top-right on mobile). Inside a `.card-actions` cluster, the close is an `icon-btn icon-btn--ghost` instead.
-- `.job-toast-close` — the toast's close.
+**Klassen:**
+- `.btn-close` ([btn-close.css](public/css/components/btn-close.css)) — die Primitive: randlos, zentriertes Icon; Variation über `--close-size` / `--close-pad`.
+- `.btn-card-close` ([card-actions.css](public/css/components/card-form/card-actions.css)) — ein Schliessen-Button, der **allein** in einem Kartenkopf steht (auf Mobile oben rechts verankert). In einem `.card-actions`-Cluster ist das Schliessen stattdessen ein `icon-btn icon-btn--ghost`.
+- `.job-toast-close` — das Schliessen des Toasts.
 
-**Rules:** destructive removal is not closing — `trash`, not `x`.
+**Regeln:** destruktives Entfernen ist kein Schliessen — `trash`, nicht `x`.
 
 ---
 
 ## Tooltip (`data-tip`)
 
-**Use:** instant hover/focus hint, mandatory on icon-only buttons. Preferred
-over native `title` (unskippable ~500ms delay).
+**Einsatz:** sofortiger Hover-/Fokus-Hinweis, Pflicht an Icon-only-Buttons.
+Dem nativen `title` vorzuziehen (nicht abschaltbare Verzögerung von ~500ms).
 
 **Markup:** `<button … :data-tip="t('…')" :aria-label="t('…')">`
 
-**Classes** [tooltip.css](public/css/components/tooltip.css) — CSS-only: the
-target's `::after` renders `attr(data-tip)` above it on `:hover` /
+**Klassen** [tooltip.css](public/css/components/tooltip.css) — nur CSS: das
+`::after` des Ziels rendert `attr(data-tip)` darüber bei `:hover` /
 `:focus-visible`.
-- `.tip--below` — bubble below (targets near the top edge, e.g. the header).
-- `.tip--end` — right-aligned bubble (targets near the right edge, last action).
+- `.tip--below` — Blase darunter (Ziele nahe am oberen Rand, z. B. der Kopf).
+- `.tip--end` — rechtsbündige Blase (Ziele nahe am rechten Rand, letzte Aktion).
 
-**Rules:**
-- The target's `::after` belongs to the tooltip: no `data-tip` on elements that
-  use their own `::after` (`.tabs-btn`).
-- Clipped by ancestors with `overflow: hidden/auto` — don't use inside
-  scroll containers.
-- Hidden on touch (`hover: none`) — the `aria-label` carries the meaning.
-- The label always comes from i18n.
+**Regeln:**
+- Das `::after` des Ziels gehört dem Tooltip: kein `data-tip` an Elementen, die
+  ihr eigenes `::after` nutzen (`.tabs-btn`).
+- Wird von Vorfahren mit `overflow: hidden/auto` abgeschnitten — nicht in
+  Scroll-Containern verwenden.
+- Auf Touch ausgeblendet (`hover: none`) — das `aria-label` trägt die Bedeutung.
+- Das Label kommt immer aus i18n.
 
 ---
 
-## Forms
+## Formulare
 
-**Use:** inputs in cards — one shared geometry, no per-card form vocabulary.
+**Einsatz:** Eingaben in Karten — eine gemeinsame Geometrie, kein
+kartenweises Formularvokabular.
 
-**Markup (label/value grid):**
+**Markup (Label/Wert-Raster):**
 ```html
 <div class="card-form-grid">
   <div class="card-form-row">
@@ -697,26 +722,30 @@ target's `::after` renders `attr(data-tip)` above it on `:hover` /
 <p class="card-form-error" id="x-err" x-show="err" x-text="err"></p>
 ```
 
-**Classes** [card-form/form-elements.css](public/css/components/card-form/form-elements.css):
-- Element defaults: `label`, `input[type=text|email|password|url|search|tel|number|date|month|datetime-local]`, `select`, `.card-form-input`, `.card-form-textarea` — 1px `--color-border-input`, `--radius-md`, focus = `--color-border-focus`, disabled = `--opacity-hint`; ≥ 16px under 768px (no iOS zoom).
-- Grid: `.card-form-grid`, `.card-form-row` (170px label column; one column ≤ 600px), `--top`, `--full` (label-less full width), `.card-form-label`, `.card-form-field`, `.card-form-section-divider`.
-- Value column: `.form-stack` (vertical), `.form-inline` + `.form-inline-field`, `.form-num`, `.form-check` (+ `.form-check-title`, `.form-check-desc`), `.form-radio-group` + `.form-radio-option` (`.form-radio-group--card` = bordered options tinted with `--card-accent`), `.form-lead`, `.form-section`.
-- Result lines: `.card-form-saved` (✓ prefix, ok colour), `.card-form-error`, `.card-form-warn` (action succeeded with a consequence the user must know — tinted, `role="status"`, no auto-dismiss).
-- Hints: `.card-form-hint`, `.card-form-field-note` (see [Card interior](#card-interior)).
+**Klassen** [card-form/form-elements.css](public/css/components/card-form/form-elements.css):
+- Element-Standards: `label`, `input[type=text|email|password|url|search|tel|number|date|month|datetime-local]`, `select`, `.card-form-input`, `.card-form-textarea` — 1px `--color-border-input`, `--radius-md`, Fokus = `--color-border-focus`, deaktiviert = `--opacity-hint`; ≥ 16px unter 768px (kein iOS-Zoom).
+- Raster: `.card-form-grid`, `.card-form-row` (170px-Labelspalte; einspaltig ≤ 600px), `--top`, `--full` (volle Breite ohne Label), `.card-form-label`, `.card-form-field`, `.card-form-section-divider`.
+- Wertspalte: `.form-stack` (vertikal), `.form-inline` + `.form-inline-field`, `.form-num`, `.form-check` (+ `.form-check-title`, `.form-check-desc`), `.form-radio-group` + `.form-radio-option` (`.form-radio-group--card` = umrandete Optionen, getönt mit `--card-accent`), `.form-lead`, `.form-section`.
+- Ergebniszeilen: `.card-form-saved` (✓-Präfix, OK-Farbe), `.card-form-error`, `.card-form-warn` (Aktion erfolgreich, mit einer Folge, die der Benutzer kennen muss — getönt, `role="status"`, kein automatisches Ausblenden).
+- Hinweise: `.card-form-hint`, `.card-form-field-note` (siehe [Karten-Innenraum](#karten-innenraum)).
 
-**Rules:**
-- Labels carry no margin — spacing comes from the container `gap`.
-- Validation = `aria-invalid="true"` + `aria-describedby`; no parallel invalid class.
-- Same height per row: all default controls or all compact, never mixed.
-- Native `<select>` is styled and allowed (no combobox component ships).
-- All labels, placeholders and messages via `t()`; numbers/dates via `Intl` with the UI locale.
+**Regeln:**
+- Labels tragen keinen Margin — der Abstand kommt aus dem `gap` des Containers.
+- Validierung = `aria-invalid="true"` + `aria-describedby`; keine parallele
+  Invalid-Klasse.
+- Gleiche Höhe pro Zeile: alle Standard-Bedienelemente oder alle kompakt, nie
+  gemischt.
+- Natives `<select>` ist gestylt und erlaubt (es wird keine Combobox-Komponente
+  ausgeliefert).
+- Alle Labels, Platzhalter und Meldungen über `t()`; Zahlen/Daten über `Intl`
+  mit der UI-Locale.
 
 ---
 
-## Toggle switch
+## Schalter (Toggle)
 
-**Use:** a single boolean setting (on/off). For a choice among values use a
-radio group or `<select>`.
+**Einsatz:** eine einzelne boolesche Einstellung (ein/aus). Für eine Wahl
+zwischen Werten eine Radio-Gruppe oder `<select>` nutzen.
 
 **Markup:**
 ```html
@@ -726,19 +755,20 @@ radio group or `<select>`.
 </button>
 ```
 
-**Classes** [toggle-switch.css](public/css/components/toggle-switch.css):
+**Klassen** [toggle-switch.css](public/css/components/toggle-switch.css):
 `.toggle-switch__btn`, `.toggle-switch__track` (`.is-on`), `.toggle-switch__thumb`,
 `.toggle-switch__label`.
 
-**Rules:** round pill (the universal switch affordance — the square rule is for
-badges). `role="switch"` + `aria-checked` are mandatory; the state is a real
-boolean. No label → `aria-label` on the button.
+**Regeln:** runde Pill (die universelle Schalter-Affordanz — die Eckig-Regel
+gilt für Badges). `role="switch"` + `aria-checked` sind Pflicht; der Zustand
+ist ein echter Boolean. Kein Label → `aria-label` am Button.
 
 ---
 
-## Tabs / mode toggle
+## Tabs / Modus-Umschalter
 
-**Use:** tab rows with panels **and** 2–3-option mode toggles (filters).
+**Einsatz:** Tab-Zeilen mit Panels **und** Modus-Umschalter mit 2–3 Optionen
+(Filter).
 
 **Markup:**
 ```html
@@ -751,52 +781,54 @@ boolean. No label → `aria-label` on the button.
 <div class="card-section" role="tabpanel" x-show="tab === 'a'">…</div>
 ```
 
-**Classes** [tabs.css](public/css/components/tabs.css):
-- `.tabs` — bordered segmented row; scrolls horizontally on every width (edge shadow signals it).
-- `.tabs-btn` + `.tabs-btn--active` or `[aria-selected="true"]` — 2px primary underline, animated.
-- `.tabs-btn-count` — count badge; `:disabled` / `[aria-disabled]` dims it (use for empty filter buckets).
-- `.tabs--scrollable` (fills the container width), `.tabs--fullwidth` (equal-width buttons).
+**Klassen** [tabs.css](public/css/components/tabs.css):
+- `.tabs` — umrandete Segmentzeile; scrollt auf jeder Breite horizontal (ein Randschatten zeigt es an).
+- `.tabs-btn` + `.tabs-btn--active` oder `[aria-selected="true"]` — 2px-Primary-Unterstreichung, animiert.
+- `.tabs-btn-count` — Zähl-Badge; `:disabled` / `[aria-disabled]` dimmt es (für leere Filter-Töpfe).
+- `.tabs--scrollable` (füllt die Containerbreite), `.tabs--fullwidth` (gleich breite Buttons).
 
-**Rules:** panels are separate elements with their own padding/section — the
-tab row has no box around the panels. Mode toggles without panels skip the
-`role="tablist"`. In a card header's `.card-actions` the tab row gets its own
-full line on ≤ 700px.
+**Regeln:** Panels sind eigene Elemente mit eigenem Padding/Abschnitt — die
+Tab-Zeile hat keine Box um die Panels. Modus-Umschalter ohne Panels lassen
+`role="tablist"` weg. In `.card-actions` eines Kartenkopfs bekommt die Tab-Zeile
+bei ≤ 700px eine eigene volle Zeile.
 
 ---
 
-## Status / loading / empty / error
+## Status / Laden / Leer / Fehler
 
-**Use:** every state a view can be in, with one class per state.
+**Einsatz:** jeder Zustand, in dem eine Ansicht sein kann, mit einer Klasse pro
+Zustand.
 
-| State | Markup | CSS |
+| Zustand | Markup | CSS |
 |---|---|---|
-| Loading (view) | `.skeleton` with `.skeleton-line` (`--title`, `--wide`, `--narrow`) + `aria-busy` + `.visually-hidden` label | [skeleton.css](public/css/components/skeleton.css) |
-| Loading (inline) | `<span class="spinner" aria-hidden="true">` next to a label/timestamp | skeleton.css |
-| Progress | `.progress-bar-wrap` > `.progress-bar` with `:style="{ '--progress': pct + '%' }"` + `.card-status` | [card-blocks.css](public/css/components/card-form/card-blocks.css) |
-| Empty (with CTA) | `.card-empty` > `.card-empty-text`, optional `.card-empty-hint`, `button.primary.card-empty-cta` | [form-elements.css](public/css/components/card-form/form-elements.css) |
-| Empty / state line | `.card-status` or `.muted-msg` | card-blocks.css |
-| Error in a card | `.card-status--error` / `.card-form-error` | card-blocks.css / form-elements.css |
-| Form-level banner | `.success-msg--banner` / `.error-msg--banner` (inline: `.success-msg` / `.error-msg`) | [status-msg.css](public/css/components/status-msg.css) |
+| Laden (Ansicht) | `.skeleton` mit `.skeleton-line` (`--title`, `--wide`, `--narrow`) + `aria-busy` + `.visually-hidden`-Label | [skeleton.css](public/css/components/skeleton.css) |
+| Laden (inline) | `<span class="spinner" aria-hidden="true">` neben einem Label/Zeitstempel | skeleton.css |
+| Fortschritt | `.progress-bar-wrap` > `.progress-bar` mit `:style="{ '--progress': pct + '%' }"` + `.card-status` | [card-blocks.css](public/css/components/card-form/card-blocks.css) |
+| Leer (mit CTA) | `.card-empty` > `.card-empty-text`, optional `.card-empty-hint`, `button.primary.card-empty-cta` | [form-elements.css](public/css/components/card-form/form-elements.css) |
+| Leer / Zustandszeile | `.card-status` oder `.muted-msg` | card-blocks.css |
+| Fehler in einer Karte | `.card-status--error` / `.card-form-error` | card-blocks.css / form-elements.css |
+| Banner auf Formularebene | `.success-msg--banner` / `.error-msg--banner` (inline: `.success-msg` / `.error-msg`) | [status-msg.css](public/css/components/status-msg.css) |
 
-**Rules:**
-- Never a bare `<div>` with inline text for these states.
-- No skeleton without shimmer; skeletons are decorative (`aria-hidden`) and
-  carry a `.visually-hidden` loading text.
-- **Progress width** is the only sanctioned runtime style binding: object form
-  `:style="{ '--progress': … }"` setting a custom property (Alpine uses CSSOM →
-  CSP-safe). Never `:style="'width:' + …"` (string form sets a `style`
-  attribute, which the CSP blocks) and never static `style=""`.
-- Empty-state CTA must match the view's real data source.
+**Regeln:**
+- Nie ein nacktes `<div>` mit Inline-Text für diese Zustände.
+- Kein Skeleton ohne Shimmer; Skeletons sind dekorativ (`aria-hidden`) und
+  tragen einen `.visually-hidden`-Ladetext.
+- **Fortschrittsbreite** ist die einzige zulässige Laufzeit-Style-Bindung:
+  Objektform `:style="{ '--progress': … }"`, die eine Custom Property setzt
+  (Alpine nutzt CSSOM → CSP-sicher). Nie `:style="'width:' + …"` (die
+  String-Form setzt ein `style`-Attribut, das die CSP blockiert) und nie
+  statisches `style=""`.
+- Die CTA im Leerzustand muss zur echten Datenquelle der Ansicht passen.
 
-**Examples:** loading skeleton in [index.html](public/index.html), empty state
-and spinner in [notes.html](public/partials/notes.html).
+**Beispiele:** Lade-Skeleton in [index.html](public/index.html), Leerzustand
+und Spinner in [notes.html](public/partials/notes.html).
 
 ---
 
-## Confirm dialog (modal)
+## Bestätigungsdialog (Modal)
 
-**Use:** confirm destructive actions and "discard unsaved changes"; generic
-modal panel. Never `window.confirm()`.
+**Einsatz:** destruktive Aktionen und "ungespeicherte Änderungen verwerfen"
+bestätigen; generisches Modal-Panel. Nie `window.confirm()`.
 
 **Markup:**
 ```html
@@ -808,30 +840,30 @@ modal panel. Never `window.confirm()`.
     <button type="button" class="confirm-dialog-btn confirm-dialog-btn--danger" @click="…; $refs.confirmDlg.close()" x-text="t('…')"></button>
   </div>
 </dialog>
-<!-- open: $refs.confirmDlg.showModal() -->
+<!-- öffnen: $refs.confirmDlg.showModal() -->
 ```
 
-**Classes** [confirm-dialog.css](public/css/components/confirm-dialog.css):
-`.confirm-dialog` (panel + `::backdrop`), `.confirm-dialog-title`,
-`.confirm-dialog-message`, `.confirm-dialog-input` (prompt variant),
+**Klassen** [confirm-dialog.css](public/css/components/confirm-dialog.css):
+`.confirm-dialog` (Panel + `::backdrop`), `.confirm-dialog-title`,
+`.confirm-dialog-message`, `.confirm-dialog-input` (Prompt-Variante),
 `.confirm-dialog-actions`, `.confirm-dialog-btn` (`.confirm-dialog-btn--primary`,
 `.confirm-dialog-btn--danger`).
 
-**Rules:**
-- Native `<dialog>` + `showModal()`: focus trap, inert background and ESC come
-  from the browser — no custom overlay div or focus trap.
-- `margin: auto` is part of every dialog/panel class (the global reset's
-  `margin: 0` would pin it top-left).
-- `@close` is the single clean-up point (ESC, backdrop and buttons all end in
-  `dialog.close()`). Close the dialog when its card disappears.
+**Regeln:**
+- Natives `<dialog>` + `showModal()`: Fokusfalle, inerter Hintergrund und ESC
+  kommen vom Browser — kein eigenes Overlay-Div und keine eigene Fokusfalle.
+- `margin: auto` gehört zu jeder Dialog-/Panel-Klasse (das `margin: 0` des
+  globalen Resets würde ihn oben links festnageln).
+- `@close` ist der einzige Aufräumpunkt (ESC, Backdrop und Buttons enden alle
+  in `dialog.close()`). Den Dialog schliessen, wenn seine Karte verschwindet.
 
 ---
 
-## Danger zone
+## Gefahrenzone
 
-**Use:** set apart irreversible actions at the end of a card (delete account,
-reset data). Not for deleting one list entry — that's an
-`icon-btn--danger` + confirm dialog.
+**Einsatz:** unumkehrbare Aktionen am Ende einer Karte absetzen (Konto löschen,
+Daten zurücksetzen). Nicht für das Löschen eines einzelnen Listeneintrags — das
+ist ein `icon-btn--danger` + Bestätigungsdialog.
 
 **Markup:**
 ```html
@@ -849,20 +881,22 @@ reset data). Not for deleting one list entry — that's an
 </div>
 ```
 
-**Classes** [danger-zone.css](public/css/components/danger-zone.css):
+**Klassen** [danger-zone.css](public/css/components/danger-zone.css):
 `.danger-zone`, `-title`, `-row`, `-text`, `-actions`, `-btn`, `-section`
-(several actions → one `.danger-zone-section` each, divider automatic).
+(mehrere Aktionen → je eine `.danger-zone-section`, Trenner automatisch).
 
-**Rules:** colours from the error tokens, not the card accent. Confirmation is
-mandatory (confirm dialog); for account-level actions, two steps (confirm,
-then type a word). In a form grid wrap it in `.card-form-row--full`.
+**Regeln:** Farben aus den Fehler-Tokens, nicht aus dem Karten-Akzent. Eine
+Bestätigung ist Pflicht (Bestätigungsdialog); für Aktionen auf Kontoebene zwei
+Schritte (bestätigen, dann ein Wort eintippen). In einem Formularraster in
+`.card-form-row--full` einpacken.
 
 ---
 
-## Job toast
+## Job-Toast
 
-**Use:** global, non-blocking notice when a long-running background job (the
-job queue) finishes. Card-internal results stay in the card.
+**Einsatz:** globaler, nicht blockierender Hinweis, wenn ein lang laufender
+Hintergrund-Job (die Job-Queue) fertig ist. Karteninterne Ergebnisse bleiben in
+der Karte.
 
 **Markup:**
 ```html
@@ -874,18 +908,20 @@ job queue) finishes. Card-internal results stay in the card.
 </div>
 ```
 
-**Classes** [job-toast.css](public/css/components/job-toast.css): `.job-toast`
-(fixed bottom-right, full width ≤ 600px, `--z-toast`), `.job-toast--ok`, `.job-toast--err`,
+**Klassen** [job-toast.css](public/css/components/job-toast.css): `.job-toast`
+(fix unten rechts, volle Breite ≤ 600px, `--z-toast`), `.job-toast--ok`, `.job-toast--err`,
 `.job-toast-msg`, `.job-toast-close`.
 
-**Rules:** one toast state on the root (declared in `app-state.js`), not one per
-feature; `aria-live="assertive"` for errors; text via `t()`; never blocking.
+**Regeln:** ein Toast-Zustand auf der Root (deklariert in `app-state.js`),
+nicht einer pro Feature; `aria-live="assertive"` für Fehler; Text über `t()`;
+nie blockierend.
 
 ---
 
-## Session banner
+## Sitzungs-Banner
 
-**Use:** fixed top banner for app-level states (session expired, offline).
+**Einsatz:** fixes Banner oben für Zustände auf App-Ebene (Sitzung abgelaufen,
+offline).
 
 **Markup:**
 ```html
@@ -895,144 +931,148 @@ feature; `aria-live="assertive"` for errors; text via `t()`; never blocking.
 </div>
 ```
 
-**Classes** [layout-base.css](public/css/layout/layout-base.css):
-`.session-banner` (error tint, `--z-banner`), `.session-banner--offline` (warn tint),
-`.session-banner-text`, `.session-banner-btn`.
+**Klassen** [layout-base.css](public/css/layout/layout-base.css):
+`.session-banner` (Fehler-Tönung, `--z-banner`), `.session-banner--offline`
+(Warn-Tönung), `.session-banner-text`, `.session-banner-btn`.
 
 ---
 
-## Feature anatomy
+## Feature-Anatomie
 
-**Use:** every frontend feature — anything that gets its own entry in the
-navigation. Pattern from schreibwerkstatt (feature registry, one card per
-feature with a shared lifecycle, card inventory, domain module), adapted to
-this template's view-based shell. **Generate it, don't hand-build it:**
+**Einsatz:** jedes Frontend-Feature — alles, was einen eigenen Eintrag in der
+Navigation bekommt. Muster aus schreibwerkstatt (Feature-Registry, eine Karte
+pro Feature mit gemeinsamem Lifecycle, Karten-Inventar, Fachmodul), angepasst
+an die ansichtsbasierte Shell dieses Templates. **Generieren, nicht von Hand
+bauen:**
 
 ```bash
 npm run feature:new -- <id> --label-de "…" --label-en "…" --icon <sprite-id>
 ```
 
-The generator ([scripts/feature-new.js](scripts/feature-new.js), templates in
-[scripts/templates/feature/](scripts/templates/feature/)) writes every file and
-registers it at every SSoT; [feature-registry.test](tests/unit/feature-registry.test.mjs)
-(rules in [scripts/feature-anatomy.js](scripts/feature-anatomy.js)) fails for any
-missing piece — most of them would otherwise fail **silently** (an unregistered
-card renders nothing, no error).
+Der Generator ([scripts/feature-new.js](scripts/feature-new.js), Vorlagen in
+[scripts/templates/feature/](scripts/templates/feature/)) schreibt jede Datei und
+registriert sie an jeder SSoT; [feature-registry.test](tests/unit/feature-registry.test.mjs)
+(Regeln in [scripts/feature-anatomy.js](scripts/feature-anatomy.js)) schlägt bei
+jedem fehlenden Teil fehl — die meisten würden sonst **still** versagen (eine
+nicht registrierte Karte rendert nichts, ohne Fehler).
 
-| Piece | File (feature `notes`) | Rule |
+| Teil | Datei (Feature `notes`) | Regel |
 | --- | --- | --- |
-| Registry entry | [features.js](public/js/app/features.js) `{ id, icon, labelKey, card, partial }` | SSoT for nav, host, hash route `#<id>[/<sub>]`, smoke |
-| Host | [index.html](public/index.html) `<section :data-feature="f.id">` (x-for) | never hand-written per feature |
-| Partial | [partials/notes.html](public/partials/notes.html) | loaded on **first open** ([feature-host.js](public/js/app/feature-host.js)); its **root element is the card** (`x-data="notesCard"`); nested `data-partial` resolved before insert; > 250 LOC → `partials/<id>/…` |
-| Feature card | [cards/notes-card.js](public/js/cards/notes-card.js) | `Alpine.data('<id>Card')` + `register<Id>Card()`; state declared up front; lifecycle via `setupCardLifecycle` |
-| Card inventory | [app/register-cards.js](public/js/app/register-cards.js) | the ONE place every `Alpine.data` is registered (app **and** harness) |
-| Domain module | [js/notes/](public/js/notes/) (`notes-methods.js`) | `export const <id>Methods` spread into the card (`this` = card), API calls + data rules; pure helpers as plain exports (unit-testable) |
-| Sub-components | [cards/note-item-card.js](public/js/cards/note-item-card.js) | `<entity>ItemCard` for list items; talk to the feature card by DOM event (`note-removed`), never by reaching into it |
-| Entity CSS | [css/entities/notes.css](public/css/entities/notes.css) | deviations from the card vocabulary only; linked in index.html **and** every harness |
-| i18n | `nav.<id>`, `<id>.*` in de.json **and** en.json | camelCase area for kebab ids (`demo-board` → `demoBoard.title`) |
-| Harness + spec | [tests/fixtures/notes-harness.html](tests/fixtures/notes-harness.html), [tests/e2e/notes-card.spec.js](tests/e2e/notes-card.spec.js) | `mountFeature('<id>')` ([_harness.js](tests/fixtures/_harness.js)) mounts the real card; mocks in [tests/server.js](tests/server.js) |
+| Registry-Eintrag | [features.js](public/js/app/features.js) `{ id, icon, labelKey, card, partial }` | SSoT für Navigation, Host, Hash-Route `#<id>[/<sub>]`, Smoke |
+| Host | [index.html](public/index.html) `<section :data-feature="f.id">` (x-for) | nie pro Feature von Hand geschrieben |
+| Partial | [partials/notes.html](public/partials/notes.html) | geladen beim **ersten Öffnen** ([feature-host.js](public/js/app/feature-host.js)); sein **Wurzelelement ist die Karte** (`x-data="notesCard"`); verschachtelte `data-partial` vor dem Einfügen aufgelöst; > 250 LOC → `partials/<id>/…` |
+| Feature-Karte | [cards/notes-card.js](public/js/cards/notes-card.js) | `Alpine.data('<id>Card')` + `register<Id>Card()`; State vorab deklariert; Lifecycle über `setupCardLifecycle` |
+| Karten-Inventar | [app/register-cards.js](public/js/app/register-cards.js) | der EINE Ort, an dem jedes `Alpine.data` registriert wird (App **und** Harness) |
+| Fachmodul | [js/notes/](public/js/notes/) (`notes-methods.js`) | `export const <id>Methods` in die Karte gespreadet (`this` = Karte), API-Aufrufe + Datenregeln; reine Helfer als einfache Exports (unit-testbar) |
+| Unterkomponenten | [cards/note-item-card.js](public/js/cards/note-item-card.js) | `<entity>ItemCard` für Listeneinträge; sprechen mit der Feature-Karte über ein DOM-Event (`note-removed`), greifen nie in sie hinein |
+| Entity-CSS | [css/entities/notes.css](public/css/entities/notes.css) | nur Abweichungen vom Karten-Vokabular; verlinkt in index.html **und** jedem Harness |
+| i18n | `nav.<id>`, `<id>.*` in de.json **und** en.json | camelCase-Bereich für Kebab-IDs (`demo-board` → `demoBoard.title`) |
+| Harness + Spec | [tests/fixtures/notes-harness.html](tests/fixtures/notes-harness.html), [tests/e2e/notes-card.spec.js](tests/e2e/notes-card.spec.js) | `mountFeature('<id>')` ([_harness.js](tests/fixtures/_harness.js)) montiert die echte Karte; Mocks in [tests/server.js](tests/server.js) |
 
-**Lifecycle** ([card-lifecycle.js](public/js/cards/card-lifecycle.js)): the card
-loads when its feature becomes active (first open and every re-open;
-`reloadOnReopen: false` to load once), reloads on a **re-click of the active nav
-item** (`card:refresh`), resets on `view:reset`, clears its timers and removes
-its listeners on destroy (AbortSignal). Own window listeners: `{ signal }`
-from the returned lifecycle.
+**Lifecycle** ([card-lifecycle.js](public/js/cards/card-lifecycle.js)): die Karte
+lädt, wenn ihr Feature aktiv wird (erstes Öffnen und jedes erneute Öffnen;
+`reloadOnReopen: false`, um nur einmal zu laden), lädt neu bei einem
+**erneuten Klick auf den aktiven Navigationseintrag** (`card:refresh`), setzt
+sich bei `view:reset` zurück, räumt beim Zerstören ihre Timer ab und entfernt
+ihre Listener (AbortSignal). Eigene Window-Listener: `{ signal }` aus dem
+zurückgegebenen Lifecycle.
 
-**Root access:** `$app.<field>` in card templates, `window.__app` in card JS
-(`$root` is the nearest `x-data` — the card itself). The root is the **shell**
-only (session, navigation, routing — [app-state.js](public/js/app/app-state.js));
-it never holds a feature's data. Switching features only via
-`openFeature(id, sub)` (exclusive: one feature visible).
+**Root-Zugriff:** `$app.<field>` in Karten-Templates, `window.__app` im
+Karten-JS (`$root` ist das nächste `x-data` — die Karte selbst). Die Root ist
+nur die **Shell** (Sitzung, Navigation, Routing — [app-state.js](public/js/app/app-state.js));
+sie hält nie die Daten eines Features. Feature-Wechsel nur über
+`openFeature(id, sub)` (exklusiv: ein Feature sichtbar).
 
-**Sub-route:** `#<id>/<sub>` → `$app.featureSub`. The router only splits; the
-**feature validates** its sub and owns the fallback.
+**Sub-Route:** `#<id>/<sub>` → `$app.featureSub`. Der Router teilt nur auf; das
+**Feature validiert** seine Sub-Route und besitzt den Fallback.
 
-**A card inside an existing feature** (the more common case): `/karte` — no
-registry entry, a sub-partial `partials/<id>/<name>.html` + a sub-component in
-the card inventory.
+**Eine Karte in einem bestehenden Feature** (der häufigere Fall): `/karte` —
+kein Registry-Eintrag, ein Sub-Partial `partials/<id>/<name>.html` + eine
+Unterkomponente im Karten-Inventar.
 
 ---
 
-## Entity card (notes)
+## Entity-Karte (Notizen)
 
-**Use:** reference for a list of domain entities with their own actions — the
-template's example feature; replace with your entity.
+**Einsatz:** Referenz für eine Liste von Domänen-Entities mit eigenen Aktionen
+— das Beispiel-Feature des Templates; durch die eigene Entity ersetzen.
 
-Each note is a `.card.card--notes.note-card` sub-component
-(`x-data="noteItemCard(note)"`): header with title + timestamp subline +
-spinner, ghost icon-button cluster (edit / stats / sep / delete), serif body
-rendered into an `x-html` sink via the escaped `bodyHtml` getter, job result as
-`.badge-ok`. Edit mode uses `.card-section.form-stack` + a right-aligned `.row`.
-The feature card above holds the form grid (notebook select, new-note row) and
-the `.card-empty` state.
+Jede Notiz ist eine `.card.card--notes.note-card`-Unterkomponente
+(`x-data="noteItemCard(note)"`): Kopf mit Titel + Zeitstempel-Subline +
+Spinner, Cluster aus Ghost-Icon-Buttons (bearbeiten / Statistik / Trenner /
+löschen), Serif-Body, über den escapten `bodyHtml`-Getter in eine
+`x-html`-Senke gerendert, Job-Ergebnis als `.badge-ok`. Der Bearbeitungsmodus
+nutzt `.card-section.form-stack` + eine rechtsbündige `.row`. Die Feature-Karte
+darüber hält das Formularraster (Notizbuch-Auswahl, Zeile für neue Notiz) und
+den `.card-empty`-Zustand.
 
-Reference: [notes.html](public/partials/notes.html),
+Referenz: [notes.html](public/partials/notes.html),
 [note-item-card.js](public/js/cards/note-item-card.js). CSS
-[entities/notes.css](public/css/entities/notes.css) declares only the deviations
-from the generic card vocabulary (reading font for the body, stats spacing,
-edit-action alignment). Entity CSS lives in `entities/`, never in the generic
-layer.
+[entities/notes.css](public/css/entities/notes.css) deklariert nur die
+Abweichungen vom generischen Karten-Vokabular (Lesefont für den Body, Abstände
+der Statistik, Ausrichtung der Bearbeitungsaktionen). Entity-CSS lebt in
+`entities/`, nie im generischen Layer.
 
 ---
 
-## Naming
+## Benennung
 
-- **BEM-light** for components with modifiers: `.block`, `.block-element`,
-  `.block--modifier` (`.card-header--subline`, `.tabs-btn--active`); state
-  classes `.is-on` / `.is-active`.
-- **Flat** for small utilities: `.row`, `.spinner`, `.muted-msg`.
-- kebab-case only; modifiers via `--`, never by concatenation.
-- Prefixes: `card-` / `card-form-` (shared card geometry), `site-` (app
-  header), `nav-` / `app-nav` (navigation), `<entity>-` (entity CSS).
+- **BEM-light** für Komponenten mit Modifiern: `.block`, `.block-element`,
+  `.block--modifier` (`.card-header--subline`, `.tabs-btn--active`);
+  Zustandsklassen `.is-on` / `.is-active`.
+- **Flach** für kleine Utilities: `.row`, `.spinner`, `.muted-msg`.
+- Nur kebab-case; Modifier über `--`, nie durch Zusammensetzen.
+- Präfixe: `card-` / `card-form-` (gemeinsame Karten-Geometrie), `site-`
+  (App-Kopf), `nav-` / `app-nav` (Navigation), `<entity>-` (Entity-CSS).
 
 ---
 
-## CSS file inventory
+## CSS-Inventar
 
-Cascade order = link order in [index.html](public/index.html) (login.html links
-a subset in the same order). Every file except `tokens*` wraps its rules in a
-layer.
+Cascade-Reihenfolge = Link-Reihenfolge in [index.html](public/index.html)
+(login.html verlinkt eine Teilmenge in derselben Reihenfolge). Jede Datei
+ausser `tokens*` legt ihre Regeln in einen Layer.
 
-| File | Layer | Scope | Origin (schreibwerkstatt) |
+| Datei | Layer | Umfang | Herkunft (schreibwerkstatt) |
 |---|---|---|---|
-| `css/tokens.css` | — | facade: layer order, token `@import`s, `@font-face` (Inter, Source Serif 4) | `tokens.css` |
-| `css/tokens/colors.css` | — | colour tokens (light-dark), card-accent hues + OKLCH dark derivation | `tokens/colors.css` (generic subset) |
-| `css/tokens/typography.css` | — | families, sizes, weights, line heights, control sizes | `tokens/typography.css` |
-| `css/tokens/spacing.css` | — | spacing scale, card rhythm, padding, border width, radius | `tokens/spacing.css` |
-| `css/tokens/motion.css` | — | transitions, easing, shadows, opacity, reduced motion | `tokens/motion.css` |
-| `css/tokens/scale.css` | — | z-index stack | `tokens/scale.css` |
-| `css/card-accents.css` | components | `.card--<key>` → `--card-accent` mapping | `card-accents.css` |
-| `css/layout/base.css` | base | reset, `[x-cloak]`, skip link, paper desk, body column, `h1`/`a`/`kbd`/`code`, site title/logo | `layout/base.css` |
-| `css/layout/layout-base.css` | components | session banner, header row, subtitle, login shell | `layout/layout-base.css` |
-| `css/layout/twocolumn.css` | components | `.layout` sidebar + main grid, sticky sidebar | `layout/twocolumn.css` |
-| `css/layout/app-nav.css` | components | registry-driven sidebar nav (`.app-nav`, `.nav-item`) | new (after `page/page-list.css` `.page-item`) |
+| `css/tokens.css` | — | Facade: Layer-Reihenfolge, Token-`@import`s, `@font-face` (Inter, Source Serif 4) | `tokens.css` |
+| `css/tokens/colors.css` | — | Farb-Tokens (light-dark), Karten-Akzent-Farbtöne + OKLCH-Ableitung für Dark Mode | `tokens/colors.css` (generische Teilmenge) |
+| `css/tokens/typography.css` | — | Schriftfamilien, Grössen, Gewichte, Zeilenhöhen, Grössen der Bedienelemente | `tokens/typography.css` |
+| `css/tokens/spacing.css` | — | Abstandsskala, Karten-Rhythmus, Padding, Rahmenbreite, Radius | `tokens/spacing.css` |
+| `css/tokens/motion.css` | — | Transitions, Easing, Schatten, Deckkraft, reduzierte Bewegung | `tokens/motion.css` |
+| `css/tokens/scale.css` | — | Z-Index-Stapel | `tokens/scale.css` |
+| `css/card-accents.css` | components | Mapping `.card--<key>` → `--card-accent` | `card-accents.css` |
+| `css/layout/base.css` | base | Reset, `[x-cloak]`, Skip-Link, Papier-Schreibtisch, Body-Spalte, `h1`/`a`/`kbd`/`code`, Site-Titel/-Logo | `layout/base.css` |
+| `css/layout/layout-base.css` | components | Sitzungs-Banner, Kopfzeile, Untertitel, Login-Shell | `layout/layout-base.css` |
+| `css/layout/twocolumn.css` | components | `.layout`-Grid aus Sidebar + Main, Sticky-Sidebar | `layout/twocolumn.css` |
+| `css/layout/app-nav.css` | components | Registry-gesteuerte Sidebar-Navigation (`.app-nav`, `.nav-item`) | neu (nach `page/page-list.css` `.page-item`) |
 | `css/layout/utilities.css` | utilities, components | `.row`, `.list-header`, `.table-scroll`, `.tabular-nums`, `.visually-hidden` | `layout/utilities.css` |
-| `css/components/icons.css` | components | `.icon`, sprite usage, mask icon URLs | `components/icons.css` |
-| `css/components/card-form/card-shell.css` | components | `.card`, header, title, eyebrow, subline, aside, toolbar | `components/card-form/card-shell.css` |
-| `css/components/card-form/card-blocks.css` | components | card interior: sections, hints, status, muted msg, progress, filter bar | `components/card-form/card-blocks.css` |
-| `css/components/card-form/form-elements.css` | components | form elements, form grid, checks/radios, result lines, empty state | `components/card-form/form-elements.css` |
+| `css/components/icons.css` | components | `.icon`, Sprite-Nutzung, Masken-Icon-URLs | `components/icons.css` |
+| `css/components/card-form/card-shell.css` | components | `.card`, Kopf, Titel, Eyebrow, Subline, Aside, Toolbar | `components/card-form/card-shell.css` |
+| `css/components/card-form/card-blocks.css` | components | Karten-Innenraum: Abschnitte, Hinweise, Status, gedämpfte Meldung, Fortschritt, Filterleiste | `components/card-form/card-blocks.css` |
+| `css/components/card-form/form-elements.css` | components | Formularelemente, Formularraster, Checkboxen/Radios, Ergebniszeilen, Leerzustand | `components/card-form/form-elements.css` |
 | `css/components/card-form/card-actions.css` | components | `.card-actions`, `.action-sep`, `.btn-card-close` | `components/card-form/card-actions.css` |
-| `css/components/buttons-badges.css` | components | buttons + variants, compact, count, badges | `components/buttons-badges.css` |
-| `css/components/icon-btn.css` | components | `.icon-btn` (+ ghost/success/danger/badge), glyph + tap-target normalisation | `components/icon-btn.css` |
-| `css/components/btn-close.css` | components | `.btn-close` primitive | `components/btn-close.css` |
-| `css/components/status-msg.css` | components | `.success-msg` / `.error-msg` (+ banner) | `components/status-msg.css` |
-| `css/components/skeleton.css` | components | skeleton shimmer, spinner | `chat.css`, `page/page-content-skeleton.css`, `page/page-list.css` (merged) |
-| `css/components/tabs.css` | components | tabs / segmented toggle | `components/tabs.css` |
-| `css/components/toggle-switch.css` | components | boolean switch | `components/toggle-switch.css` |
-| `css/components/tooltip.css` | base, components | CSS-only `data-tip` tooltip | new (replaces the JS tooltip layer) |
-| `css/components/confirm-dialog.css` | components | native `<dialog>` confirm/modal | `components/confirm-dialog.css` |
-| `css/components/danger-zone.css` | components | danger zone | `components/danger-zone.css` |
-| `css/components/job-toast.css` | components | job-done toast | `components/job-toast.css` |
-| `css/entities/notes.css` | components | notes feature deviations | template |
+| `css/components/buttons-badges.css` | components | Buttons + Varianten, kompakt, Zähler, Badges | `components/buttons-badges.css` |
+| `css/components/icon-btn.css` | components | `.icon-btn` (+ ghost/success/danger/badge), Normalisierung von Glyphe + Tap-Target | `components/icon-btn.css` |
+| `css/components/btn-close.css` | components | Primitive `.btn-close` | `components/btn-close.css` |
+| `css/components/status-msg.css` | components | `.success-msg` / `.error-msg` (+ Banner) | `components/status-msg.css` |
+| `css/components/skeleton.css` | components | Skeleton-Shimmer, Spinner | `chat.css`, `page/page-content-skeleton.css`, `page/page-list.css` (zusammengeführt) |
+| `css/components/tabs.css` | components | Tabs / Segment-Umschalter | `components/tabs.css` |
+| `css/components/toggle-switch.css` | components | boolescher Schalter | `components/toggle-switch.css` |
+| `css/components/tooltip.css` | base, components | reiner CSS-Tooltip über `data-tip` | neu (ersetzt die JS-Tooltip-Schicht) |
+| `css/components/confirm-dialog.css` | components | natives `<dialog>` für Bestätigung/Modal | `components/confirm-dialog.css` |
+| `css/components/danger-zone.css` | components | Gefahrenzone | `components/danger-zone.css` |
+| `css/components/job-toast.css` | components | Toast bei fertigem Job | `components/job-toast.css` |
+| `css/entities/notes.css` | components | Abweichungen Feature Notizen | template |
 
-Assets: [public/fonts/](public/fonts/) (Inter + Source Serif 4 variable woff2,
-SIL OFL 1.1 — licence in `fonts/OFL.txt`, keep it next to the files),
-[public/icons.svg](public/icons.svg) (Lucide sprite, ISC — licence in
-[public/icons.LICENSE.txt](public/icons.LICENSE.txt), keep it next to the sprite).
+Assets: [public/fonts/](public/fonts/) (Inter + Source Serif 4 als variable
+woff2, SIL OFL 1.1 — Lizenz in `fonts/OFL.txt`, neben den Dateien belassen),
+[public/icons.svg](public/icons.svg) (Lucide-Sprite, ISC — Lizenz in
+[public/icons.LICENSE.txt](public/icons.LICENSE.txt), neben dem Sprite belassen).
 
-**Add a CSS file:** put it in the right subfolder (`layout/`, `components/`,
-`entities/`), wrap it in `@layer components`, add a `<link>` to
-[index.html](public/index.html) at its cascade position (and to
-[login.html](public/login.html) if the public page needs it), and add a row
-here. Split a file before it passes 600 lines (`<name>/` subfolder).
+**Eine CSS-Datei hinzufügen:** in den richtigen Unterordner legen (`layout/`,
+`components/`, `entities/`), in `@layer components` einpacken, einen `<link>` in
+[index.html](public/index.html) an ihrer Cascade-Position ergänzen (und in
+[login.html](public/login.html), falls die öffentliche Seite sie braucht), und
+hier eine Zeile ergänzen. Eine Datei aufteilen, bevor sie 600 Zeilen
+überschreitet (`<name>/`-Unterordner).

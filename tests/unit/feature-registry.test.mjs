@@ -1,5 +1,5 @@
 // Gate for "Feature-Registry ist SSoT" + the feature anatomy (CLAUDE.md →
-// Harte Regeln; DESIGN.md → "Feature anatomy"):
+// Harte Regeln; DESIGN.md → "Feature-Anatomie"):
 //   1. every registry entry is a complete feature: card (registered in the card
 //      inventory, with lifecycle), domain module, partial rooted in the card,
 //      entity CSS, fixture harness + harness spec (scripts/feature-anatomy.js);
@@ -23,7 +23,7 @@ const index = stripHtmlComments(read('public/index.html'));
 test('Registry: jedes Feature ist vollständig (Anatomie)', () => {
   assert.ok(Array.isArray(FEATURES) && FEATURES.length > 0, 'FEATURES leer?');
   const v = anatomy.check(ROOT, FEATURES);
-  assert.deepEqual(v, [], 'Feature-Anatomie unvollständig (DESIGN.md → Feature anatomy; '
+  assert.deepEqual(v, [], 'Feature-Anatomie unvollständig (DESIGN.md → Feature-Anatomie; '
     + `neues Feature: npm run feature:new):\n  ${v.join('\n  ')}`);
 });
 

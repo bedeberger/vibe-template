@@ -32,13 +32,13 @@ Bestimme (bei Unklarheit **nachfragen**, nicht raten):
 
 ## Teil C — Frontend (neues Feature in der Navigation)
 
-**Vor neuer UI: [DESIGN.md](DESIGN.md)-Pattern-Katalog prüfen** — wiederverwenden, nicht neu erfinden. Fehlt das Pattern: erst dort dokumentieren (Markup + CSS-Datei + Use-Case), dann bauen. Die Struktur eines Features ist **fest** (DESIGN.md → „Feature anatomy") und wird **generiert, nicht von Hand gebaut**:
+**Vor neuer UI: [DESIGN.md](DESIGN.md)-Pattern-Katalog prüfen** — wiederverwenden, nicht neu erfinden. Fehlt das Pattern: erst dort dokumentieren (Markup + CSS-Datei + Use-Case), dann bauen. Die Struktur eines Features ist **fest** (DESIGN.md → „Feature-Anatomie") und wird **generiert, nicht von Hand gebaut**:
 
 1. **Generieren:**
    ```bash
    npm run feature:new -- <id> --label-de "…" --label-en "…" --icon <sprite-id>
    ```
-   `<id>` kebab-case (Hash-Route + Dateistamm), das Icon muss im Sprite stehen (DESIGN.md → Icon system). Erst mit `--dry-run` den Plan zeigen lassen. Das legt an: Feature-Karte `public/js/cards/<id>-card.js`, Fachmodul `public/js/<id>/<id>-methods.js`, Partial `public/partials/<id>.html`, `public/css/entities/<id>.css`, Harness + Spec — und trägt ein: `FEATURES`, Karten-Inventar `register-cards.js`, `<link>` in index.html + allen Harnesses, DESIGN.md-Inventar, i18n `nav.<id>` / `<id>.title` / `<id>.empty` in **beiden** Locales.
+   `<id>` kebab-case (Hash-Route + Dateistamm), das Icon muss im Sprite stehen (DESIGN.md → Icon-System). Erst mit `--dry-run` den Plan zeigen lassen. Das legt an: Feature-Karte `public/js/cards/<id>-card.js`, Fachmodul `public/js/<id>/<id>-methods.js`, Partial `public/partials/<id>.html`, `public/css/entities/<id>.css`, Harness + Spec — und trägt ein: `FEATURES`, Karten-Inventar `register-cards.js`, `<link>` in index.html + allen Harnesses, DESIGN.md-Inventar, i18n `nav.<id>` / `<id>.title` / `<id>.empty` in **beiden** Locales.
 2. **Fachlogik** ins Fachmodul (`<id>Methods`, `this` = die Karte): API-Calls über `api()`, reine Berechnungen als eigene Exporte (unit-testbar). **Jedes Feld, das dort zugewiesen wird, als Initialfeld in der Karte deklarieren** (Gate `architecture-tripwire`).
 3. **Karte** (`cards/<id>-card.js`): State ergänzen, `setupCardLifecycle`-Konfiguration anpassen (`load`, `resetState`, `timerKeys`, ggf. `reloadOnReopen: false`). Root-Felder im Template über `$app.…`, im JS über `window.__app` — **nie** Feature-Daten in den Root.
 4. **Partial** ausbauen: Wurzel bleibt `x-data="<id>Card"`; Listeneinträge als eigene Sub-Komponente (`<entity>ItemCard`, Muster [note-item-card.js](public/js/cards/note-item-card.js)), Rückmeldung per DOM-Event. > 250 LOC → Teil-Partials unter `partials/<id>/` per `data-partial`.

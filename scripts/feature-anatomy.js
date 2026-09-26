@@ -2,7 +2,7 @@
 // The anatomy of a frontend feature — ONE definition, used by the unit gate
 // (tests/unit/feature-registry.test.mjs) and by the generator
 // (scripts/feature-new.js, which must produce exactly this). Documented in
-// DESIGN.md → "Feature anatomy".
+// DESIGN.md → "Feature-Anatomie".
 //
 // For a registry entry { id: 'notes', card: 'notesCard', partial: 'notes' }:
 //   public/js/cards/notes-card.js        Alpine.data('notesCard') + registerNotesCard()

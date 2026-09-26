@@ -75,7 +75,7 @@ test('State explizit: jedes this.x = … ist vorab deklariert', () => {
   ];
   // A domain module (public/js/<feature>/…, `export const xxxMethods`) is spread
   // into its feature card: `this` is the CARD, so its fields count as declared
-  // if the importing card declares them (DESIGN.md → Feature anatomy).
+  // if the importing card declares them (DESIGN.md → Feature-Anatomie).
   const importersOf = (f) => files.filter((g) => g !== f
     && new RegExp(`from\\s+['"][./]*[^'"]*/${f.split('/').pop().replace(/\./g, '\\.')}['"]`).test(read(g)));
   for (const f of files) {

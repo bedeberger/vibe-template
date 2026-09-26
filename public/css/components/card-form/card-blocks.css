@@ -7,7 +7,7 @@
  * otherwise its look depends on the load order of two unrelated files.
  * Load position: right after card-shell.css, before any feature CSS. A card
  * that deviates declares ONLY the deviation, next to the generic class.
- * Pattern doc: DESIGN.md → "Card interior". */
+ * Pattern doc: DESIGN.md → "Karten-Innenraum". */
 
 @layer components {
 /* === 1. Vertical rhythm ====================================================

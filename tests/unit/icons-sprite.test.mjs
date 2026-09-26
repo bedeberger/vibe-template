@@ -1,4 +1,4 @@
-// Integrity of the Lucide sprite public/icons.svg (DESIGN.md → "Icon system"):
+// Integrity of the Lucide sprite public/icons.svg (DESIGN.md → "Icon-System"):
 //  1. every symbol id is unique (a second definition silently shadows the
 //     first) and every symbol is a 24×24 Lucide viewBox;
 //  2. every static `icons.svg#NAME` reference in public/ (HTML/JS/CSS) and
@@ -6,7 +6,7 @@
 //     `'/icons.svg#' + f.icon`) resolves to a symbol — a typo is an invisible icon;
 //  3. references carry no query string (`/icons.svg?v=…` is a separate URL,
 //     i.e. a separate fetch per variant);
-//  4. the "Shipped symbols" list in DESIGN.md equals the sprite (the catalog
+//  4. the "Ausgelieferte Symbole" list in DESIGN.md equals the sprite (the catalog
 //     is the index people search before adding an icon);
 //  5. the ISC licence ships next to the sprite.
 // Pure static analysis; public/vendor/** is excluded.
@@ -63,7 +63,7 @@ test('icons.svg-Referenzen ohne Query-String', () => {
   assert.deepEqual(offenders, [], `icons.svg mit Query-String (nur /icons.svg#NAME):\n  ${offenders.join('\n  ')}`);
 });
 
-test('DESIGN.md "Shipped symbols" == Sprite', () => {
+test('DESIGN.md "Ausgelieferte Symbole" == Sprite', () => {
   const design = read('DESIGN.md');
   const a = design.indexOf('<!-- icon-list:start -->');
   const b = design.indexOf('<!-- icon-list:end -->');

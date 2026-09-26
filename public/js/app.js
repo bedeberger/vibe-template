@@ -4,7 +4,7 @@
 //
 // The root scope is the SHELL: session, navigation, routing. Each feature is a
 // card of its own (js/cards/<id>-card.js) whose partial is loaded on first
-// open (js/app/feature-host.js). Anatomy: DESIGN.md → "Feature anatomy".
+// open (js/app/feature-host.js). Anatomy: DESIGN.md → "Feature-Anatomie".
 
 import Alpine from '/vendor/alpine-3.15.12.esm.min.js';
 import { initialState } from '/js/app/app-state.js';

@@ -5,7 +5,7 @@
 // applied the OLD meaning of v30 and chokes on the new chain.
 //
 // After adding a migration, run `npm run migrations:lock` and commit the updated
-// lock (CLAUDE.md → Add a feature). The committed state must always verify.
+// lock (CLAUDE.md → Feature hinzufügen). The committed state must always verify.
 
 import test from 'node:test';
 import assert from 'node:assert';

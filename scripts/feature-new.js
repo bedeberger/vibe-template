@@ -2,7 +2,7 @@
 // npm run feature:new -- <id> [--label-de "…"] [--label-en "…"] [--icon <sprite-id>] [--dry-run]
 //
 // Scaffolds a complete frontend feature from scripts/templates/feature/ — the
-// anatomy of DESIGN.md → "Feature anatomy", exactly what
+// anatomy of DESIGN.md → "Feature-Anatomie", exactly what
 // tests/unit/feature-registry.test.mjs (scripts/feature-anatomy.js) demands:
 //
 //   public/js/cards/<id>-card.js      feature card (Alpine.data + lifecycle + register fn)
@@ -48,7 +48,7 @@ function plan(root, id, opts) {
 
   const icon = opts.icon || 'file-text';
   if (!read('public/icons.svg').includes(`<symbol id="${icon}"`)) {
-    throw new Error(`Icon "${icon}" gibt es im Sprite public/icons.svg nicht (Liste: DESIGN.md → Icon system)`);
+    throw new Error(`Icon "${icon}" gibt es im Sprite public/icons.svg nicht (Liste: DESIGN.md → Icon-System)`);
   }
   const features = read('public/js/app/features.js');
   if (new RegExp(`id:\\s*'${id}'`).test(features)) throw new Error(`Feature "${id}" existiert bereits in features.js`);
@@ -105,7 +105,7 @@ function plan(root, id, opts) {
     if (!rows.length) throw new Error('DESIGN.md: keine css/entities-Zeile im CSS-Inventar gefunden');
     const last = rows.at(-1);
     const end = last.index + last[0].length;
-    return `${s.slice(0, end)}\n| \`css/entities/${id}.css\` | components | ${vars.__LABEL_EN__} feature deviations | template |${s.slice(end)}`;
+    return `${s.slice(0, end)}\n| \`css/entities/${id}.css\` | components | Abweichungen Feature ${vars.__LABEL_DE__} | template |${s.slice(end)}`;
   });
 
   // i18n: nav label + card title + empty state, in BOTH locales.

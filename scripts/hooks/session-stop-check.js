@@ -191,7 +191,7 @@ if (mobileFiles.length) {
     + '`npx playwright test --config=playwright.app.config.js <spec>` (echte App). '
     + 'Steht dort „KEIN Spec", ist das der Befund — dann entweder einen Phone-Viewport-Block '
     + 'ergänzen oder bewusst als desktop-only stehen lassen.\n'
-    + '  Woran es scheitert (DESIGN.md → Mobile): fixe px-Breiten, die bei 360–480 px '
+    + '  Woran es scheitert (DESIGN.md → Mobile-Breakpoints): fixe px-Breiten, die bei 360–480 px '
     + 'überlaufen; breite Inhalte ohne scrollbaren Container; zu kleine Tap-Ziele.';
 }
 

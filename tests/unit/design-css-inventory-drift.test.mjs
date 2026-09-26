@@ -1,5 +1,5 @@
 // Drift guard: three lists of stylesheets must agree —
-//   (a) the "CSS file inventory" table in DESIGN.md (`css/…` in column 1),
+//   (a) the "CSS-Inventar" table in DESIGN.md (`css/…` in column 1),
 //   (b) the CSS files actually shipped under public/css/ (vendor excluded),
 //   (c) what public/index.html loads: its <link>s plus the token modules the
 //       facade css/tokens.css @imports.
@@ -15,7 +15,7 @@ const require = createRequire(import.meta.url);
 const { walk, toRel, read, stripCssComments, stripHtmlComments } = require('../../scripts/hooks/_rules.js');
 
 const design = read('DESIGN.md');
-const section = design.slice(design.indexOf('## CSS file inventory'));
+const section = design.slice(design.indexOf('## CSS-Inventar'));
 const inventory = new Set([...section.matchAll(/^\|\s*`(css\/[^`]+\.css)`\s*\|/gm)].map((m) => m[1]));
 
 const shipped = new Set(walk('public/css', ['.css']).map(toRel).map((f) => f.replace(/^public\//, '')));
@@ -37,7 +37,7 @@ test('Inventar-Scan greift (kein vacuous pass)', () => {
 
 test('DESIGN.md-Inventar == ausgelieferte CSS-Dateien', () => {
   assert.deepEqual(diff(shipped, inventory), [],
-    `CSS-Dateien ohne Zeile im „CSS file inventory" von DESIGN.md:\n${fmt(diff(shipped, inventory))}`);
+    `CSS-Dateien ohne Zeile im „CSS-Inventar" von DESIGN.md:\n${fmt(diff(shipped, inventory))}`);
   assert.deepEqual(diff(inventory, shipped), [],
     `DESIGN.md-Inventar nennt Dateien, die es nicht gibt:\n${fmt(diff(inventory, shipped))}`);
 });

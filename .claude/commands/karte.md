@@ -9,7 +9,7 @@ Du ergänzt ein bestehendes Feature: **$ARGUMENTS**
 > Der **häufigere** Weg als `/feature`: eine App wächst meist innerhalb einer
 > Ansicht, nicht um eine neue. Er braucht die halbe Feature-Ceremony **nicht** —
 > aber der Teil, den er braucht, fällt stumm aus, wenn er fehlt.
-> Anatomie und Regeln: [DESIGN.md](DESIGN.md) → „Feature anatomy"; Muster
+> Anatomie und Regeln: [DESIGN.md](DESIGN.md) → „Feature-Anatomie"; Muster
 > **erst dort nachsehen, wiederverwenden**; fehlt es, dort zuerst dokumentieren.
 
 ## Was NICHT anzufassen ist
@@ -23,7 +23,7 @@ nicht gibt: erst Facade + Route (Teil A von `/feature`), dann die Karte.
 1. **Ort bestimmen:** eine **Karte** im Feature, oder ein **Tab** (Sub-Route
    `#<feature-id>/<sub>`)? Beim Tab liest die Feature-Karte `$app.featureSub`,
    **validiert** ihn und besitzt den Fallback (der Router splittet nur);
-   Tab-Leiste: DESIGN.md → „Tabs / mode toggle".
+   Tab-Leiste: DESIGN.md → „Tabs / Modus-Umschalter".
 2. **Teil-Partial** `public/partials/<feature-id>/<name>.html`, im Feature-Partial
    per `<div data-partial="<feature-id>/<name>"></div>` bestellt
    (feature-host.js löst es **vor** dem Einfügen auf). > 250 LOC → weiter teilen.

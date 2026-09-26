@@ -1,62 +1,63 @@
-# Migrations
+# Migrationen
 
-Numbered, forward-only files in [db/migrations/](../db/migrations/)
-(`000N_<name>.js`, exporting `{ version, name, up(db) }`). The workflow for a new
-one is the `/migration` command ([.claude/commands/migration.md](../.claude/commands/migration.md)).
+Nummerierte Forward-only-Dateien in [db/migrations/](../db/migrations/)
+(`000N_<name>.js`, exportieren `{ version, name, up(db) }`). Den Ablauf für eine
+neue beschreibt der Befehl `/migration` ([.claude/commands/migration.md](../.claude/commands/migration.md)).
 
-## Two install paths, one schema
+## Zwei Installationspfade, ein Schema
 
-| DB state at boot | What [db/schema.js](../db/schema.js) does |
+| DB-Zustand beim Boot | Was [db/schema.js](../db/schema.js) tut |
 | --- | --- |
-| fresh (no `schema_version`) | runs the **squashed schema** ([db/squashed-schema/](../db/squashed-schema/)) in one batch, stamps `SQUASHED_VERSION` |
-| existing | replays only migrations with `version > MAX(schema_version)` |
+| frisch (kein `schema_version`) | führt das **Squash-Schema** ([db/squashed-schema/](../db/squashed-schema/)) in einem Durchgang aus, stempelt `SQUASHED_VERSION` |
+| bestehend | spielt nur Migrationen mit `version > MAX(schema_version)` nach |
 
-Every step runs in a transaction followed by `PRAGMA foreign_key_check`
-([db/migrations.js](../db/migrations.js)); a dangling FK fails loudly.
-Migrations run at every server start — `npm run db:migrate` runs the same path
-standalone.
+Jeder Schritt läuft in einer Transaktion, gefolgt von `PRAGMA foreign_key_check`
+([db/migrations.js](../db/migrations.js)); ein hängender FK schlägt laut fehl.
+Migrationen laufen bei jedem Serverstart — `npm run db:migrate` fährt denselben
+Pfad eigenständig.
 
-## The gates
+## Die Gates
 
-| Gate | Catches |
+| Gate | Fängt |
 | --- | --- |
-| [squash-drift.test.mjs](../tests/unit/squash-drift.test.mjs) (`npm run squash:check`) | squash and chain produce different schemas; `SQUASHED_VERSION` ≠ highest migration |
-| [migration-chain-boot.test.mjs](../tests/unit/migration-chain-boot.test.mjs) | chain fails with `foreign_keys = ON` (FK ordering, bad CREATE) |
-| [migration-lock.test.mjs](../tests/unit/migration-lock.test.mjs) + [db/migrations.lock.json](../db/migrations.lock.json) | a frozen migration renumbered/renamed/rewritten, a new one inserted at or below the frozen watermark, duplicate numbers, an unfrozen new migration |
+| [squash-drift.test.mjs](../tests/unit/squash-drift.test.mjs) (`npm run squash:check`) | Squash und Kette ergeben verschiedene Schemas; `SQUASHED_VERSION` ≠ höchste Migration |
+| [migration-chain-boot.test.mjs](../tests/unit/migration-chain-boot.test.mjs) | Kette scheitert mit `foreign_keys = ON` (FK-Reihenfolge, fehlerhaftes CREATE) |
+| [migration-lock.test.mjs](../tests/unit/migration-lock.test.mjs) + [db/migrations.lock.json](../db/migrations.lock.json) | eine eingefrorene Migration umnummeriert/umbenannt/umgeschrieben, eine neue auf oder unter der eingefrorenen Marke eingefügt, doppelte Nummern, eine nicht eingefrorene neue Migration |
 
-Not caught by the fresh-chain tests: `ADD COLUMN … REFERENCES` with a non-NULL
-default on a **populated** table. Write a seed-based
-`tests/unit/migration-000N-<name>.test.mjs` for such a migration.
+Von den Frische-Ketten-Tests nicht gefangen: `ADD COLUMN … REFERENCES` mit einem
+Nicht-NULL-Default auf einer **befüllten** Tabelle. Für eine solche Migration
+einen Seed-basierten `tests/unit/migration-000N-<name>.test.mjs` schreiben.
 
-## The lock
+## Der Lock
 
-`npm run migrations:lock` freezes the chain: version → sha256 of the
-whitespace-normalized `up()` source plus the name. Commit it with the migration.
-The lock diff must only ever **add** lines — a changed line means a released
-migration was edited, which crash-loops a prod DB that already applied the old
-meaning. (Never deployed yet? Then re-freezing is legitimate — check the diff
-consciously.)
+`npm run migrations:lock` friert die Kette ein: Version → sha256 der
+whitespace-normalisierten `up()`-Quelle plus Name. Mit der Migration committen.
+Der Lock-Diff darf immer nur Zeilen **hinzufügen** — eine geänderte Zeile heisst,
+eine veröffentlichte Migration wurde bearbeitet, was eine Prod-DB, die die alte
+Bedeutung schon angewendet hat, in eine Crash-Schleife schickt. (Noch nie
+deployt? Dann ist Neu-Einfrieren legitim — den Diff bewusst prüfen.)
 
-## Parallel work: renumbering
+## Paralleles Arbeiten: Umnummerieren
 
-Two branches picking the same number usually do **not** conflict in git
-(`0007_a.js` next to `0007_b.js`); the lock test flags it. `npm run
-migration:renumber` moves only **your** migrations (those not in `origin/main`)
-to `max(origin/main) + 1`, rewrites their `version:` field, regenerates the lock
-and bumps `SQUASHED_VERSION`. Folding the DDL stays manual. `--dry-run`,
-`--ref <ref>`, `--no-fetch`.
+Zwei Branches mit derselben Nummer kollidieren in git meist **nicht**
+(`0007_a.js` neben `0007_b.js`); der Lock-Test meldet es. `npm run
+migration:renumber` verschiebt nur **deine** Migrationen (die nicht in
+`origin/main`) auf `max(origin/main) + 1`, schreibt ihr `version:`-Feld um,
+erzeugt den Lock neu und erhöht `SQUASHED_VERSION`. Das Einfalten der DDL bleibt
+manuell. `--dry-run`, `--ref <ref>`, `--no-fetch`.
 
-## Deploy and rollback
+## Deploy und Rollback
 
-The deploy counts pending migrations on a copy of the live DB
-([scripts/pending-migrations.js](../scripts/pending-migrations.js)) and runs the
-new chain against that copy before touching anything. On a failed deploy the
-DB is restored from the pre-deploy backup **only** if that count was not `0`
-(`-1` = unknown counts as "ran"). Details: [deployment.md](deployment.md).
+Der Deploy zählt ausstehende Migrationen auf einer Kopie der Live-DB
+([scripts/pending-migrations.js](../scripts/pending-migrations.js)) und führt die
+neue Kette gegen diese Kopie aus, bevor er irgendetwas anfasst. Bei einem
+fehlgeschlagenen Deploy wird die DB **nur** aus dem Backup vor dem Deploy
+wiederhergestellt, wenn diese Zahl nicht `0` war (`-1` = unbekannt gilt als
+"gelaufen"). Details: [deployment.md](deployment.md).
 
-## Tests and the repo DB
+## Tests und die Repo-DB
 
-`npm run test:unit`/`test:integration` run with `NODE_ENV=test`
-([scripts/with-env.js](../scripts/with-env.js)). Under it,
-[db/connection.js](../db/connection.js) refuses to open anything without an
-explicit `DB_PATH` — every test sets its own temp DB before its first `require`.
+`npm run test:unit`/`test:integration` laufen mit `NODE_ENV=test`
+([scripts/with-env.js](../scripts/with-env.js)). Darunter verweigert
+[db/connection.js](../db/connection.js), irgendetwas ohne explizites `DB_PATH`
+zu öffnen — jeder Test setzt seine eigene Temp-DB vor seinem ersten `require`.

@@ -3,6 +3,10 @@
 .env.local
 .env.*.local
 
+# Personal Claude Code settings/notes (the team setup is .claude/settings.json + CLAUDE.md)
+.claude/settings.local.json
+CLAUDE.local.md
+
 # Dependencies
 node_modules/
 

@@ -1,19 +1,20 @@
-# lib rules (`lib/`)
+# lib-Regeln (`lib/`)
 
-Applies in addition to the root [CLAUDE.md](../CLAUDE.md).
+Gilt zusätzlich zur Root-[CLAUDE.md](../CLAUDE.md).
 
-- **A facade per domain** (`lib/<domain>-store.js`, reference
-  [note-store.js](note-store.js)) is the only entry point to that domain's data:
-  validation, invariants and (later) caching live here — not in routes, not in
-  jobs. Routes/jobs import the facade, never `db/<domain>.js`, never raw SQL.
-- **Facade errors are domain errors** (`name required`, `not found`) — the route
-  maps them to HTTP status codes; the facade knows nothing about HTTP.
-- **Log context** ([log-context.js](log-context.js)): `runWithContext` opens a
-  scope (the HTTP middleware and the job queue do it), `setContext` fills slots.
-  Don't create a second context mechanism.
-- **Dates on the server** only via [local-date.js](local-date.js) (reads
-  `app.timezone`), never the process timezone.
-- **Dev seed** ([dev-seed.js](dev-seed.js)) writes through the facade, only
-  under `LOCAL_DEV_MODE=1`, only into empty tables — and seeds the
-  *differences* (e.g. one note with HTML in its body to exercise the escape)
-  rather than five identical rows.
+- **Eine Facade pro Domäne** (`lib/<domain>-store.js`, Referenz
+  [note-store.js](note-store.js)) ist der einzige Eintrittspunkt zu den Daten
+  dieser Domäne: Validierung, Invarianten und (später) Caching leben hier — nicht
+  in Routen, nicht in Jobs. Routen/Jobs importieren die Facade, nie
+  `db/<domain>.js`, nie Roh-SQL.
+- **Facade-Fehler sind Domänenfehler** (`name required`, `not found`) — die Route
+  bildet sie auf HTTP-Statuscodes ab; die Facade weiss nichts von HTTP.
+- **Log-Kontext** ([log-context.js](log-context.js)): `runWithContext` öffnet einen
+  Scope (das tun die HTTP-Middleware und die Job-Queue), `setContext` füllt Slots.
+  Keinen zweiten Kontext-Mechanismus bauen.
+- **Datum auf dem Server** nur über [local-date.js](local-date.js) (liest
+  `app.timezone`), nie über die Prozess-Zeitzone.
+- **Dev-Seed** ([dev-seed.js](dev-seed.js)) schreibt über die Facade, nur unter
+  `LOCAL_DEV_MODE=1`, nur in leere Tabellen — und seedet die *Unterschiede*
+  (z. B. eine Notiz mit HTML im Body, um das Escaping zu prüfen) statt fünf
+  identischer Zeilen.
