@@ -19,7 +19,7 @@
   --space-20:  20px;
   --space-xl:  24px;
   --space-2xl: 32px;
-  /* Page geometry: breathing room below the last card (body bottom padding). */
+  /* Page geometry: breathing room below the last card (main bottom padding). */
   --space-page-end: 56px;
 
   /* === Card rhythm — the spacing INSIDE a card body ===
@@ -36,16 +36,16 @@
   --pad-detail:      0.5rem 0.75rem;
 
   /* === Border width — only the deviations from 1px are tokens ===
-     0.5px hairline divider, 2px accent band (tabs active, card top band).
-     The 1px default stays literal: the colour is the token, not the width. */
+     0.5px hairline divider. The 1px default stays literal: the colour is the
+     token, not the width. */
   --border-thin:  0.5px;
-  --border-thick: 2px;
 
   /* === Radius ===
-     Editorial-square is the leitmotif: badges/tags hard 0; inputs/buttons
-     slightly soft; cards softer; modals with a real jump. */
-  --radius-sm: 0;
-  --radius-md: 3px;
-  --radius-lg: 6px;
-  --radius-xl: 10px;
+     Soft-modern: badges/tags pill-ish small, inputs/buttons 6px, cards 10px,
+     modals + drawers 14px. `--radius-full` for avatars and pills. */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-full: 999px;
 }

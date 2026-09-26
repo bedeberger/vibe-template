@@ -174,6 +174,24 @@ test('overview: collapsed by default, Chart.js loads only on open', async ({ pag
     .toEqual([1, 1]);
 });
 
+// The colour tokens are light-dark(…): handed to the canvas raw, it paints
+// them as black. They must arrive resolved (rgb) and follow a theme switch.
+test('overview chart: token colours resolved, re-coloured on theme switch', async ({ page }) => {
+  await page.evaluate(() => window.uiTheme?.set('light') ?? document.documentElement.setAttribute('data-theme', 'light'));
+  await page.getByRole('button', { name: 'Übersicht' }).click();
+  await expect.poll(() => page.evaluate(() => typeof window.Chart)).toBe('function');
+  const colours = () => page.evaluate(() => {
+    const ch = window.Chart.getChart(document.querySelector('.notes-chart canvas'));
+    return { bar: ch.data.datasets[0].backgroundColor, tick: ch.options.scales.y.ticks.color, grid: ch.options.scales.y.grid.color };
+  });
+  await expect.poll(async () => (await colours()).bar).toBe('rgb(99, 102, 241)'); // --color-accent, light
+  const light = await colours();
+  for (const v of Object.values(light)) expect(v).toMatch(/^rgba?\(/);
+  await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));
+  await expect.poll(async () => (await colours()).bar).toBe('rgb(129, 140, 248)'); // --color-accent, dark
+  expect((await colours()).tick).not.toBe(light.tick);
+});
+
 test('long body is clamped; "show more" appears only where it clips (x-resize)', async ({ page, request }) => {
   await request.post('/__mock/long-note');
   await page.reload();

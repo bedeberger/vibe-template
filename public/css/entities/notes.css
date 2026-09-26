@@ -4,9 +4,8 @@
  * `.card.card--notes` + `.card-header` + `.card-actions` etc. */
 
 @layer components {
-/* Body text of a note: reading font, keeps the author's line breaks. */
+/* Body text of a note: reading size, keeps the author's line breaks. */
 .note-card .note-body {
-  font-family: var(--font-serif);
   font-size: var(--font-size-reading);
   line-height: var(--lh-relaxed);
   color: var(--color-text);
@@ -42,6 +41,9 @@
   height: 12rem;
   padding-top: var(--space-sm);
 }
+/* Token resolver for the canvas (js/notes/notes-chart.js): computed `color`
+   turns a light-dark() token into the rgb() a canvas can paint. */
+.card--notes .chart-probe { color: var(--probe); }
 
 /* Edit mode: action buttons right-aligned under the fields. */
 .note-edit-actions { justify-content: flex-end; }

@@ -11,9 +11,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-bg);
-  border: var(--border-thin) solid var(--color-border);
-  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-md);
   color: var(--color-muted);
   cursor: pointer;
   font-family: var(--font-sans);
@@ -35,20 +35,21 @@
   color: var(--color-accent);
 }
 
-/* Ghost: soft fill at rest (half-transparent overlay over --color-text —
-   darkens any ground evenly, adapts to light/dark); border on hover/active. */
+/* Ghost: transparent at rest, soft fill on hover (half-transparent overlay
+   over --color-text — adapts to light/dark). */
 .icon-btn--ghost {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   padding: 0;
-  background: var(--icon-ghost-fill);
+  background: transparent;
+  box-shadow: none;
   border-color: transparent;
   color: var(--color-text);
   font-size: var(--font-size-base);
 }
 .icon-btn--ghost:hover:not(:disabled) {
   background: var(--icon-ghost-fill-hover);
-  border-color: var(--color-border);
+  border-color: transparent;
   color: var(--color-text);
 }
 .icon-btn--ghost:disabled {
@@ -94,7 +95,7 @@
   justify-content: center;
   background: var(--color-primary);
   color: var(--color-on-primary);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-full);
   font-size: var(--font-size-xs);
   font-weight: var(--fw-semibold);
   line-height: 1;

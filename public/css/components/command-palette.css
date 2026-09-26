@@ -1,0 +1,91 @@
+/* Command palette — native <dialog> + showModal() (focus trap, inert
+ * background and ESC from the browser, like the confirm dialog), opened with
+ * ⌘K / Ctrl+K or the topbar search. Lists the registry features the user may
+ * open; keyboard: ↑/↓ move, Enter opens. DESIGN.md → "Command Palette". */
+
+@layer components {
+.command-palette {
+  width: calc(100% - 2rem);
+  max-width: 36rem;
+  margin: 12vh auto auto;
+  padding: 0;
+  overflow: hidden;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+}
+.command-palette::backdrop {
+  background: var(--color-overlay);
+  backdrop-filter: blur(2px);
+}
+@media (max-width: 600px) {
+  .command-palette { margin-top: max(var(--space-lg), env(safe-area-inset-top)); }
+}
+
+.command-palette-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 0 var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-subtle);
+  font-size: var(--font-size-reading);
+}
+/* Scoped: beats the generic input[type=search] field look (form-elements.css). */
+.command-palette .command-palette-input,
+.command-palette .command-palette-input:focus {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--space-lg) 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+  font-size: var(--font-size-reading);
+  color: var(--color-text);
+}
+
+.command-palette-list {
+  list-style: none;
+  max-height: min(24rem, 60vh);
+  overflow-y: auto;
+  padding: var(--space-6);
+}
+.command-palette-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  min-height: 40px;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+}
+.command-palette-item > .icon { flex-shrink: 0; color: var(--color-muted); }
+.command-palette-item[aria-selected="true"] { background: var(--color-accent-soft); }
+.command-palette-item[aria-selected="true"] > .icon { color: var(--color-primary); }
+.command-palette-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.command-palette-hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-subtle);
+}
+.command-palette-item > .command-palette-enter { visibility: hidden; color: var(--color-subtle); }
+.command-palette-item[aria-selected="true"] > .command-palette-enter { visibility: visible; }
+@media (pointer: coarse) {
+  .command-palette-item { min-height: 44px; }
+  .command-palette-enter { display: none; }
+}
+
+.command-palette-empty {
+  padding: var(--space-xl) var(--space-lg);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+}
+}

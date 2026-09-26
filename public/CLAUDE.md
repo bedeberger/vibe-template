@@ -46,9 +46,14 @@ Gilt zusätzlich zur Root-[CLAUDE.md](../CLAUDE.md); CSS-Regeln in
 - **Strings nur via `t('area.field')`** — inklusive `aria-label`, `data-tip`,
   Placeholder. Neuer Key → `js/i18n/de.json` **und** `en.json`.
 - **API-Aufrufe via `api()`** ([js/utils.js](js/utils.js)): JSON rein/raus, wirft
-  bei Nicht-2xx, und ein 401 feuert `session-expired` → die Root zeigt das
+  bei Nicht-2xx einen `ApiError` (`isApiError(e)`, `e.status`, `e.message` =
+  Server-Fehlertext), und ein 401 feuert `session-expired` → die Root zeigt das
   Session-Banner (kein Auto-Redirect: ungespeicherte Eingaben lassen sich
   retten). 401 nicht pro Feature behandeln.
+- **Fehler melden:** ein ungefangener `api()`-Fehler erscheint von selbst als
+  App-Toast ([js/app/toast.js](js/app/toast.js)) — kein `try/catch` nur fürs
+  Melden. Eigener Wortlaut → selbst fangen und in der Karte zeigen; sonstige
+  Hinweise via `notify(kind, t('…'))`. DESIGN.md → "Job-Toast".
 - **Datum** nur via `formatDate`/`tzOpts()` (App-Zeitzone), nie nacktes
   `toLocaleString()`.
 - **Neue UI ⇒ `npm run test:smoke`** — die einzige Schicht, die verschluckte

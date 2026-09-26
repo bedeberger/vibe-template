@@ -5,7 +5,9 @@ Notizen) für alle Angemeldeten und die **Admin-Sicht** (Admin-Konsole:
 Benutzer, Einstellungen, …) nur für den Admin. Welche Sicht ein Feature hat,
 steht in seinem Registry-Eintrag (`view: 'user' | 'admin'`,
 [features.js](../public/js/app/features.js)). Der Admin wechselt die Sicht über
-den Umschalter in der Kopfzeile, alle anderen sehen ihn nicht. Der Server
+das Benutzermenü unten in der Sidebar („Admin-Konsole“, zurück über „Zurück zur
+App“ — [DESIGN.md → App-Shell](../DESIGN.md#app-shell)); alle anderen sehen den
+Eintrag nicht. Der Server
 schützt `/api/admin/*` unabhängig davon (`requireAdmin`, [lib/auth.js](../lib/auth.js)):
 die Sicht entscheidet nur, was angezeigt wird, nicht, was erlaubt ist.
 

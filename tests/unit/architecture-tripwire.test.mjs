@@ -85,14 +85,19 @@ test('State explizit: jedes this.x = … ist vorab deklariert', () => {
   ];
   // A domain module (public/js/<feature>/…, `export const xxxMethods`) is spread
   // into its feature card: `this` is the CARD, so its fields count as declared
-  // if the importing card declares them (DESIGN.md → Feature-Anatomie).
+  // if the importing card declares them (DESIGN.md → Feature-Anatomie). Spread
+  // into the ROOT (the importer uses initialState()), app-state.js declares them.
   const importersOf = (f) => files.filter((g) => g !== f
     && new RegExp(`from\\s+['"][./]*[^'"]*/${f.split('/').pop().replace(/\./g, '\\.')}['"]`).test(read(g)));
   for (const f of files) {
     const code = stripJsComments(read(f));
     const declared = new Set(declaredIn(code));
     if (/export\s+const\s+\w+Methods\s*=/.test(code)) {
-      for (const g of importersOf(f)) for (const k of declaredIn(stripJsComments(read(g)))) declared.add(k);
+      for (const g of importersOf(f)) {
+        const importer = stripJsComments(read(g));
+        for (const k of declaredIn(importer)) declared.add(k);
+        if (/\binitialState\(\)/.test(importer)) for (const k of rootKeys) declared.add(k);
+      }
     }
     const usesRoot = /\binitialState\(\)/.test(code);
     for (const m of code.matchAll(/\bthis\.([A-Za-z_]\w*)\s*(?:=(?!=)|\+=|-=|\+\+|--)/g)) {

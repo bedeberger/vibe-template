@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <title>vibe-template</title>
-  <meta name="theme-color" content="#faf7f2" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#1a1816" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fbfbfc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#131417" media="(prefers-color-scheme: dark)">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <!-- Classic, synchronous: sets <html data-theme> before the first paint. -->
+  <script src="/js/theme-boot.js"></script>
 
   <!-- Primary UI font; keep in sync with the @font-face in css/tokens.css. -->
   <link rel="preload" href="/fonts/Inter.var.woff2" as="font" type="font/woff2" crossorigin>
@@ -20,7 +22,7 @@
   <!-- layout -->
   <link rel="stylesheet" href="/css/layout/base.css">
   <link rel="stylesheet" href="/css/layout/layout-base.css">
-  <link rel="stylesheet" href="/css/layout/twocolumn.css">
+  <link rel="stylesheet" href="/css/layout/app-shell.css">
   <link rel="stylesheet" href="/css/layout/app-nav.css">
   <link rel="stylesheet" href="/css/layout/utilities.css">
   <!-- components -->
@@ -44,6 +46,7 @@
   <link rel="stylesheet" href="/css/components/confirm-dialog.css">
   <link rel="stylesheet" href="/css/components/danger-zone.css">
   <link rel="stylesheet" href="/css/components/job-toast.css">
+  <link rel="stylesheet" href="/css/components/command-palette.css">
   <!-- entities -->
   <link rel="stylesheet" href="/css/entities/notes.css">
   <link rel="stylesheet" href="/css/entities/users.css">
@@ -52,7 +55,8 @@
   <!-- @entity-css:end — `npm run feature:new` inserts above this line. -->
 </head>
 <body>
-  <div class="app-shell" x-data="app" x-cloak>
+  <div class="app-shell" x-data="app" x-cloak
+       :class="{ 'app-shell--collapsed': sidebarCollapsed && !isNarrow, 'app-shell--drawer-open': drawerOpen && isNarrow }">
     <a class="skip-link" href="#main-content" x-text="t('a11y.skipToMain')"></a>
 
     <div class="session-banner" x-show="sessionExpired" role="alert">
@@ -60,47 +64,118 @@
       <a class="session-banner-btn" href="/login" x-text="t('session.relogin')"></a>
     </div>
 
-    <header class="site-header-row">
-      <div class="site-header-center">
-        <h1 class="site-title">
-          <img src="/icon.svg" alt="" class="site-logo" width="40" height="40">
-          <span x-text="t('app.title')"></span>
-        </h1>
-        <p class="subtitle" x-text="t('app.subtitle')"></p>
-      </div>
-      <div class="site-header-aside" x-show="user">
-        <!-- View switch (docs/auth.md): only the admin has a second view. -->
-        <div class="tabs" x-show="isAdmin">
-          <button type="button" class="tabs-btn" :class="{ 'tabs-btn--active': view === 'user' }" :aria-pressed="view === 'user'"
-                  @click="switchView('user')" x-text="t('view.user')"></button>
-          <button type="button" class="tabs-btn" :class="{ 'tabs-btn--active': view === 'admin' }" :aria-pressed="view === 'admin'"
-                  @click="switchView('admin')" x-text="t('view.admin')"></button>
-        </div>
-        <span class="site-header-user" x-text="user ? user.email : ''"></span>
-        <a class="icon-btn icon-btn--ghost tip--below tip--end" href="/auth/logout"
-           :aria-label="t('app.logout')" :data-tip="t('app.logout')">
-          <svg class="icon" aria-hidden="true"><use href="/icons.svg#log-out"/></svg>
-        </a>
-      </div>
-    </header>
+    <!-- Phone: scrim behind the open drawer; tap closes it. -->
+    <div class="sidebar-scrim" x-show="drawerOpen && isNarrow" @click="closeDrawer()" aria-hidden="true"></div>
 
-    <div class="layout">
+    <!-- Sidebar (DESIGN.md → App-Shell): brand, registry nav of the current
+         view, user menu. Desktop: fixed column, collapsible to an icon rail.
+         Phone: off-canvas drawer with focus trap. -->
+    <aside class="sidebar" id="app-sidebar" :aria-label="t('shell.sidebar')"
+           x-trap.noscroll="drawerOpen && isNarrow" @keydown.escape="closeDrawer()">
+      <div class="sidebar-header">
+        <a class="sidebar-brand" href="#" @click.prevent="switchView('user')">
+          <img src="/icon.svg" alt="" class="site-logo" width="28" height="28">
+          <span class="sidebar-brand-name sidebar-label truncate" x-text="t('app.title')"></span>
+        </a>
+        <button type="button" class="icon-btn icon-btn--ghost sidebar-toggle tip--below tip--end"
+                @click="toggleSidebar()" :aria-expanded="isNarrow ? drawerOpen : !sidebarCollapsed" aria-controls="app-sidebar"
+                :aria-label="isNarrow ? t('shell.closeNav') : (sidebarCollapsed ? t('shell.expandNav') : t('shell.collapseNav'))"
+                :data-tip="isNarrow ? t('shell.closeNav') : (sidebarCollapsed ? t('shell.expandNav') : t('shell.collapseNav'))">
+          <svg class="icon" aria-hidden="true"><use :href="isNarrow ? '/icons.svg#x' : '/icons.svg#panel-left'"/></svg>
+        </button>
+      </div>
+
+      <!-- Admin console context: only in the admin view. -->
+      <div class="sidebar-context" x-show="view === 'admin'">
+        <span class="sidebar-section-label sidebar-label" x-text="t('shell.adminConsole')"></span>
+        <button type="button" class="sidebar-back tip--right" @click="switchView('user')" :aria-label="t('shell.backToApp')" :data-tip="sidebarCollapsed && !isNarrow ? t('shell.backToApp') : null">
+          <svg class="icon" aria-hidden="true"><use href="/icons.svg#arrow-left"/></svg>
+          <span class="sidebar-label" x-text="t('shell.backToApp')"></span>
+        </button>
+      </div>
+
       <!-- Navigation is rendered from the feature registry (features.js = SSoT). -->
-      <aside class="layout-sidebar">
-        <nav class="card card--nav app-nav" :aria-label="t('nav.label')">
-          <template x-for="f in features" :key="f.id">
-            <!-- Only the features of the current view (registry field `view`). -->
-            <template x-if="f.view === view">
-            <button type="button" class="nav-item"
-                    :aria-current="activeFeature === f.id ? 'page' : null"
-                    @click="openFeature(f.id)">
-              <svg class="icon" aria-hidden="true"><use :href="'/icons.svg#' + f.icon"/></svg>
-              <span x-text="t(f.labelKey)"></span>
-            </button>
-            </template>
+      <nav class="app-nav" :aria-label="t('nav.label')">
+        <template x-for="f in features" :key="f.id">
+          <!-- Only the features of the current view (registry field `view`). -->
+          <template x-if="f.view === view">
+          <button type="button" class="nav-item tip--right"
+                  :aria-current="activeFeature === f.id ? 'page' : null"
+                  :data-tip="sidebarCollapsed && !isNarrow ? t(f.labelKey) : null"
+                  @click="openFeature(f.id)">
+            <svg class="icon" aria-hidden="true"><use :href="'/icons.svg#' + f.icon"/></svg>
+            <span class="sidebar-label truncate" x-text="t(f.labelKey)"></span>
+          </button>
           </template>
-        </nav>
-      </aside>
+        </template>
+      </nav>
+
+      <!-- User menu (DESIGN.md → Benutzermenü): identity, theme, admin console, sign-out. -->
+      <div class="sidebar-footer" x-show="user">
+        <button type="button" class="user-menu-trigger" x-ref="userMenuBtn"
+                @click="userMenuOpen = !userMenuOpen" :aria-expanded="userMenuOpen" aria-haspopup="menu"
+                :aria-label="t('shell.userMenu')">
+          <span class="avatar" aria-hidden="true" x-text="userInitials()"></span>
+          <span class="user-menu-identity sidebar-label">
+            <span class="user-menu-name truncate" x-text="user ? (user.display_name || user.email) : ''"></span>
+            <span class="user-menu-role" x-text="isAdmin ? t('shell.roleAdmin') : t('shell.roleUser')"></span>
+          </span>
+          <svg class="icon sidebar-label" aria-hidden="true"><use href="/icons.svg#chevrons-up-down"/></svg>
+        </button>
+        <div class="popover user-menu" x-show="userMenuOpen" x-cloak role="menu" :aria-label="t('shell.userMenu')"
+             x-anchor.top-start.offset.6="$refs.userMenuBtn" x-trap="userMenuOpen"
+             @keydown.escape.stop="userMenuOpen = false" @click.outside="userMenuOpen = false">
+          <div class="user-menu-header">
+            <span class="user-menu-email truncate" x-text="user ? user.email : ''"></span>
+          </div>
+          <div class="user-menu-group" role="group" :aria-label="t('shell.theme')">
+            <span class="user-menu-label" x-text="t('shell.theme')"></span>
+            <!-- Tabs pattern as a 3-option mode toggle (the scrolling track would clip a data-tip). -->
+            <div class="tabs tabs--fullwidth">
+              <template x-for="opt in themeOptions" :key="opt.mode">
+                <button type="button" class="tabs-btn" role="menuitemradio" :class="{ 'tabs-btn--active': theme === opt.mode }"
+                        :aria-checked="theme === opt.mode" @click="setTheme(opt.mode)" :aria-label="t(opt.labelKey)">
+                  <svg class="icon" aria-hidden="true"><use :href="'/icons.svg#' + opt.icon"/></svg>
+                </button>
+              </template>
+            </div>
+          </div>
+          <div class="user-menu-group">
+            <button type="button" class="user-menu-item" role="menuitem" x-show="isAdmin && view === 'user'" @click="switchView('admin')">
+              <svg class="icon" aria-hidden="true"><use href="/icons.svg#shield"/></svg>
+              <span x-text="t('shell.adminConsole')"></span>
+            </button>
+            <button type="button" class="user-menu-item" role="menuitem" x-show="view === 'admin'" @click="switchView('user')">
+              <svg class="icon" aria-hidden="true"><use href="/icons.svg#arrow-left"/></svg>
+              <span x-text="t('shell.backToApp')"></span>
+            </button>
+            <a class="user-menu-item" role="menuitem" href="/auth/logout">
+              <svg class="icon" aria-hidden="true"><use href="/icons.svg#log-out"/></svg>
+              <span x-text="t('app.logout')"></span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="app-main">
+      <!-- Topbar: menu (phone), page title = the ONE h1, search trigger. -->
+      <header class="topbar">
+        <button type="button" class="icon-btn icon-btn--ghost topbar-menu" @click="toggleSidebar()"
+                :aria-expanded="drawerOpen" aria-controls="app-sidebar"
+                :aria-label="t('shell.openNav')" :data-tip="t('shell.openNav')">
+          <svg class="icon" aria-hidden="true"><use href="/icons.svg#menu"/></svg>
+        </button>
+        <div class="topbar-title">
+          <span class="topbar-crumb" x-show="view === 'admin'" x-text="t('shell.adminConsole')"></span>
+          <h1 class="page-title truncate" x-text="activeLabel"></h1>
+        </div>
+        <button type="button" class="topbar-search" @click="openPalette()" :aria-label="t('shell.search')">
+          <svg class="icon" aria-hidden="true"><use href="/icons.svg#search"/></svg>
+          <span class="topbar-search-text" x-text="t('shell.searchPlaceholder')"></span>
+          <kbd class="topbar-search-kbd" x-text="shortcutLabel()"></kbd>
+        </button>
+      </header>
 
       <main id="main-content" class="layout-main">
         <!-- Loading skeleton until i18n + initial data are in. -->
@@ -121,6 +196,36 @@
         </template>
       </main>
     </div>
+
+    <!-- Command palette (DESIGN.md → Command Palette): ⌘K / Ctrl+K or the
+         topbar search. Lists the registry features this user may open. -->
+    <dialog class="command-palette" x-ref="palette" @close="paletteOpen = false" @click.self="closePalette()"
+            :aria-label="t('shell.search')">
+      <div class="command-palette-panel">
+        <div class="command-palette-search">
+          <svg class="icon" aria-hidden="true"><use href="/icons.svg#search"/></svg>
+          <input type="search" class="command-palette-input" x-model="paletteQuery" @input="paletteIndex = 0"
+                 :placeholder="t('shell.searchPlaceholder')" :aria-label="t('shell.search')"
+                 role="combobox" aria-controls="command-palette-list" :aria-expanded="paletteOpen"
+                 :aria-activedescendant="paletteResults().length ? 'palette-opt-' + paletteIndex : null"
+                 @keydown.arrow-down.prevent="movePalette(1)" @keydown.arrow-up.prevent="movePalette(-1)"
+                 @keydown.enter.prevent="choosePalette()" @keydown.escape.prevent="closePalette()"
+                 autocomplete="off" spellcheck="false">
+        </div>
+        <ul class="command-palette-list" id="command-palette-list" role="listbox" x-show="paletteResults().length">
+          <template x-for="(f, i) in paletteResults()" :key="f.id">
+            <li class="command-palette-item" role="option" :id="'palette-opt-' + i" :aria-selected="i === paletteIndex"
+                @click="choosePalette(f)" @mousemove="paletteIndex = i">
+              <svg class="icon" aria-hidden="true"><use :href="'/icons.svg#' + f.icon"/></svg>
+              <span class="command-palette-label truncate" x-text="t(f.labelKey)"></span>
+              <span class="command-palette-hint" x-show="f.view === 'admin'" x-text="t('shell.adminConsole')"></span>
+              <svg class="icon command-palette-enter" aria-hidden="true"><use href="/icons.svg#corner-down-left"/></svg>
+            </li>
+          </template>
+        </ul>
+        <p class="command-palette-empty" x-show="!paletteResults().length" x-text="t('shell.noResults')"></p>
+      </div>
+    </dialog>
   </div>
 
   <script type="module" src="/js/app.js"></script>

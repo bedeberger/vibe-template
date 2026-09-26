@@ -2,12 +2,14 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <title>Login — vibe-template</title>
-  <meta name="theme-color" content="#faf7f2" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#1a1816" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0e0f12" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <!-- Classic, synchronous: the theme chosen in the app applies here too. -->
+  <script src="/js/theme-boot.js"></script>
   <!-- Public page: only the files it needs, same cascade order as index.html. -->
   <link rel="stylesheet" href="/css/tokens.css">
   <link rel="stylesheet" href="/css/card-accents.css">
@@ -27,9 +29,10 @@
     <div class="card card--nav">
       <div class="card-header">
         <h1 class="site-title">
-          <img src="/icon.svg" alt="" class="site-logo" width="40" height="40">
+          <img src="/icon.svg" alt="" class="site-logo" width="36" height="36">
           <span x-text="t('app.title')"></span>
         </h1>
+        <p class="login-lead" x-text="t('login.lead')"></p>
       </div>
 
       <!-- Dev bypass: only when LOCAL_DEV_MODE=1 on the server. -->

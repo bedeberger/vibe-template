@@ -14,10 +14,15 @@
   --transition-slow:       0.15s ease;
   --transition-emphasized: 0.3s var(--ease-out);
 
-  /* === Shadow — three elevations (dark theme inherits darker alphas) === */
-  --shadow-sm:        0 2px 8px var(--color-shadow);          /* sheet lift */
-  --shadow-md:        0 4px 12px var(--color-shadow-med);     /* popover/dropdown/toast */
-  --shadow-lg:        0 12px 40px var(--color-shadow-strong); /* modal */
+  /* === Shadow — four elevations (dark theme inherits darker alphas) ===
+     Two-layer shadows: a tight contact shadow + a soft ambient one. */
+  --shadow-xs:        0 1px 2px var(--color-shadow-soft);                                  /* card resting */
+  --shadow-sm:        0 1px 2px var(--color-shadow-soft), 0 2px 8px var(--color-shadow);   /* card hover, banner */
+  --shadow-md:        0 2px 4px var(--color-shadow-soft), 0 8px 24px var(--color-shadow-med); /* popover/dropdown/toast */
+  --shadow-lg:        0 4px 8px var(--color-shadow-soft), 0 24px 48px var(--color-shadow-strong); /* modal, drawer */
+
+  /* === Focus ring — one halo for every focusable control === */
+  --focus-ring: 0 0 0 3px var(--color-focus-ring);
   --shadow-inset-top: 0 -2px 10px var(--color-shadow-soft);   /* bottom bars */
 
   /* === Opacity steps === */

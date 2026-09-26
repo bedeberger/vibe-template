@@ -13,14 +13,18 @@ import { ensurePartial } from '/js/app/feature-host.js';
 import { setupRouting, hashFor } from '/js/app/router.js';
 import { registerCards } from '/js/app/register-cards.js';
 import { registerPlugins } from '/js/app/alpine-plugins.js';
+import { shellMethods, THEME_OPTIONS } from '/js/app/shell.js';
 import { EVT } from '/js/events.js';
 import { configureI18n, t } from '/js/i18n.js';
 import { api, setTimezone, formatDate } from '/js/utils.js';
+import { toastMethods, listenForToasts, installApiErrorToast } from '/js/app/toast.js';
 
 function appRoot() {
   return {
     ...initialState(),
+    ...shellMethods,
     features: FEATURES,
+    themeOptions: THEME_OPTIONS,
     t,
     fmt: formatDate,
 
@@ -29,6 +33,9 @@ function appRoot() {
       // Global 401 handler — banner instead of redirect, so unsaved input can
       // be rescued (public/CLAUDE.md → api()).
       window.addEventListener(EVT.SESSION_EXPIRED, () => { this.sessionExpired = true; });
+      this.initShell();
+      // One toast for the whole app: notify() + api errors no card caught (js/app/toast.js).
+      listenForToasts(this);
       try {
         const cfg = await api('/api/config');
         setTimezone(cfg.timezone);
@@ -50,16 +57,27 @@ function appRoot() {
     get isAdmin() { return this.user?.role === 'admin'; },
     canSee(feature) { return !!feature && (feature.view === 'user' || this.isAdmin); },
 
+    // Admin console = the 'admin' view (user menu → "Admin-Konsole", sidebar
+    // → "Zurück zur App"); lands on the view's first feature.
     switchView(view) {
+      this.userMenuOpen = false;
       const target = firstFeatureOf(view);
       if (target && this.canSee(target)) this.openFeature(target.id);
     },
+
+    get activeLabel() {
+      const f = findFeature(this.activeFeature);
+      return f ? this.t(f.labelKey) : '';
+    },
+
+    ...toastMethods,
 
     // The ONE way to switch features (nav click, hash, code). Exclusive: one
     // feature visible at a time. Re-click on the active one = refresh.
     async openFeature(id, sub = '', { fromHash = false } = {}) {
       const feature = findFeature(id);
       if (!this.canSee(feature)) return;
+      this.drawerOpen = false; // phone: any navigation closes the drawer (re-click included)
       if (!fromHash && id === this.activeFeature && sub === this.featureSub) {
         window.dispatchEvent(new CustomEvent(EVT.CARD_REFRESH, { detail: { id } }));
         return;
@@ -83,6 +101,7 @@ async function boot() {
   // i18n BEFORE Alpine starts: the first render already has translated strings.
   await configureI18n('de');
   registerPlugins(Alpine);
+  installApiErrorToast(Alpine); // app only — harnesses keep Alpine's loud default
   registerCards(Alpine);
   Alpine.data('app', appRoot);
   window.Alpine = Alpine;

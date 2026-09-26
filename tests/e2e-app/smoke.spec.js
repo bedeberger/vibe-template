@@ -20,13 +20,28 @@ test('SPA boots without console errors', async ({ page }) => {
 
 // Two views (docs/auth.md): the nav shows only the current view's features.
 // The dev user is admin under LOCAL_DEV_MODE, so both views are reachable;
-// openInNav switches the view via the header switch, then clicks the entry.
+// openInNav switches the view via the user menu ("Admin-Konsole" / "Zurück zur
+// App" — the first visible menu item), then clicks the entry. On a phone the
+// sidebar is a drawer: open it from the topbar first (navigating closes it).
+const shellState = (page) => page.evaluate(() => {
+  const d = window.Alpine.$data(document.querySelector('.app-shell'));
+  return { view: d.view, narrow: d.isNarrow, drawerOpen: d.drawerOpen };
+});
+async function showSidebar(page) {
+  const s = await shellState(page);
+  if (s.narrow && !s.drawerOpen) {
+    await page.locator('.topbar-menu').click();
+    await expect(page.locator('.sidebar')).toBeInViewport({ ratio: 1 });
+  }
+}
 async function openInNav(page, features, f) {
   const inView = features.filter((x) => x.view === f.view);
-  const current = await page.evaluate(() => window.Alpine.$data(document.querySelector('.app-shell')).view);
-  if (current !== f.view) {
-    await page.locator('.site-header-aside .tabs-btn').nth(f.view === 'admin' ? 1 : 0).click();
+  await showSidebar(page);
+  if ((await shellState(page)).view !== f.view) {
+    await page.locator('.user-menu-trigger').click();
+    await page.locator('.user-menu-item:visible').first().click();
     await expect(page.locator('.nav-item')).toHaveCount(inView.length);
+    await showSidebar(page);
   }
   const item = page.locator('.nav-item').nth(inView.indexOf(f));
   await item.click();

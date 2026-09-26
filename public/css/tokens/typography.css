@@ -1,11 +1,10 @@
 /* Typography tokens — families, sizes, weights, line-heights.
- * Self-hosted Inter (sans, UI) + Source Serif 4 (headings, reading frame);
- * @font-face lives in the facade css/tokens.css. */
+ * Self-hosted Inter (sans, UI + headings); @font-face lives in the facade
+ * css/tokens.css. */
 
 :root {
   /* === Font family === */
   --font-sans:  'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-serif: 'Source Serif 4', 'Iowan Old Style', 'Palatino', Georgia, serif;
   --font-mono:  ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   /* === Font-size scale ===
@@ -38,6 +37,11 @@
   --fw-medium:   500;
   --fw-semibold: 600;
   --fw-bold:     700;
+
+  /* === Letter spacing — headings tighten as they grow (Inter display optics) === */
+  --tracking-tight:  -0.011em;
+  --tracking-tighter: -0.022em;
+  --tracking-caps:    0.06em;  /* small uppercase labels (eyebrow, nav section) */
 
   /* === Line height === */
   --lh-tight:   1.2;   /* headings, buttons, compact UI */

@@ -5,37 +5,28 @@
 
 @layer components {
 /* === Card ===
-   Top border is the accent band: 2px in `--card-accent` (card-accents.css).
-   Flat model: no baseline/hover shadow — border + band + a faint accent wash
-   from the header into the surface carry the edge; hover pulls the side and
-   bottom borders towards the accent. Cards without `card--<key>` stay
-   neutral via the fallbacks. */
+   Elevated-surface model: white surface, 1px hairline, resting contact
+   shadow. The card accent (`--card-accent`, card-accents.css) is a quiet
+   signal — eyebrow colour and checked-option tint — not a frame. Cards
+   without `card--<key>` stay neutral via the fallbacks. */
 .card {
-  background:
-    linear-gradient(
-      to bottom,
-      color-mix(in oklab, var(--card-accent, var(--color-surface)) 4%, var(--color-surface)),
-      var(--color-surface) 110px
-    );
+  background: var(--color-surface);
   border-radius: var(--radius-lg);
-  border: var(--border-thin) solid var(--color-border);
-  border-top: var(--border-thick) solid var(--card-accent, var(--color-border));
-  padding: var(--space-20);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-xs);
+  padding: var(--space-xl);
   margin-bottom: var(--space-lg);
   /* `backwards` (not `both`): applies the from-state before start (no flash)
      but leaves no transform behind — a lingering transform would create a
      containing block for position:fixed descendants. */
   animation: cardFadeIn var(--transition-emphasized) backwards;
-  transition: border-color var(--transition-base);
+  transition: box-shadow var(--transition-base);
 }
-/* Explicit sides instead of the border-color shorthand, which would also
-   recolour the accent band. */
-.card:hover {
-  border-inline-color: color-mix(in oklab, var(--card-accent, var(--color-border)) 22%, var(--color-border));
-  border-bottom-color: color-mix(in oklab, var(--card-accent, var(--color-border)) 22%, var(--color-border));
+@media (max-width: 600px) {
+  .card { padding: var(--space-lg); }
 }
 @keyframes cardFadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -59,18 +50,14 @@
 }
 
 .card-title {
-  font-family: var(--font-serif);
-  font-weight: var(--fw-medium);
-  font-size: var(--font-size-lg);
+  font-weight: var(--fw-semibold);
+  font-size: var(--font-size-md);
   line-height: var(--lh-tight);
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-tight);
   overflow-wrap: anywhere;
   min-width: 0;
-  font-optical-sizing: auto;
   text-wrap: balance;
-  /* Title leans 30% towards the card accent — ink stays dominant; the
-     currentColor fallback keeps accent-less cards neutral. */
-  color: color-mix(in oklab, var(--card-accent, currentColor) 30%, var(--color-text));
+  color: var(--color-text);
 }
 
 /* Eyebrow: small tracked caps line ABOVE the .card-title (context label:
@@ -79,9 +66,10 @@
   font-family: var(--font-sans);
   font-size: var(--font-size-xs);
   font-weight: var(--fw-medium);
-  letter-spacing: 0.12em;
+  letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
-  color: var(--color-subtle);
+  /* The card accent's one visible trace in the header. */
+  color: color-mix(in oklab, var(--card-accent, var(--color-subtle)) 75%, var(--color-text));
   line-height: 1;
   overflow-wrap: anywhere;
 }

@@ -149,6 +149,16 @@ if (require.main === module) {
   const argv = process.argv.slice(2);
   const slug = argv.find((a) => !a.startsWith('--') && !['--title', '--root'].includes(argv[argv.indexOf(a) - 1]));
   const root = path.resolve(value(argv, '--root') || path.join(__dirname, '..'));
+  if (!slug || flag(argv, '--help')) {
+    console.log('Aufruf: npm run init -- <slug> [--title "Anzeigename"] [--dry-run] [--no-test] [--fresh] [--force]\n\n'
+      + '  <slug>     technischer Name, kebab-case (Paket, systemd-Unit, Pfade), z. B. invoice-hub\n'
+      + '  --title    Anzeigename (Titel, Login, Manifest), Default: der Slug\n'
+      + '  --dry-run  nur die betroffenen Dateien zeigen\n'
+      + '  --fresh    CHANGELOG, Version, lokale DB auch auf einem schon umbenannten Projekt zurücksetzen\n'
+      + '  --force    auch mit uncommitteten Änderungen laufen\n\n'
+      + 'Beispiel: npm run init -- invoice-hub --title "Invoice Hub" --dry-run');
+    process.exit(flag(argv, '--help') ? 0 : 1);
+  }
   try {
     const p = plan(root, slug, { title: value(argv, '--title'), fresh: flag(argv, '--fresh') });
     console.log(`Projekt: ${p.oldSlug} → ${p.slug}   Titel: "${p.oldTitle}" → "${p.title}"`);

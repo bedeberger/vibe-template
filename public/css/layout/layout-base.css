@@ -1,6 +1,5 @@
-/* App chrome: session banner, header row, subtitle.
- * Source: schreibwerkstatt layout/layout-base.css (boss-screen, dev-banner and
- * editor-specific banner variants removed). */
+/* Page chrome outside the shell grid: session banner, login page.
+ * The shell itself (sidebar, topbar, content column) is layout/app-shell.css. */
 
 @layer components {
 /* Fixed banner at the top (session expired, server offline, update ready). */
@@ -45,51 +44,31 @@
   border-bottom: 2px solid var(--color-warn-text);
 }
 
-/* Header row: title block left, user/actions right; wraps on narrow screens. */
-.site-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-lg);
-  flex-wrap: wrap;
-  margin-bottom: var(--space-lg);
-  min-height: 2.5rem;
-}
-.site-header-center {
-  display: flex;
-  align-items: center;
-  gap: var(--space-14);
-  flex-wrap: wrap;
-  min-width: 0;
-}
-/* Right side of the header row (signed-in user + sign-out). */
-.site-header-aside {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  min-width: 0;
-  margin-left: auto;
-}
-.site-header-user {
-  font-size: var(--font-size-sm);
-  color: var(--color-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 24ch;
-}
-
-.subtitle {
-  font-size: var(--font-size-sm);
-  color: var(--color-muted);
-  margin-bottom: 0;
-}
-
-/* Login page (public/login.html): one centred card. */
+/* Login page (public/login.html): one centred card on a soft brand glow. */
 .login-shell {
-  max-width: 420px;
-  margin: 12vh auto 0;
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: var(--space-xl) max(var(--page-pad-x), env(safe-area-inset-right))
+    var(--space-xl) max(var(--page-pad-x), env(safe-area-inset-left));
+  background: radial-gradient(ellipse 80% 50% at 50% 0%, var(--color-accent-bg), transparent 70%);
 }
-.login-shell .site-title { font-size: var(--font-size-2xl); }
+.login-shell > .card {
+  width: 100%;
+  max-width: 25rem;
+  padding: var(--space-2xl) var(--space-xl);
+  box-shadow: var(--shadow-md);
+}
+.login-shell .card-header {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.login-lead {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+}
 .login-btn { width: 100%; justify-content: center; }
 }

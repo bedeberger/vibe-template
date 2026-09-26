@@ -13,11 +13,15 @@
 @layer components {
   .tabs {
     --tabs-edge-shadow: color-mix(in oklab, var(--color-text) 15%, transparent);
+    /* Track colour (opaque — the edge-shadow cover layers below reuse it). */
+    --tabs-track: var(--color-neutral-bg);
     display: inline-flex;
+    gap: var(--space-2xs);
     max-width: 100%;
-    border: 0.5px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    background-color: var(--color-surface);
+    padding: var(--space-2xs);
+    border: none;
+    border-radius: var(--radius-md);
+    background-color: var(--tabs-track);
     /* Scrollen statt Clippen. overflow-y bleibt hidden, damit der Radius die
        Buttons weiter beschneidet. */
     overflow-x: auto;
@@ -35,8 +39,8 @@
        (Schatten) und wandern mit dem Inhalt. Am jeweiligen Anschlag deckt die
        local-Ebene ihren Schatten ab, weggescrollt gibt sie ihn frei. */
     background-image:
-      linear-gradient(to right,  var(--color-surface) 55%, transparent),
-      linear-gradient(to left,   var(--color-surface) 55%, transparent),
+      linear-gradient(to right,  var(--tabs-track) 55%, transparent),
+      linear-gradient(to left,   var(--tabs-track) 55%, transparent),
       linear-gradient(to right,  var(--tabs-edge-shadow), transparent),
       linear-gradient(to left,   var(--tabs-edge-shadow), transparent);
     background-position: left center, right center, left center, right center;
@@ -52,64 +56,41 @@
     align-items: center;
     /* Nicht zusammenquetschen — die Reihe scrollt stattdessen. */
     flex-shrink: 0;
-    padding: var(--space-sm) var(--space-14);
+    justify-content: center;
+    padding: var(--space-6) var(--space-md);
     font-size: var(--font-size-sm);
     font-weight: var(--fw-medium);
     background: transparent;
+    box-shadow: none;
     color: var(--color-muted);
     border: none;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     white-space: nowrap;
-    transition: background-color var(--transition-slow), color var(--transition-slow);
-  }
-
-  .tabs-btn:not(:last-child) {
-    border-right: 0.5px solid var(--color-border);
+    transition: background-color var(--transition-slow), color var(--transition-slow), box-shadow var(--transition-slow);
   }
 
   .tabs-btn:hover {
+    background: transparent;
     color: var(--color-text);
   }
+  .tabs-btn:active { transform: none; }
 
-  /* Underline-Indicator: ::after immer im DOM, default scaleX(0). Active und
-     Hover schalten auf scaleX(1) — Browser animiert die Skalierung weich. */
-  .tabs-btn::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 2px;
-    background: var(--color-primary);
-    transform: scaleX(0);
-    transform-origin: center;
-    transition: transform var(--transition-emphasized), background-color var(--transition-slow), height var(--transition-slow);
-    pointer-events: none;
-  }
-
-  /* Hover-Vorschau (nur auf inaktiven Tabs): 1px Underline in muted. */
-  .tabs-btn:not(.tabs-btn--active):not([aria-selected="true"]):hover::after {
-    transform: scaleX(1);
-    background: var(--color-muted);
-    height: 1px;
-  }
-
-  /* Active: Akzentfarbe + 2px scaleX(1) Underline. Doppel-Selektor erlaubt
-     parallelen a11y-Hook via aria-selected (CSS-Hook ist additiv zur Klasse). */
+  /* Active: the button lifts out of the track as a small surface (segmented
+     look for tab sets AND mode toggles). Double selector = parallel a11y hook via aria-selected (the CSS
+     hook is additive to the class). */
   .tabs-btn--active,
   .tabs-btn[aria-selected="true"] {
-    color: var(--color-primary);
-    font-weight: var(--fw-semibold);
+    background: var(--color-surface);
+    color: var(--color-text);
+    box-shadow: var(--shadow-xs);
   }
-  .tabs-btn--active::after,
-  .tabs-btn[aria-selected="true"]::after {
-    transform: scaleX(1);
-    background: var(--color-primary);
-  }
+  .tabs-btn--active:hover,
+  .tabs-btn[aria-selected="true"]:hover { background: var(--color-surface); }
 
   .tabs-btn:focus-visible {
-    outline: 2px solid var(--color-border-focus);
-    outline-offset: -2px;
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 
   /* Disabled (z.B. leerer Filter-Bucket): ausgegraut, kein Hover, kein Active. */
@@ -123,10 +104,6 @@
   .tabs-btn[aria-disabled="true"]:hover {
     color: var(--color-muted);
   }
-  .tabs-btn:disabled:hover::after,
-  .tabs-btn[aria-disabled="true"]:hover::after {
-    transform: scaleX(0);
-  }
 
   /* Count-Badge im Tab (rechts vom Label). Reuse Stil von .btn-count. */
   .tabs-btn-count {
@@ -136,9 +113,9 @@
     font-size: var(--font-size-xs);
     font-weight: var(--fw-semibold);
     line-height: 1.4;
-    background: var(--color-border);
+    background: var(--color-tag-bg);
     color: var(--color-text);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-full);
     vertical-align: middle;
   }
   .tabs-btn--active .tabs-btn-count,

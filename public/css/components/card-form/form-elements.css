@@ -9,7 +9,8 @@
    margin in an align-items:center row mis-centres the visible box. */
 label {
   font-size: var(--font-size-sm);
-  color: var(--color-muted);
+  font-weight: var(--fw-medium);
+  color: var(--color-text);
   display: block;
 }
 
@@ -33,6 +34,8 @@ select,
   font-family: inherit;
   background: var(--color-surface);
   color: var(--color-text);
+  box-shadow: var(--shadow-xs);
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }
 /* iOS: font-size ≥16px prevents the automatic zoom on focus. */
 @media (max-width: 768px) {
@@ -59,6 +62,7 @@ textarea:focus,
 .card-form-textarea:focus {
   outline: none;
   border-color: var(--color-border-focus);
+  box-shadow: var(--focus-ring);
 }
 
 input:disabled,
@@ -109,9 +113,9 @@ select[aria-invalid="true"] {
 /* Label-less full-width content in the grid (danger zone, footnote). */
 .card-form-row--full { display: block; }
 .card-form-label {
-  font-weight: var(--fw-bold);
+  font-weight: var(--fw-medium);
   font-size: var(--font-size-sm);
-  padding-top: var(--space-6);
+  padding-top: var(--space-sm);
   color: var(--color-text);
 }
 .card-form-field {
@@ -161,7 +165,7 @@ select[aria-invalid="true"] {
   margin: var(--space-sm) 0 0;
   padding: var(--space-6) var(--space-sm);
   border-left: 3px solid var(--color-warn-text);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border-radius: var(--radius-sm);
   background: var(--color-warn-bg);
   font-size: var(--font-size-mini);
   color: var(--color-warn-text);
@@ -259,7 +263,7 @@ select[aria-invalid="true"] {
   padding: var(--space-sm) var(--space-md);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: var(--color-bg);
+  background: var(--color-surface);
   transition: border-color var(--transition-base), background var(--transition-base);
 }
 .form-radio-group--card .form-radio-option:has(input:checked) {

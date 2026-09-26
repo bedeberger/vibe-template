@@ -63,13 +63,19 @@ test('load older appends with the cursor of the last entry', async ({ page }) =>
   await expect(page.getByRole('button', { name: 'Ältere laden' })).toBeHidden();
 });
 
-test('live switch closes and reopens the stream', async ({ page, request }) => {
+test('live switch closes and reopens the stream', async ({ page }) => {
+  // Observed on the page, not via mock state: workers share the mock server.
   const sw = page.getByRole('switch');
-  await expect(sw).toHaveAttribute('aria-checked', 'true');
+  await expect(rows(page).first()).toContainText('Live-Zeile'); // stream is open
   await sw.click();
   await expect(sw).toHaveAttribute('aria-checked', 'false');
-  await sw.click();
-  await expect.poll(async () => (await (await request.get('/__mock/logs')).json()).streams).toBe(2);
+  const [req] = await Promise.all([
+    page.waitForRequest((r) => r.url().endsWith('/api/admin/logs/stream')),
+    sw.click(),
+  ]);
+  expect(req.method()).toBe('GET');
+  await expect(sw).toHaveAttribute('aria-checked', 'true');
+  await expect(rows(page).filter({ hasText: 'Live-Zeile' })).toHaveCount(2);
 });
 
 test('download buttons per file hit the download endpoint', async ({ page }) => {

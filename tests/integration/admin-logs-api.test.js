@@ -14,7 +14,7 @@ test.before(ctx.start);
 test.after(ctx.stop);
 
 const append = (...lines) => fs.appendFileSync(process.env.LOG_PATH, lines.map((l) => l + '\n').join(''));
-const get = (p) => fetch(ctx.url(p));
+const { get } = ctx;
 
 test('GET /api/admin/logs: newest first, filter, cursor', async () => {
   append(

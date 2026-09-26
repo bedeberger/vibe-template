@@ -1,5 +1,5 @@
-/* Base layer: reset, document chrome (paper desk), global element defaults.
- * Source: schreibwerkstatt layout/base.css (domain selectors removed). */
+/* Base layer: reset, document chrome, global element defaults.
+ * The page frame itself (sidebar, topbar, content column) is layout/app-shell.css. */
 
 @layer base {
 /* === Reset === */
@@ -30,25 +30,13 @@
   outline-offset: 2px;
 }
 
-/* Text selection in feather gold — brand accent instead of browser blue.
-   Alpha mix keeps the text colour readable; dark theme inherits the token. */
+/* Text selection in the brand hue — alpha mix keeps the text readable. */
 ::selection {
-  background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 24%, transparent);
 }
 
 html {
   background-color: var(--color-bg);
-  /* Desk: soft vignette + faint paper grain (inline SVG turbulence, no
-     request — allowed by CSP img-src data:). Both fixed to the viewport. */
-  background-image:
-    radial-gradient(
-      ellipse 90% 70% at 50% 40%,
-      transparent 55%,
-      var(--color-vignette)
-    ),
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.35  0 0 0 0 0.27  0 0 0 0 0.18  0 0 0 0.035 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-  background-repeat: no-repeat, repeat;
-  background-attachment: fixed;
   scrollbar-gutter: stable;
 }
 
@@ -57,36 +45,34 @@ body {
   font-size: var(--font-size-base);
   line-height: var(--lh-base);
   color: var(--color-text);
+  background-color: var(--color-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  /* Inter: cv11 = single-storey a (editorial signature). */
-  font-feature-settings: "kern", "liga", "calt", "cv11";
+  /* Inter: cv11 = single-storey a, ss03 = rounded quotes. */
+  font-feature-settings: "kern", "liga", "calt", "cv11", "ss03";
   min-height: 100vh;
   min-height: 100dvh;
-  /* Side gutter never under the notch / rounded corners (index.html sets
-     viewport-fit=cover, so the page reaches into the safe-area insets). */
+  /* Side gutter of the content column + topbar (layout/app-shell.css). The
+     body itself is full-bleed: the shell owns the frame. */
   --page-pad-x: var(--space-lg);
-  padding: var(--space-lg) max(var(--page-pad-x), env(safe-area-inset-right))
-    var(--space-page-end) max(var(--page-pad-x), env(safe-area-inset-left));
-  max-width: 860px;
-  margin: 0 auto;
 }
 
 @media (min-width: 600px) {
-  body { --page-pad-x: var(--space-xl); padding-top: var(--space-xl); }
+  body { --page-pad-x: var(--space-xl); }
 }
 
 @media (min-width: 960px) {
-  body { padding-top: var(--space-2xl); max-width: 1600px; }
+  body { --page-pad-x: var(--space-2xl); }
 }
 
+/* The ONE h1 per page: the page title (topbar in the app, card head on login). */
 h1 {
-  font-family: var(--font-serif);
-  font-size: var(--font-size-2xl);
-  font-weight: var(--fw-medium);
-  letter-spacing: -0.015em;
-  margin-bottom: var(--space-xs);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xl);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tighter);
 }
 
 a { color: var(--color-primary); }
@@ -116,24 +102,20 @@ code {
   font-size: var(--font-size-mini);
 }
 
-/* === Site title (app header) === */
+/* === Site title (login page brand) === */
 .site-title {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-10);
-  font-family: var(--font-serif);
+  font-size: var(--font-size-xl);
   font-weight: var(--fw-semibold);
-  font-size: var(--font-size-3xl);
-  letter-spacing: -0.022em;
-  font-feature-settings: "kern", "liga", "dlig", "calt", "onum", "ss01";
+  letter-spacing: var(--tracking-tighter);
   color: var(--color-text);
-  margin-bottom: 0;
 }
 
 .site-logo {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.25rem;
+  height: 2.25rem;
   flex-shrink: 0;
-  align-self: center;
 }
 }

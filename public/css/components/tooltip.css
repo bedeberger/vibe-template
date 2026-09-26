@@ -5,7 +5,8 @@
  * `title` has an unskippable ~500ms delay).
  *   <button class="icon-btn" :data-tip="t('x.y')" :aria-label="t('x.y')">…
  * Modifiers (class on the target): .tip--below (target near the top edge),
- * .tip--end (right-aligned bubble for targets near the right edge).
+ * .tip--end (right-aligned bubble for targets near the right edge),
+ * .tip--right (bubble to the right — collapsed sidebar rail).
  * Limits: the target's ::after belongs to the tooltip — never put data-tip on
  * an element that uses its own ::after (.tabs-btn). Clipped by ancestors with
  * overflow:hidden/auto. Hidden on touch (no hover) — aria-label stays. */
@@ -29,9 +30,9 @@
     max-width: min(280px, 80vw);
     padding: var(--pad-badge);
     background: var(--color-tooltip-bg);
-    color: var(--color-text);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
+    color: var(--color-text-inverse);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
     box-shadow: var(--shadow-md);
     font-family: var(--font-sans);
     font-size: var(--font-size-mini);
@@ -51,6 +52,12 @@
     left: auto;
     right: 0;
     transform: none;
+  }
+  .tip--right[data-tip]:is(:hover, :focus-visible)::after {
+    bottom: auto;
+    top: 50%;
+    left: calc(100% + var(--space-sm));
+    transform: translateY(-50%);
   }
 }
 }

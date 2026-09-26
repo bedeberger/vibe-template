@@ -144,9 +144,23 @@ function apply(root, p) {
 
 module.exports = { plan, apply, camel, pascal };
 
+const USAGE = `Aufruf: npm run feature:new -- <id> [--label-de "…"] [--label-en "…"] [--icon <sprite-id>] [--view user|admin] [--dry-run]
+
+  <id>        kebab-case, z. B. invoices oder time-entries (Hash-Route + Dateistamm)
+  --label-*   Nav-Beschriftung je Sprache (Default: aus der Id)
+  --icon      Symbol aus public/icons.svg (Default: file-text; Liste: DESIGN.md → Icon-System)
+  --view      user (alle) oder admin (nur der .env-Admin), Default user
+  --dry-run   nur zeigen, was entstünde
+
+Beispiel: npm run feature:new -- invoices --label-de "Rechnungen" --label-en "Invoices" --icon banknote --dry-run`;
+
 if (require.main === module) {
   const argv = process.argv.slice(2);
   const id = argv.find((a) => !a.startsWith('--') && !['--label-de', '--label-en', '--icon', '--view', '--root'].includes(argv[argv.indexOf(a) - 1]));
+  if (!id || flag(argv, '--help')) {
+    console.log(USAGE);
+    process.exit(id || flag(argv, '--help') ? 0 : 1);
+  }
   const root = path.resolve(value(argv, '--root') || path.join(__dirname, '..'));
   try {
     const p = plan(root, id, { labelDe: value(argv, '--label-de'), labelEn: value(argv, '--label-en'), icon: value(argv, '--icon'), view: value(argv, '--view') });
@@ -157,7 +171,7 @@ if (require.main === module) {
       console.log('\n(--dry-run: nichts geschrieben)');
     } else {
       apply(root, p);
-      console.log('\nNoch zu tun: Backend (db/ → lib/<id>-store.js → routes/), Mock in tests/server.js,');
+      console.log('\nNoch zu tun: Backend (db/ → lib/<id>-store.js → routes/ mit handle(); Domäne in DOMAINS von scripts/hooks/_rules.js), Mock in tests/server.js,');
       console.log('echte Methoden in public/js/' + p.id + '/, Spec erweitern — dann `npm run test:unit && npm run test:e2e && npm run test:smoke`.');
     }
   } catch (e) {

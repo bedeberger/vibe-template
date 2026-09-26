@@ -3,7 +3,7 @@
 // it owns its local edit + job state and tells the feature card about a
 // deletion via the `note-removed` event.
 
-import { api, escHtml, formatDate } from '../utils.js';
+import { api, escHtml, formatDate, notify } from '../utils.js';
 import { t } from '../i18n.js';
 
 export function noteItemCard(note) {
@@ -75,8 +75,10 @@ export function noteItemCard(note) {
           await new Promise((r) => setTimeout(r, 200));
           job = await api(`/api/jobs/${job.id}`);
         }
+        // A failed job is an answer, not an exception: say so (api() errors
+        // on the way here go to the global toast on their own).
         if (job.status === 'done') this.stats = JSON.parse(job.result_json);
-        else throw new Error(job.status_text || 'job failed');
+        else notify('err', t('notes.statsFailed'));
       } finally {
         this.busy = false;
       }

@@ -81,7 +81,8 @@ API-Mocks mit Seed-Daten (ansehen `GET /__mock/state`, zurücksetzen
   Verhaltens-Assertions.
 - Verhaltens-Specs, deren Assertion am **echten Backend, am vollständigen
   Template-Baum oder am vollen CSS** hängt (Layout-Höhen, Overlay-Geometrie),
-  gehören daneben — z. B. [notes.spec.js](../tests/e2e-app/notes.spec.js).
+  gehören daneben — z. B. [notes.spec.js](../tests/e2e-app/notes.spec.js) oder
+  [shell.spec.js](../tests/e2e-app/shell.spec.js) (Sidebar/Schublade, Benutzermenü, Theme, Command Palette).
 - **Entscheidungsregel:** hängt die Assertion am vollständigen CSS oder an
   Template + Store + Backend zusammen? → `tests/e2e-app/`. Reine DOM-/Modul-Logik?
   → Harness in `tests/e2e/` (schneller, isoliert).

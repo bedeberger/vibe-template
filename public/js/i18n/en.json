@@ -1,7 +1,6 @@
 {
   "app": {
     "title": "vibe-template",
-    "subtitle": "Notes",
     "logout": "Sign out",
     "loading": "Loading …"
   },
@@ -32,6 +31,7 @@
     "delete": "Delete",
     "runStats": "Compute stats",
     "stats": "{words} words, {chars} characters",
+    "statsFailed": "The statistics could not be computed.",
     "updated": "Updated",
     "titlePlaceholder": "Title",
     "bodyPlaceholder": "Text …",
@@ -120,12 +120,9 @@
     "loadMore": "Load older",
     "downloadFile": "Download {name}"
   },
-  "view": {
-    "user": "App",
-    "admin": "Admin"
-  },
   "login": {
     "title": "Sign in",
+    "lead": "Sign in to your account.",
     "adminTitle": "Admin sign-in",
     "email": "Email",
     "password": "Password",
@@ -193,5 +190,39 @@
       "oidcRequired": "OIDC needs issuer, client ID and redirect URI.",
       "generic": "That did not work. Please try again."
     }
+  },
+  "errors": {
+    "generic": "That didn't work. Please try again.",
+    "network": "No connection to the server. Please check your network and try again.",
+    "server": "Server error — please try again later.",
+    "invalid": "The input was rejected. Please check it and try again.",
+    "forbidden": "You don't have permission for that.",
+    "notFound": "Not found — it may have been deleted meanwhile. Please reload.",
+    "conflict": "That conflicts with an existing entry.",
+    "rateLimited": "Too many attempts. Please wait a moment."
+  },
+  "toast": {
+    "close": "Close message"
+  },
+  "shell": {
+    "sidebar": "Sidebar",
+    "openNav": "Open navigation",
+    "closeNav": "Close navigation",
+    "collapseNav": "Collapse sidebar",
+    "expandNav": "Expand sidebar",
+    "adminConsole": "Admin console",
+    "backToApp": "Back to app",
+    "userMenu": "User menu",
+    "roleAdmin": "Administrator",
+    "roleUser": "User",
+    "theme": "Appearance",
+    "themeSystem": "Match system",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "search": "Search and jump",
+    "searchPlaceholder": "Search …",
+    "shortcutMac": "⌘K",
+    "shortcutOther": "Ctrl K",
+    "noResults": "No results"
   }
 }

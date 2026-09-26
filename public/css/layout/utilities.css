@@ -18,6 +18,14 @@
   }
 }
 
+/* One line, cut with an ellipsis (names, titles, e-mails in narrow rows).
+   Needs a width bound: a block, or a flex child with `min-width: 0`. */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Numbers that update live must not wobble. */
 .tabular-nums { font-variant-numeric: tabular-nums; }
 

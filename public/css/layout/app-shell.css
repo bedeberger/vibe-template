@@ -1,0 +1,164 @@
+/* App shell: sidebar column + main column (topbar, content), the phone
+ * drawer and its scrim. DESIGN.md → "App-Shell". What sits INSIDE the sidebar
+ * (brand, nav items, user menu) is layout/app-nav.css.
+ *
+ * Desktop (≥ 960px): grid of a sticky full-height sidebar and the main column;
+ * `.app-shell--collapsed` narrows the sidebar to an icon rail.
+ * Phone/tablet (< 960px): the sidebar is an off-canvas drawer
+ * (`.app-shell--drawer-open`), opened from the topbar menu button. */
+
+@layer components {
+.app-shell {
+  --sidebar-w: 248px;
+  --sidebar-w-collapsed: 64px;
+  --topbar-h: 56px;
+  min-height: 100dvh;
+}
+
+@media (min-width: 960px) {
+  .app-shell {
+    display: grid;
+    grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+    transition: grid-template-columns var(--transition-emphasized);
+  }
+  .app-shell.app-shell--collapsed {
+    grid-template-columns: var(--sidebar-w-collapsed) minmax(0, 1fr);
+  }
+}
+
+/* === Sidebar === */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  min-width: 0;
+  background: var(--color-chrome);
+  border-right: 1px solid var(--color-border);
+  padding: var(--space-md);
+  padding-bottom: max(var(--space-md), env(safe-area-inset-bottom));
+}
+
+@media (min-width: 960px) {
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    z-index: var(--z-sticky);
+    padding-left: max(var(--space-md), env(safe-area-inset-left));
+  }
+}
+
+/* Drawer: off-canvas until opened. `visibility` (transitioned with the
+   transform) takes the closed drawer out of the tab order and the a11y tree. */
+@media (max-width: 959.98px) {
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: var(--z-modal);
+    width: min(calc(var(--sidebar-w) + var(--space-2xl)), 85vw);
+    padding-top: max(var(--space-md), env(safe-area-inset-top));
+    padding-left: max(var(--space-md), env(safe-area-inset-left));
+    box-shadow: var(--shadow-lg);
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform var(--transition-emphasized), visibility var(--transition-emphasized);
+  }
+  .app-shell--drawer-open .sidebar {
+    transform: none;
+    visibility: visible;
+  }
+}
+
+.sidebar-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background: var(--color-overlay);
+}
+@media (min-width: 960px) {
+  .sidebar-scrim { display: none; }
+}
+
+/* === Main column === */
+.app-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100dvh;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  min-height: var(--topbar-h);
+  padding: env(safe-area-inset-top) max(var(--page-pad-x), env(safe-area-inset-right)) 0
+    max(var(--page-pad-x), env(safe-area-inset-left));
+  background: color-mix(in srgb, var(--color-bg) 82%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid var(--color-border);
+}
+/* Scoped: .icon-btn (linked later, same layer) would win over a bare class. */
+@media (min-width: 960px) {
+  .topbar > .topbar-menu { display: none; }
+}
+
+.topbar-title {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.topbar-crumb {
+  font-size: var(--font-size-xs);
+  font-weight: var(--fw-medium);
+  color: var(--color-subtle);
+  line-height: var(--lh-tight);
+}
+.page-title {
+  font-size: var(--font-size-lg);
+  letter-spacing: var(--tracking-tight);
+}
+
+/* Search trigger: a fake input on desktop, an icon button on phones. */
+.topbar-search {
+  flex: 0 0 auto;
+  gap: var(--space-sm);
+  min-width: 16rem;
+  padding: var(--space-6) var(--space-6) var(--space-6) var(--space-10);
+  background: var(--color-surface);
+  color: var(--color-subtle);
+  font-size: var(--font-size-sm);
+  box-shadow: var(--shadow-xs);
+}
+.topbar-search:hover { background: var(--color-surface); color: var(--color-muted); border-color: var(--color-border-focus); }
+.topbar-search:active { transform: none; }
+.topbar-search-kbd { margin-left: auto; }
+@media (max-width: 600px) {
+  .topbar-search {
+    min-width: 0;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+    font-size: var(--font-size-reading);
+  }
+  .topbar-search-text,
+  .topbar-search-kbd { display: none; }
+}
+
+.layout-main {
+  width: 100%;
+  max-width: 75rem;
+  margin-inline: auto;
+  min-width: 0;
+  padding: var(--space-xl) max(var(--page-pad-x), env(safe-area-inset-right)) var(--space-page-end)
+    max(var(--page-pad-x), env(safe-area-inset-left));
+}
+@media (min-width: 960px) {
+  .layout-main { padding-top: var(--space-2xl); }
+}
+}

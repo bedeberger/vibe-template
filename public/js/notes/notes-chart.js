@@ -17,11 +17,42 @@ export function notebookCounts(notebooks, currentId, currentCount) {
 }
 
 // Colours come from the design tokens (DESIGN.md → Dark Mode), read at
-// creation — the canvas can't resolve var(--…) itself.
+// creation and again on every theme switch. The canvas can't resolve var(--…),
+// and getPropertyValue('--x') returns the token *unresolved* — our colour
+// tokens are light-dark(…), which a canvas silently paints as black. So each
+// colour goes through a probe element (css/entities/notes.css → .chart-probe):
+// its computed `color` is a plain rgb().
 function tokens(el) {
-  const css = getComputedStyle(el);
-  const v = (name) => css.getPropertyValue(name).trim();
-  return { bar: v('--color-accent'), text: v('--color-muted'), grid: v('--color-border'), font: v('--font-sans') };
+  const probe = document.createElement('span');
+  probe.className = 'chart-probe';
+  probe.hidden = true;
+  el.parentNode.appendChild(probe);
+  const color = (name) => {
+    probe.style.setProperty('--probe', `var(${name})`);
+    return getComputedStyle(probe).color;
+  };
+  const c = { bar: color('--color-accent'), text: color('--color-muted'), grid: color('--color-border') };
+  probe.remove();
+  c.font = getComputedStyle(el).getPropertyValue('--font-sans').trim();
+  return c;
+}
+
+function applyTokens(chart, c) {
+  const { x, y } = chart.options.scales;
+  chart.data.datasets[0].backgroundColor = c.bar;
+  x.ticks.color = c.text;
+  y.ticks.color = c.text;
+  y.grid.color = c.grid;
+}
+
+// Re-colour when the theme flips: <html data-theme> (js/theme-boot.js) or the
+// OS scheme while on 'system'. Returns the unsubscribe.
+function onThemeChange(fn) {
+  const mo = new MutationObserver(fn);
+  mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  mq.addEventListener('change', fn);
+  return () => { mo.disconnect(); mq.removeEventListener('change', fn); };
 }
 
 export async function mountNotesChart(canvas, { labels, counts }, seriesLabel) {
@@ -41,12 +72,13 @@ export async function mountNotesChart(canvas, { labels, counts }, seriesLabel) {
       },
     },
   });
+  const themeOff = onThemeChange(() => { applyTokens(chart, tokens(canvas)); chart.update(); });
   return {
     update({ labels: l, counts: n }) {
       chart.data.labels = l;
       chart.data.datasets[0].data = n;
       chart.update();
     },
-    destroy() { chart.destroy(); },
+    destroy() { themeOff(); chart.destroy(); },
   };
 }

@@ -15,9 +15,10 @@ CSS-Inventar: [DESIGN.md](../../DESIGN.md).
   nie rohe `rem`/`px`-Abstände (`em` ist ausgenommen: schriftrelativ ist eine
   andere Aussage).
 - **Farben:** eine `light-dark(light, dark)`-Deklaration pro Token. Dark-Mode
-  folgt dem OS; `data-theme="light|dark"` auf `<html>` erzwingt ihn.
-- **Fonts** self-hosted in `public/fonts/` (Inter = UI, Source Serif 4 =
-  Titel/Lesetext; `OFL.txt` behalten). **Icons** nur aus dem Lucide-Sprite
+  folgt dem OS; `data-theme="light|dark"` auf `<html>` erzwingt ihn (gesetzt
+  nur von `js/theme-boot.js`, Umschalter im Benutzermenü).
+- **Fonts** self-hosted in `public/fonts/` (Inter = UI und Titel, eine
+  Familie; `OFL.txt` behalten). **Icons** nur aus dem Lucide-Sprite
   `public/icons.svg` (`<svg class="icon"><use href="/icons.svg#name"/></svg>`),
   keine Unicode-Glyphen als Icons.
 - **Karten-Akzent.** Akzent = `--card-accent-<key>-base` in `tokens/colors.css`

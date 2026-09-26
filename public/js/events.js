@@ -10,4 +10,7 @@ export const EVT = {
   VIEW_RESET: 'view:reset',
   // Re-click on the ACTIVE nav item: detail { id } — that feature reloads.
   CARD_REFRESH: 'card:refresh',
+  // A toast: detail { kind: 'ok' | 'err', text } — fired via notify() (utils.js),
+  // shown by the root (one toast state, DESIGN.md → "Job-Toast").
+  NOTIFY: 'app:notify',
 };

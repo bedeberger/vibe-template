@@ -8,11 +8,13 @@ CLAUDE.md → Harte Regeln: "DESIGN.md-Pattern-Katalog vor neuer UI prüfen".
 **Jedes Muster hier gilt auch auf dem Handy** — [Mobile (Pflicht)](#mobile-pflicht)
 ist Teil jedes Abschnitts, auch wo er es nicht eigens erwähnt.
 
-Das Design-System ist **Papier/Tinte, editorial**: warmer Papier-Schreibtisch,
-weisse Karten mit schmalem Akzentband, tintenschwarzer Text, Inter für die UI,
-Source Serif 4 für Titel und Lesetext, eckige Badges, Haarlinien-Rahmen, kaum
-Schatten. Aufgeführt sind nur Muster, deren CSS in `public/css/` ausgeliefert
-wird.
+Das Design-System ist **neutral-modernes SaaS**: kühle Zink-Grautöne,
+weisse Karten mit Haarlinie und leisem Kontaktschatten auf einem leicht
+getönten App-Grund, eine Markenfarbe (Indigo) für Primäraktion, Auswahl und
+Fokus, durchgehend Inter (Titel semibold mit engem Tracking), weiche Radien,
+Pill-Badges, ein einheitlicher Fokus-Halo. Der Rahmen ist eine App-Shell mit
+Sidebar, Topbar und Command Palette. Aufgeführt sind nur Muster, deren CSS in
+`public/css/` ausgeliefert wird.
 
 ## Inhalt
 
@@ -21,7 +23,8 @@ wird.
   [Cascade-Layer](#cascade-layer) ·
   [Dark Mode](#dark-mode) · [Mobile (Pflicht)](#mobile-pflicht) ·
   [Bewegung](#bewegung) · [Z-Index-Stapel](#z-index-stapel)
-- [App-Shell](#app-shell) · [Zeile / Listenkopf / Tabellen-Scroll](#zeile--listenkopf--tabellen-scroll)
+- [App-Shell](#app-shell) · [Benutzermenü](#benutzermenü) · [Command Palette](#command-palette) ·
+  [Zeile / Listenkopf / Tabellen-Scroll](#zeile--listenkopf--tabellen-scroll)
 - [Karte](#karte-card) · [Karten-Innenraum](#karten-innenraum) · [Überschriften-Hierarchie](#überschriften-hierarchie)
 - [Buttons](#buttons) · [Badges](#badges) · [Aktions-Icon-Bibliothek](#aktions-icon-bibliothek-verbindlich) · [Icon-System](#icon-system-lucide-sprite) ·
   [Icon-Button](#icon-button-icon-btn) · [Schliessen-Button](#schliessen-button) ·
@@ -78,18 +81,20 @@ Token → das passende Modul; kein zusätzlicher `<link>` nötig.
 | Bereich | Tokens (Modul) | Einsatz |
 |---|---|---|
 | **Textfarben** | `--color-text`, `--color-muted`, `--color-subtle`, `--color-faint`, `--color-text-inverse` (colors) | Fliesstext / sekundär / tertiär (AA) / nur dekorativ (nie lesbarer Text) / auf dunklen Flächen. |
-| **Flächen** | `--color-bg` (Papier-Schreibtisch), `--color-surface` (Karten), `--color-card-bg`, `--color-neutral-bg`, `--color-tooltip-bg` | |
+| **Flächen** | `--color-bg` (App-Grund), `--color-surface` (Karten, Panels), `--color-chrome` (Sidebar), `--color-card-bg`, `--color-neutral-bg` (deckende Spur, z. B. Tabs), `--color-tooltip-bg` (dunkle Blase) | |
 | **Linien + Tönungen** | `--color-border`, `--color-border-input`, `--color-border-focus`, `--color-hover`, `--color-hover-light`, `--color-hover-strong`, `--color-tag-bg`, `--icon-ghost-fill(-hover)` | Rahmen sind Alpha auf dem Grund und funktionieren darum auf jeder Fläche. |
-| **Marke** | `--color-primary(-hover/-light)`, `--color-on-primary`, `--color-accent` (+ `-bg/-text/-hover/-soft`), `--color-on-accent`, `--color-running` | Primary = Markenblau (CTA, aktiver Zustand). Accent = Federgold (Auswahl, Hervorhebungen). |
+| **Marke** | `--color-primary(-hover/-light)`, `--color-on-primary`, `--color-accent` (+ `-bg/-text/-hover/-soft`), `--color-on-accent`, `--color-running`, `--color-focus-ring` | Primary = Indigo (CTA, aktiver Zustand, Fokus). Accent = dieselbe Farbfamilie für Auswahl und sanfte Hervorhebung. Die Marke steckt **nur** in diesen Zeilen — ein Projekt tauscht sie dort. |
 | **Status** | `--color-ok-{bg,text,border}`, `--color-warn-{bg,text}`, `--color-err-{bg,text,border,light,hover}`, `--color-pending`, `--color-success(-hover)` | Nur für Betriebsstatus (Banner, Validierung, Jobs). Nie ein Karten-Akzent. |
 | **Karten-Akzent** | `--card-accent-<key>-base` → `--card-accent-<key>` → `.card--<key>` | Siehe [Karte](#karte-card). |
-| **Schatten** | `--shadow-sm` (Blatt-Anhebung), `--shadow-md` (Popover, Tooltip, Toast), `--shadow-lg` (Modal), `--shadow-inset-top` (motion) | Karten sind flach — kein Schatten. |
-| **Abstände** | `--space-xs` 4 · `--space-sm` 8 · `--space-md` 12 · `--space-lg` 16 · `--space-xl` 24 · `--space-2xl` 32, dazu `--space-1/2xs/3/5/6/10/14/18/20` (spacing); `--space-page-end` 56 (unteres Body-Padding) | 4px-Raster; Zwischenstufen nur für dichte Zeilen. Rohe rem/px in margin/padding/gap sperrt `spacing-scale.test.mjs`. |
+| **Schatten** | `--shadow-xs` (Karte, Feld, Button in Ruhe), `--shadow-sm` (Banner), `--shadow-md` (Popover, Tooltip, Toast, Login-Karte), `--shadow-lg` (Modal, Palette, Schublade), `--shadow-inset-top` (motion) | Zweilagig: enger Kontakt- + weicher Umgebungsschatten. |
+| **Fokus** | `--focus-ring` (motion, aus `--color-focus-ring`) | 3px-Halo als `box-shadow` — siehe Fokusring unten. |
+| **Abstände** | `--space-xs` 4 · `--space-sm` 8 · `--space-md` 12 · `--space-lg` 16 · `--space-xl` 24 · `--space-2xl` 32, dazu `--space-1/2xs/3/5/6/10/14/18/20` (spacing); `--space-page-end` 56 (unteres Padding der Inhaltsspalte) | 4px-Raster; Zwischenstufen nur für dichte Zeilen. Rohe rem/px in margin/padding/gap sperrt `spacing-scale.test.mjs`. |
 | **Karten-Rhythmus** | `--card-gap-section` (16), `--card-gap-tight` (8) | Die einzigen zwei Abstände in einem Karten-Body — siehe [Karten-Innenraum](#karten-innenraum). |
 | **Padding** | `--pad-btn-compact`, `--pad-badge`, `--pad-detail` | Wiederkehrende Zellgrössen. |
-| **Rahmenbreite** | `--border-thin` (0.5px), `--border-thick` (2px) | Nur die Abweichungen sind Tokens; der 1px-Standard bleibt literal (`1px solid var(--color-border)`). |
-| **Radius** | `--radius-sm` 0 (Badges, Tags) · `--radius-md` 3px (Inputs, Buttons) · `--radius-lg` 6px (Karten) · `--radius-xl` 10px (Modal) | Leitmotiv: editorial-eckig. |
-| **Schrift** | `--font-sans` (Inter, UI), `--font-serif` (Source Serif 4, Titel + Lesetext), `--font-mono` (typography) | |
+| **Rahmenbreite** | `--border-thin` (0.5px) | Nur die Abweichung sind Tokens; der 1px-Standard bleibt literal (`1px solid var(--color-border)`). |
+| **Radius** | `--radius-sm` 4px (Menüeinträge, Tabs-Knopf) · `--radius-md` 6px (Inputs, Buttons, Nav-Einträge) · `--radius-lg` 10px (Karten, Popover) · `--radius-xl` 14px (Modal, Palette) · `--radius-full` (Avatar, Badges, Zähler, Fortschritt) | Weich-modern. |
+| **Schrift** | `--font-sans` (Inter, UI **und** Titel), `--font-mono` (typography) | Eine Familie; Hierarchie über Grösse, Gewicht und Tracking. |
+| **Laufweite** | `--tracking-tight` (Karten-/Seitentitel), `--tracking-tighter` (`h1`, Login-Titel), `--tracking-caps` (Versal-Labels) | Grössere Titel laufen enger. |
 | **Schriftgrösse** | `--font-size-micro` 10 · `xs` 11 · `mini` 12 · `sm` 13 · `base` 14 · `md` 15 · `reading` 16 · `lg` 18 · `xl` 22 · `2xl` 26 · `3xl` 30; `--font-em-80/85/90` | xs–md = UI; lg = Kartentitel; 2xl/3xl = Seiten-/Site-Titel. |
 | **Gewicht / Zeilenhöhe** | `--fw-regular/medium/semibold/bold`; `--lh-tight` 1.2 · `--lh-base` 1.45 · `--lh-relaxed` 1.6 | |
 | **Bedienelemente** | `--size-default-padding-y`, `--size-compact-font-size`, `--size-compact-padding`, `--icon-size-action` | Gleiche Höhe für Bedienelemente in einer Zeile. |
@@ -97,10 +102,11 @@ Token → das passende Modul; kein zusätzlicher `<link>` nötig.
 | **Deckkraft** | `--opacity-disabled` 0.6 · `muted` 0.5 · `hint` 0.4 · `faint` 0.35 · `strong` 0.75 | |
 | **Z-Index** | `--z-*` (scale) | Siehe [Z-Index-Stapel](#z-index-stapel). |
 
-**Fokusring:** keine globale `:focus-visible`-Regel — die Standard-Outline des
-Browsers bleibt. Komponenten mit eigenem Fokussignal (Rahmenfarbe, Tönung)
-setzen `outline: none` ohne `!important`; listenartige Bedienelemente
-(`.nav-item`, `.tabs-btn`) definieren eine explizite `:focus-visible`-Outline.
+**Fokusring:** keine globale `:focus-visible`-Regel — jede Komponente setzt
+ihren Fokus selbst, und zwar einheitlich als `outline: none; box-shadow:
+var(--focus-ring)` (Buttons, Nav-Einträge, Tabs, Menüeinträge) bzw. bei
+Feldern `border-color: var(--color-border-focus)` + `--focus-ring`. Elemente
+ohne eigene Regel behalten die Browser-Outline.
 
 ---
 
@@ -131,8 +137,12 @@ Variation nutzt eine Modifier-Klasse oder einen anderen `@media`/`@layer`-Scope.
 
 Jeder Farb-Token wird **einmal** mit `light-dark(<light>, <dark>)` in
 [tokens/colors.css](public/css/tokens/colors.css) deklariert. `:root { color-scheme: light dark }`
-folgt dem Betriebssystem; `<html data-theme="light|dark">` erzwingt ein Theme
-(Hook für einen künftigen Umschalter — das Attribut umzuschalten genügt).
+folgt dem Betriebssystem; `<html data-theme="light|dark">` erzwingt ein Theme.
+Umschalter: [Benutzermenü](#benutzermenü) → Darstellung (System / Hell /
+Dunkel), pro Gerät in `localStorage`. [theme-boot.js](public/js/theme-boot.js)
+ist ein klassisches, synchrones Skript im `<head>` von index.html **und**
+login.html: es setzt das Attribut vor dem ersten Paint (kein Aufblitzen) und
+ist mit `window.uiTheme.get()/.set()` die einzige Schnittstelle dazu.
 
 **Regeln:**
 - Farben, Hintergründe, Rahmen, Schatten nur über Tokens — kein Hex/RGB im
@@ -161,7 +171,7 @@ Datei (kein zentrales `mobile.css`).
 1. **Referenzbreite 360 px.** Bei 360 × 780 scrollt keine Seite horizontal
    (`scrollWidth ≤ innerWidth`). Breite Inhalte bekommen ihren eigenen
    Scroll-Container: Tabellen in `.table-scroll`, Leisten mit `overflow-x: auto`
-   (wie die Nav unter 960 px). Keine fixen px-Breiten auf Blöcken — `max-width`,
+   (wie die Tabs-Zeile). Keine fixen px-Breiten auf Blöcken — `max-width`,
    `minmax()`, `flex-wrap`, `min-width: 0` auf Flex-/Grid-Kindern.
 2. **Alles erreichbar.** Jede Aktion, die es auf dem Desktop gibt, gibt es auch
    auf dem Handy — sichtbar oder eine Geste weit weg (Umbruch, Scroll-Leiste,
@@ -208,7 +218,7 @@ die Werte literal — **nur** aus dieser Leiter wählen:
 | `480px` | kleines Smartphone — harter Umbruch (`.row` stapelt) |
 | `600px` | grosses Smartphone — **Standard-Mobile-Breakpoint** |
 | `768px` | Tablet — Formularfelder auf 16px (kein iOS-Fokus-Zoom) |
-| `960px` | Desktop — [twocolumn.css](public/css/layout/twocolumn.css) wechselt auf Sidebar + Main |
+| `960px` | Desktop — [app-shell.css](public/css/layout/app-shell.css) wechselt von der Schublade auf Sidebar + Main |
 
 Dokumentierte Abweichung: `700px` für Kartenköpfe/Aktionsleisten (card-shell,
 card-actions), die vor der Tablet-Breite umbrechen müssen.
@@ -295,6 +305,12 @@ im Dateinamen, Lizenz in `vendor/LICENSES/`, geändert nur via
 - **Eine Lib-Instanz nie in den Alpine-State legen** (Chart, Sortable): der
   reaktive Proxy läuft durch ihre Interna. Die Karte hält nur eine Closure
   (`_sortableOff`, `_chart` — beide vorab deklariert), die Instanz lebt darin.
+- **Canvas-Farben aufgelöst übergeben.** Die Farb-Tokens sind `light-dark(…)`;
+  `getPropertyValue('--x')` liefert sie unaufgelöst, und ein Canvas malt so
+  einen String schwarz. Jede Farbe über ein Probe-Element lesen (computed
+  `color` → `rgb()`) und bei einem Theme-Wechsel (`data-theme`,
+  `prefers-color-scheme`) neu anwenden — Vorbild
+  [notes-chart.js](public/js/notes/notes-chart.js).
 - **Keine Lib ohne Nutzer.** Eine vendorte Lib, die nichts im Template
   benutzt, kopiert jedes abgeleitete Projekt als toten Ballast mit. Neue Lib ⇒
   `LIBS`-Eintrag + Lizenz + ein Einsatz + eine Zeile hier.
@@ -336,55 +352,145 @@ registriertes Plugin warnt nur.
 ## App-Shell
 
 **Einsatz:** der Rahmen von [index.html](public/index.html): Skip-Link,
-Sitzungs-Banner, Kopfzeile, zweispaltiges Layout mit der Feature-Navigation.
+Sitzungs-Banner, Sidebar (Marke, Registry-Navigation, Benutzermenü), Topbar
+(Menü-Knopf, Seitentitel, Suche) und die Inhaltsspalte.
 
-**Markup:**
+**Markup (gekürzt):**
 ```html
-<div class="app-shell" x-data="app" x-cloak>
-  <a class="skip-link" href="#main-content" x-text="t('a11y.skipToMain')"></a>
-  <header class="site-header-row">
-    <div class="site-header-center">
-      <h1 class="site-title"><img class="site-logo" src="/icon.svg" alt=""><span x-text="t('app.title')"></span></h1>
-      <p class="subtitle" x-text="t('app.subtitle')"></p>
-    </div>
-    <div class="site-header-aside">
-      <span class="site-header-user" x-text="user.email"></span>
-      <a class="icon-btn icon-btn--ghost" href="/auth/logout" …>…</a>
-    </div>
-  </header>
-  <div class="layout">
-    <aside class="layout-sidebar">
-      <nav class="card card--nav app-nav" :aria-label="t('nav.label')">
-        <template x-for="f in features" :key="f.id">
-          <button type="button" class="nav-item" :aria-current="activeFeature === f.id ? 'page' : null" @click="selectFeature(f.id)">
-            <svg class="icon" aria-hidden="true"><use :href="'/icons.svg#' + f.icon"/></svg>
-            <span x-text="t(f.labelKey)"></span>
-          </button>
-        </template>
-      </nav>
-    </aside>
-    <main id="main-content" class="layout-main">…Ansichten…</main>
+<div class="app-shell" x-data="app" x-cloak
+     :class="{ 'app-shell--collapsed': sidebarCollapsed && !isNarrow, 'app-shell--drawer-open': drawerOpen && isNarrow }">
+  <div class="sidebar-scrim" x-show="drawerOpen && isNarrow" @click="closeDrawer()"></div>
+  <aside class="sidebar" id="app-sidebar" x-trap.noscroll="drawerOpen && isNarrow" @keydown.escape="closeDrawer()">
+    <div class="sidebar-header"><a class="sidebar-brand">…</a><button class="icon-btn icon-btn--ghost sidebar-toggle" …></button></div>
+    <div class="sidebar-context" x-show="view === 'admin'">…<button class="sidebar-back tip--right" …></button></div>
+    <nav class="app-nav">
+      <template x-for="f in features" :key="f.id"><template x-if="f.view === view">
+        <button type="button" class="nav-item tip--right" :aria-current="activeFeature === f.id ? 'page' : null"
+                :data-tip="sidebarCollapsed && !isNarrow ? t(f.labelKey) : null" @click="openFeature(f.id)">
+          <svg class="icon" aria-hidden="true"><use :href="'/icons.svg#' + f.icon"/></svg>
+          <span class="sidebar-label" x-text="t(f.labelKey)"></span>
+        </button>
+      </template></template>
+    </nav>
+    <div class="sidebar-footer">…Benutzermenü…</div>
+  </aside>
+  <div class="app-main">
+    <header class="topbar">
+      <button class="icon-btn icon-btn--ghost topbar-menu" @click="toggleSidebar()" …></button>
+      <div class="topbar-title"><span class="topbar-crumb" x-show="view === 'admin'">…</span><h1 class="page-title" x-text="activeLabel"></h1></div>
+      <button type="button" class="topbar-search" @click="openPalette()">…<kbd class="topbar-search-kbd">…</kbd></button>
+    </header>
+    <main id="main-content" class="layout-main">…Feature-Hosts…</main>
   </div>
+  <dialog class="command-palette" x-ref="palette">…</dialog>
 </div>
 ```
 
 **Klassen:**
-- [layout/base.css](public/css/layout/base.css): `.skip-link`, `.site-title`, `.site-logo`; Element-Standards (`html` Papier-Schreibtisch mit Vignette + Körnung, `body`-Spalte max-width 860 → 1600px ab 960px, `h1`, `a`, `kbd`, `code`, `::selection`, `[x-cloak]`).
-- [layout/layout-base.css](public/css/layout/layout-base.css): `.site-header-row`, `.site-header-center`, `.site-header-aside`, `.site-header-user`, `.subtitle`, `.login-shell`, `.login-btn`.
-- [layout/twocolumn.css](public/css/layout/twocolumn.css): `.layout` (Grid ab 960px, `--sidebar-w`, Standard 240px), `.layout--no-sidebar`, `.layout-sidebar` (sticky, eigener Scroll auf Desktop), `.layout-main` (`min-width: 0`).
-- [layout/app-nav.css](public/css/layout/app-nav.css): `.app-nav`, `.nav-item` (`[aria-current="page"]` = Akzentrahmen + sanfte Akzentfüllung). Unter 960px wird die Navigation zu einem horizontalen Streifen.
+- [layout/app-shell.css](public/css/layout/app-shell.css): `.app-shell` (Grid ab 960px, `--sidebar-w` 248px / `--sidebar-w-collapsed` 64px, `--topbar-h`), `--collapsed`, `--drawer-open`; `.sidebar` (Desktop: sticky, volle Höhe; darunter: Off-Canvas-Schublade mit `visibility` + Transform), `.sidebar-scrim`; `.app-main`, `.topbar` (sticky, halbtransparent mit Blur), `.topbar-menu` (nur unter 960px), `.topbar-title`, `.topbar-crumb`, `.page-title`, `.topbar-search` (+ `-text`, `-kbd`; ≤ 600px nur Icon, 40px), `.layout-main` (Inhaltsspalte, max. 75rem, Seitenrand `--page-pad-x`).
+- [layout/app-nav.css](public/css/layout/app-nav.css): `.sidebar-header`, `.sidebar-brand`, `.sidebar-brand-name`, `.sidebar-context`, `.sidebar-section-label`, `.sidebar-back`, `.app-nav`, `.nav-item` (`[aria-current="page"]` = angehobene Fläche + Primary-Icon), `.sidebar-label` (in der Icon-Leiste ausgeblendet), `.sidebar-footer` + das [Benutzermenü](#benutzermenü).
+- [layout/base.css](public/css/layout/base.css): `.skip-link`, `.site-title` + `.site-logo` (Login), Element-Standards (`body` vollflächig mit `--page-pad-x` 16/24/32px, `h1`, `a`, `kbd`, `code`, `::selection`, `[x-cloak]`).
+- Logik: [js/app/shell.js](public/js/app/shell.js) (`shellMethods`, in die Root gespreizt; Felder in [app-state.js](public/js/app/app-state.js)).
 
 **Regeln:**
-- **Zwei Sichten:** die Navigation zeigt nur die Features der aktuellen Sicht
-  (`f.view === view`). Der Admin bekommt rechts in der Kopfzeile einen
-  Modus-Umschalter ([Tabs](#tabs--modus-umschalter) ohne `role="tablist"`,
-  `tabs-btn--active` + `aria-pressed`), alle anderen sehen ihn nicht. Die
-  Sicht folgt dem geöffneten Feature (`openFeature` setzt `view`); ein
-  Deep-Link auf ein Admin-Feature fällt für Nicht-Admins auf den Default zurück.
+- **Zwei Sichten = App und Admin-Konsole.** Die Navigation zeigt nur die
+  Features der aktuellen Sicht (`f.view === view`). Der Admin wechselt über das
+  [Benutzermenü](#benutzermenü) → „Admin-Konsole“; in der Konsole zeigt die
+  Sidebar oben „Zurück zur App“ und die Topbar den Kontext. Die Sicht folgt dem
+  geöffneten Feature (`openFeature` setzt `view`); ein Deep-Link auf ein
+  Admin-Feature fällt für Nicht-Admins auf den Default zurück.
 - Navigationseinträge kommen **nur** aus der Feature-Registry
   ([features.js](public/js/app/features.js), `icon` = Sprite-ID). Nie ein
-  `.nav-item` von Hand schreiben.
-- `h1` ist für den Site-Titel reserviert (einer pro Seite).
+  `.nav-item` von Hand schreiben — auch die [Command Palette](#command-palette)
+  liest die Registry.
+- **Das `h1` ist der Seitentitel** in der Topbar (Label des aktiven Features),
+  einer pro Seite. Der App-Name in der Sidebar ist kein Überschriftenelement.
+- **Handy (< 960px):** die Sidebar ist eine Schublade — Menü-Knopf in der
+  Topbar, Scrim, Fokusfalle (`x-trap.noscroll`), ESC und Navigation schliessen
+  sie. Geschlossen ist sie `visibility: hidden` (nicht fokussierbar).
+- **Desktop:** der Knopf im Sidebar-Kopf klappt auf die Icon-Leiste ein
+  (pro Gerät, `localStorage`); dort tragen die Einträge ein `data-tip` mit
+  `.tip--right`, und die Nav schneidet nicht ab (`overflow: visible`).
+
+---
+
+## Benutzermenü
+
+**Einsatz:** Identität, Darstellung (Theme), Wechsel in die Admin-Konsole und
+Abmelden — unten in der Sidebar.
+
+**Markup:**
+```html
+<div class="sidebar-footer" x-show="user">
+  <button type="button" class="user-menu-trigger" x-ref="userMenuBtn" @click="userMenuOpen = !userMenuOpen" :aria-expanded="userMenuOpen" aria-haspopup="menu" :aria-label="t('shell.userMenu')">
+    <span class="avatar" aria-hidden="true" x-text="userInitials()"></span>
+    <span class="user-menu-identity sidebar-label"><span class="user-menu-name">…</span><span class="user-menu-role">…</span></span>
+  </button>
+  <div class="popover user-menu" x-show="userMenuOpen" role="menu" x-anchor.top-start.offset.6="$refs.userMenuBtn" x-trap="userMenuOpen" …>
+    <div class="user-menu-header"><span class="user-menu-email">…</span></div>
+    <div class="user-menu-group"><span class="user-menu-label">…</span><div class="tabs tabs--fullwidth">…Theme-Optionen…</div></div>
+    <div class="user-menu-group"><button type="button" class="user-menu-item" role="menuitem">…</button><a class="user-menu-item" role="menuitem" href="/auth/logout">…</a></div>
+  </div>
+</div>
+```
+
+**Klassen** [layout/app-nav.css](public/css/layout/app-nav.css):
+`.user-menu-trigger`, `.avatar` (Initialen, rund, Primary-Tönung),
+`.user-menu-identity`, `.user-menu-name`, `.user-menu-role`, `.user-menu`
+(Variante von [Popover](#popover)), `.user-menu-header`, `.user-menu-email`,
+`.user-menu-group`, `.user-menu-label`, `.user-menu-item`.
+
+**Regeln:**
+- Ein [Popover](#popover) (`x-anchor` + `x-trap`), kein eigenes Overlay.
+- Theme-Wahl = [Tabs](#tabs--modus-umschalter) als 3-Optionen-Umschalter
+  (`THEME_OPTIONS` in shell.js, Icons `monitor`/`sun`/`moon`, `aria-label` je
+  Option — kein `data-tip`, die scrollende Tabs-Spur würde ihn abschneiden).
+- Menüeinträge sind unter `pointer: coarse` mindestens 44px hoch.
+
+---
+
+## Command Palette
+
+**Einsatz:** schnelles Springen zu jedem Feature, das der Nutzer sehen darf —
+`⌘K` / `Strg+K` überall in der App oder der Such-Knopf in der Topbar (der
+Touch-Weg).
+
+**Markup:**
+```html
+<dialog class="command-palette" x-ref="palette" @close="paletteOpen = false" @click.self="closePalette()">
+  <div class="command-palette-panel">
+    <div class="command-palette-search">
+      <svg class="icon" aria-hidden="true"><use href="/icons.svg#search"/></svg>
+      <input type="search" class="command-palette-input" x-model="paletteQuery" role="combobox" aria-controls="command-palette-list"
+             @keydown.arrow-down.prevent="movePalette(1)" @keydown.arrow-up.prevent="movePalette(-1)" @keydown.enter.prevent="choosePalette()">
+    </div>
+    <ul class="command-palette-list" id="command-palette-list" role="listbox">
+      <template x-for="(f, i) in paletteResults()" :key="f.id">
+        <li class="command-palette-item" role="option" :aria-selected="i === paletteIndex" @click="choosePalette(f)">…</li>
+      </template>
+    </ul>
+    <p class="command-palette-empty" x-show="!paletteResults().length">…</p>
+  </div>
+</dialog>
+```
+
+**Klassen** [components/command-palette.css](public/css/components/command-palette.css):
+`.command-palette` (+ `::backdrop`), `.command-palette-search`,
+`.command-palette-input`, `.command-palette-list`, `.command-palette-item`
+(`[aria-selected="true"]` = Akzent-Tönung), `.command-palette-label`,
+`.command-palette-hint` (Sicht „Admin-Konsole“), `.command-palette-enter`,
+`.command-palette-empty`.
+
+**Regeln:**
+- Natives `<dialog>` + `showModal()` wie der
+  [Bestätigungsdialog](#bestätigungsdialog-modal): Fokusfalle, inerter
+  Hintergrund und ESC vom Browser.
+- Die Treffer kommen aus der Registry, gefiltert mit `canSee` —
+  `paletteMatches()` in [shell.js](public/js/app/shell.js) ist rein und
+  unit-getestet. Neue Aktionstypen (z. B. „Neue Notiz“) erweitern diese
+  Funktion, nie eine zweite Liste.
+- Tastatur: ↑/↓ bewegt, Enter öffnet, ESC schliesst; der Tastenkürzel-Text
+  kommt aus i18n (`shell.shortcutMac` / `shell.shortcutOther`).
 
 ---
 
@@ -397,6 +503,7 @@ Titel+Aktion-Zeilen und breite Tabellen.
 - `.row` — Flex-Zeile, Kinder wachsen, Buttons behalten ihre Breite; ≤ 480px gehen Inputs auf volle Breite.
 - `.list-header` (+ `.list-header--between`, `.list-header--wrap`) — Zeile aus Titel + Aktionen; stapelt ≤ 600px.
 - `.table-scroll` — Wrapper, der eine breite `<table>` horizontal scrollt.
+- `.truncate` — einzeilig mit Ellipse (Namen, Titel, E-Mails in schmalen Zeilen); braucht eine Breitengrenze (Block oder Flex-Kind mit `min-width: 0`).
 - `.tabular-nums`, `.display-contents`, `.visually-hidden` (Text nur für Screenreader).
 
 ---
@@ -422,11 +529,11 @@ Listeneintrag mit eigenen Aktionen, die Sidebar-Navigation.
 ```
 
 **Klassen** [card-form/card-shell.css](public/css/components/card-form/card-shell.css):
-- `.card` — flache Fläche: Haarlinien-Rahmen, 2px-Akzentband oben, schwache Akzent-Tönung in die Fläche, akzentgetönter Hover-Rahmen, Einblendung `cardFadeIn`.
+- `.card` — angehobene Fläche: 1px-Haarlinie, `--shadow-xs`, `--radius-lg`, Einblendung `cardFadeIn`; ≤ 600px schmaleres Padding.
 - `.card-header` — Flex-Zeile mit unterer Linie; `--subline` für Titel + Metazeile (oben ausgerichtet).
 - `.card-header-titlebar` — Spalte: optional `.card-eyebrow`, `.card-title`, optional `.card-subline`.
-- `.card-title` — Serif, `--font-size-lg`, 30% Richtung Akzent getönt.
-- `.card-eyebrow` — gesperrtes Versal-Kontextlabel über dem Titel.
+- `.card-title` — Inter semibold, `--font-size-md`, `--tracking-tight`.
+- `.card-eyebrow` — gesperrtes Versal-Kontextlabel über dem Titel, in der Karten-Akzentfarbe.
 - `.card-subline`, `.card-timestamp` — Metazeile (Zeitstempel, Spinner, Links).
 - `.card-header-aside` — rechte Seite für Badges/Status (nicht für Buttons).
 - `.card-actions` ([card-actions.css](public/css/components/card-form/card-actions.css)) — rechte Seite für Aktions-Buttons; `--grouped` + `.action-sep` für semantische Bündel; `.action-group` (`display: contents`) umschliesst ein Bündel, ohne die Flex-Zeile zu brechen.
@@ -438,8 +545,9 @@ Listeneintrag mit eigenen Aktionen, die Sidebar-Navigation.
   (Nachbarzeile kopieren).
 - Mapping `.card--<key> { --card-accent: var(--card-accent-<key>); }` in
   [card-accents.css](public/css/card-accents.css).
-- `card--<key>` an der Karten-Wurzel. Band, Tönung und Titelfarbe folgen
-  automatisch; Feature-CSS *konsumiert* nur `var(--card-accent)`.
+- `card--<key>` an der Karten-Wurzel. Eyebrow-Farbe und die Tönung gewählter
+  Karten-Radios folgen automatisch; Feature-CSS *konsumiert* nur
+  `var(--card-accent)`. Der Akzent ist ein leises Signal, kein Rahmen.
 - Ausgelieferte Keys: `nav` (Sidebar), `notes` (Beispiel-Entity).
 
 **Regeln:**
@@ -533,7 +641,8 @@ einen Zustand** ("keine Einträge") dort, wo der fehlende Inhalt stünde.
 **Einsatz:** konsistente Überschriftenebenen, ohne gegen eine globale
 Überschriften-Cascade anzukämpfen.
 
-- `h1.site-title` — der App-/Site-Titel, einmal pro Seite.
+- `h1.page-title` — der Seitentitel in der Topbar (App); auf der Login-Seite
+  `h1.site-title`. Einer pro Seite.
 - `.card-title` — Kartentitel (`h2` für eine Ansichtskarte, `h3` für
   Listeneintrags-Karten).
 - `.card-section-title` — Abschnittslabel in einer Karte (`h3`/`h4`, Versalien).
@@ -556,8 +665,8 @@ Keine nackten `<h2>`–`<h6>` in Karten ohne eine dieser Klassen.
 ```
 
 **Klassen** [buttons-badges.css](public/css/components/buttons-badges.css):
-- `button` (Element-Standard) — sekundär: transparent, Haarlinie, Hover-Tönung, `:active` Scale 0.98, `:disabled` `--opacity-hint`.
-- `.primary` — der EINE Haupt-CTA pro Karte (Markenblau). `.success` — bestätigende Aktion. `.danger` — destruktiv, rot umrandet.
+- `button` (Element-Standard) — sekundär: Fläche, 1px-Rahmen, medium, Hover-Tönung, Fokus-Halo, `:active` Scale 0.98, `:disabled` `--opacity-hint`.
+- `.primary` — der EINE Haupt-CTA pro Karte (Indigo, `--shadow-xs`). `.success` — bestätigende Aktion. `.danger` — destruktiv, rot umrandet.
 - `.btn-compact` — kompakte Grösse (passt zu anderen kompakten Bedienelementen).
 - `.btn-count` — Zähler in einem Button. `.btn-group` — Button-Zeile.
 - Icon + Label: [icons.css](public/css/components/icons.css) macht `button:has(> .icon)` zu einem Inline-Flex mit Gap.
@@ -581,8 +690,8 @@ Keine nackten `<h2>`–`<h6>` in Karten ohne eine dieser Klassen.
 - `.badge` + `.badge-ok` / `.badge-warn` / `.badge-err` — Betriebsstatus.
 - `.badge` + `.badge-neutral` — wertfreie Klassifizierung oder eine Anzahl (kein Status).
 
-**Regeln:** eckig (`border-radius: 0`) — nie Pills. Status-Badges nutzen die
-Status-Tokens, nie den Karten-Akzent.
+**Regeln:** Pills (`--radius-full`), `--font-size-xs`, medium. Status-Badges
+nutzen die Status-Tokens, nie den Karten-Akzent.
 
 ---
 
@@ -679,6 +788,7 @@ URL und ein eigener Fetch).
 
 **Ausgelieferte Symbole** (Lucide-Namen; das Gate vergleicht diese Liste mit dem Sprite):
 <!-- icon-list:start -->
+- App-Shell: `menu`, `panel-left`, `chevrons-up-down`, `shield`, `sun`, `moon`, `monitor`, `corner-down-left`
 - Chevrons + Pfeile: `chevron-right`, `chevron-left`, `chevron-down`, `chevron-up`, `chevron-last`, `arrow-right`, `arrow-left`, `arrow-up`, `arrow-down`
 - Kernaktionen: `check`, `x`, `plus`, `minus`, `pencil`, `trash`, `search`, `copy`, `download`, `external-link`, `share-2`, `unlink`, `undo`, `redo`, `rotate-cw`, `rotate-ccw`, `more-horizontal`, `grip-vertical`, `pin`, `archive`, `lock`, `lock-open`, `log-out`, `settings`
 - Status + Mediensteuerung: `circle`, `square`, `alert-triangle`, `circle-help`, `loader`, `activity`, `play`, `pause`, `zap`
@@ -714,6 +824,11 @@ URL und ein eigener Fetch).
 | Warnung / Hilfe | `alert-triangle` / `circle-help` |
 | Laden | `loader` (statische Glyphe; der Spinner ist `.spinner`) |
 | Abmelden | `log-out` |
+| Navigation öffnen (Handy) / Sidebar ein- und ausklappen | `menu` / `panel-left` |
+| Benutzermenü öffnen | `chevrons-up-down` |
+| Admin-Konsole | `shield` |
+| Theme hell / dunkel / System | `sun` / `moon` / `monitor` |
+| Auswahl bestätigen (Hinweis in der Command Palette) | `corner-down-left` |
 
 Neue Aktionen erweitern diese Tabelle **und** den Sprite.
 
@@ -811,10 +926,13 @@ Dem nativen `title` vorzuziehen (nicht abschaltbare Verzögerung von ~500ms).
 `:focus-visible`.
 - `.tip--below` — Blase darunter (Ziele nahe am oberen Rand, z. B. der Kopf).
 - `.tip--end` — rechtsbündige Blase (Ziele nahe am rechten Rand, letzte Aktion).
+- `.tip--right` — Blase rechts neben dem Ziel (eingeklappte Sidebar-Leiste).
+
+Die Blase ist dunkel (`--color-tooltip-bg`, Text `--color-text-inverse`).
 
 **Regeln:**
 - Das `::after` des Ziels gehört dem Tooltip: kein `data-tip` an Elementen, die
-  ihr eigenes `::after` nutzen (`.tabs-btn`).
+  ihr eigenes `::after` nutzen.
 - Wird von Vorfahren mit `overflow: hidden/auto` abgeschnitten — nicht in
   Scroll-Containern verwenden.
 - Auf Touch ausgeblendet (`hover: none`) — das `aria-label` trägt die Bedeutung.
@@ -970,8 +1088,8 @@ ist ein echter Boolean. Kein Label → `aria-label` am Button.
 ```
 
 **Klassen** [tabs.css](public/css/components/tabs.css):
-- `.tabs` — umrandete Segmentzeile; scrollt auf jeder Breite horizontal (ein Randschatten zeigt es an).
-- `.tabs-btn` + `.tabs-btn--active` oder `[aria-selected="true"]` — 2px-Primary-Unterstreichung, animiert.
+- `.tabs` — Segment-Spur (`--tabs-track` = `--color-neutral-bg`, 2px Innenabstand); scrollt auf jeder Breite horizontal (ein Randschatten zeigt es an).
+- `.tabs-btn` + `.tabs-btn--active` oder `[aria-selected="true"]` — der aktive Knopf hebt sich als kleine Fläche (`--color-surface` + `--shadow-xs`) aus der Spur.
 - `.tabs-btn-count` — Zähl-Badge; `:disabled` / `[aria-disabled]` dimmt es (für leere Filter-Töpfe).
 - `.tabs--scrollable` (füllt die Containerbreite), `.tabs--fullwidth` (gleich breite Buttons).
 
@@ -1186,9 +1304,21 @@ Schritte (bestätigen, dann ein Wort eintippen). In einem Formularraster in
 
 ## Job-Toast
 
-**Einsatz:** globaler, nicht blockierender Hinweis, wenn ein lang laufender
-Hintergrund-Job (die Job-Queue) fertig ist. Karteninterne Ergebnisse bleiben in
-der Karte.
+**Einsatz:** der eine globale, nicht blockierende Hinweis der App
+([js/app/toast.js](public/js/app/toast.js), Markup in index.html):
+
+- **`notify('ok' | 'err', t('…'))`** aus [utils.js](public/js/utils.js) — von
+  überall, z. B. wenn ein Hintergrund-Job fertig oder gescheitert ist.
+- **Automatisch für jeden `api()`-Fehler, den keine Karte selbst abfängt**:
+  Text nach HTTP-Status (`errors.*` — Netzwerk, 4xx, 404, 409, 429, 5xx). Eine
+  Karten-Methode, die `api()` einfach `await`et, braucht also **kein**
+  `try/catch` nur fürs Melden. Eine Karte, die eigenen Wortlaut braucht
+  (Feldfehler am Formular, Hinweis mit Wiederholen), fängt den Fehler selbst —
+  dann bleibt der Toast still. 401 ist nie ein Toast (→ Sitzungs-Banner).
+
+Karteninterne Ergebnisse (Statistik, Feldfehler) bleiben in der Karte. Nur in
+der App — ein Harness hat keine Shell, dort bleibt ein ungefangener Fehler laut
+(Console-Guard).
 
 **Markup:**
 ```html
@@ -1204,9 +1334,11 @@ der Karte.
 (fix unten rechts, volle Breite ≤ 600px, `--z-toast`), `.job-toast--ok`, `.job-toast--err`,
 `.job-toast-msg`, `.job-toast-close`.
 
-**Regeln:** ein Toast-Zustand auf der Root (deklariert in `app-state.js`),
-nicht einer pro Feature; `aria-live="assertive"` für Fehler; Text über `t()`;
-nie blockierend.
+**Regeln:** ein Toast-Zustand auf der Root (`toast`, deklariert in
+`app-state.js`), nicht einer pro Feature; Fehler mit `role="alert"` +
+`aria-live="assertive"` und bleiben stehen, bis sie geschlossen werden;
+Erfolg blendet nach 4 s aus; Text über `t()`; nie blockierend. Gegated:
+[tests/e2e-app/error-toast.spec.js](tests/e2e-app/error-toast.spec.js) (inkl. Handybreite).
 
 ---
 
@@ -1292,7 +1424,7 @@ Unterkomponente im Karten-Inventar.
 Jede Notiz ist eine `.card.card--notes.note-card`-Unterkomponente
 (`x-data="noteItemCard(note)"`): Kopf mit Titel + Zeitstempel-Subline +
 Spinner, Cluster aus Ghost-Icon-Buttons (bearbeiten / Statistik / Trenner /
-löschen), Serif-Body, über den escapten `bodyHtml`-Getter in eine
+löschen), Body in Lesegrösse, über den escapten `bodyHtml`-Getter in eine
 `x-html`-Senke gerendert, Job-Ergebnis als `.badge-ok`. Der Bearbeitungsmodus
 nutzt `.card-section.form-stack` + eine rechtsbündige `.row`. Die Feature-Karte
 darüber hält das Formularraster (Notizbuch-Auswahl, Zeile für neue Notiz) und
@@ -1327,18 +1459,18 @@ ausser `tokens*` legt ihre Regeln in einen Layer.
 
 | Datei | Layer | Umfang | Herkunft (schreibwerkstatt) |
 |---|---|---|---|
-| `css/tokens.css` | — | Facade: Layer-Reihenfolge, Token-`@import`s, `@font-face` (Inter, Source Serif 4) | `tokens.css` |
+| `css/tokens.css` | — | Facade: Layer-Reihenfolge, Token-`@import`s, `@font-face` (Inter) | `tokens.css` |
 | `css/tokens/colors.css` | — | Farb-Tokens (light-dark), Karten-Akzent-Farbtöne + OKLCH-Ableitung für Dark Mode | `tokens/colors.css` (generische Teilmenge) |
-| `css/tokens/typography.css` | — | Schriftfamilien, Grössen, Gewichte, Zeilenhöhen, Grössen der Bedienelemente | `tokens/typography.css` |
+| `css/tokens/typography.css` | — | Schriftfamilien, Grössen, Gewichte, Laufweiten, Zeilenhöhen, Grössen der Bedienelemente | `tokens/typography.css` |
 | `css/tokens/spacing.css` | — | Abstandsskala, Karten-Rhythmus, Padding, Rahmenbreite, Radius | `tokens/spacing.css` |
-| `css/tokens/motion.css` | — | Transitions, Easing, Schatten, Deckkraft, reduzierte Bewegung | `tokens/motion.css` |
+| `css/tokens/motion.css` | — | Transitions, Easing, Schatten, Fokus-Halo, Deckkraft, reduzierte Bewegung | `tokens/motion.css` |
 | `css/tokens/scale.css` | — | Z-Index-Stapel | `tokens/scale.css` |
 | `css/card-accents.css` | components | Mapping `.card--<key>` → `--card-accent` | `card-accents.css` |
-| `css/layout/base.css` | base | Reset, `[x-cloak]`, Skip-Link, Papier-Schreibtisch, Body-Spalte, `h1`/`a`/`kbd`/`code`, Site-Titel/-Logo | `layout/base.css` |
-| `css/layout/layout-base.css` | components | Sitzungs-Banner, Kopfzeile, Untertitel, Login-Shell | `layout/layout-base.css` |
-| `css/layout/twocolumn.css` | components | `.layout`-Grid aus Sidebar + Main, Sticky-Sidebar | `layout/twocolumn.css` |
-| `css/layout/app-nav.css` | components | Registry-gesteuerte Sidebar-Navigation (`.app-nav`, `.nav-item`) | neu (nach `page/page-list.css` `.page-item`) |
-| `css/layout/utilities.css` | utilities, components | `.row`, `.list-header`, `.table-scroll`, `.tabular-nums`, `.visually-hidden` | `layout/utilities.css` |
+| `css/layout/base.css` | base | Reset, `[x-cloak]`, Skip-Link, App-Grund, `--page-pad-x`, `h1`/`a`/`kbd`/`code`, Site-Titel/-Logo (Login) | `layout/base.css` |
+| `css/layout/layout-base.css` | components | Sitzungs-Banner, Login-Shell | `layout/layout-base.css` |
+| `css/layout/app-shell.css` | components | App-Shell: Sidebar-Spalte / Schublade + Scrim, Topbar, Seitentitel, Such-Knopf, Inhaltsspalte | neu |
+| `css/layout/app-nav.css` | components | Sidebar-Inhalt: Marke, Admin-Kontext, Registry-Navigation (`.app-nav`, `.nav-item`), Benutzermenü, Icon-Leiste | neu |
+| `css/layout/utilities.css` | utilities, components | `.row`, `.list-header`, `.table-scroll`, `.truncate`, `.tabular-nums`, `.visually-hidden` | `layout/utilities.css` |
 | `css/components/icons.css` | components | `.icon`, Sprite-Nutzung, Masken-Icon-URLs | `components/icons.css` |
 | `css/components/card-form/card-shell.css` | components | `.card`, Kopf, Titel, Eyebrow, Subline, Aside, Toolbar | `components/card-form/card-shell.css` |
 | `css/components/card-form/card-blocks.css` | components | Karten-Innenraum: Abschnitte, Hinweise, Status, gedämpfte Meldung, Fortschritt, Filterleiste | `components/card-form/card-blocks.css` |
@@ -1359,13 +1491,13 @@ ausser `tokens*` legt ihre Regeln in einen Layer.
 | `css/components/confirm-dialog.css` | components | natives `<dialog>` für Bestätigung/Modal | `components/confirm-dialog.css` |
 | `css/components/danger-zone.css` | components | Gefahrenzone | `components/danger-zone.css` |
 | `css/components/job-toast.css` | components | Toast bei fertigem Job | `components/job-toast.css` |
+| `css/components/command-palette.css` | components | Command Palette (`⌘K`) als natives `<dialog>` | neu |
 | `css/entities/notes.css` | components | Abweichungen Feature Notizen | template |
 | `css/entities/users.css` | components | Abweichungen Feature Benutzer | template |
 | `css/entities/logs.css` | components | Abweichungen Feature Logs | template |
 | `css/entities/settings.css` | components | Abweichungen Feature Einstellungen | template |
 
-Assets: [public/fonts/](public/fonts/) (Inter + Source Serif 4 als variable
-woff2, SIL OFL 1.1 — Lizenz in `fonts/OFL.txt`, neben den Dateien belassen),
+Assets: [public/fonts/](public/fonts/) (Inter als variable woff2, SIL OFL 1.1 — Lizenz in `fonts/OFL.txt`, neben den Dateien belassen),
 [public/icons.svg](public/icons.svg) (Lucide-Sprite, ISC — Lizenz in
 [public/icons.LICENSE.txt](public/icons.LICENSE.txt), neben dem Sprite belassen).
 

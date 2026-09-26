@@ -8,7 +8,7 @@ test('create, run stats, and delete a note', async ({ page }) => {
   await page.goto('/');
 
   // App becomes ready (i18n + data loaded). Seed note is visible.
-  await expect(page.locator('.site-title')).toHaveText(de.app.title);
+  await expect(page.locator('.sidebar-brand-name')).toHaveText(de.app.title);
   await expect(page.locator('.note-card').first()).toBeVisible();
 
   // Create a note.

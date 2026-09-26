@@ -1,7 +1,6 @@
 {
   "app": {
     "title": "vibe-template",
-    "subtitle": "Notizen",
     "logout": "Abmelden",
     "loading": "Wird geladen …"
   },
@@ -32,6 +31,7 @@
     "delete": "Löschen",
     "runStats": "Statistik berechnen",
     "stats": "{words} Wörter, {chars} Zeichen",
+    "statsFailed": "Die Statistik konnte nicht berechnet werden.",
     "updated": "Geändert",
     "titlePlaceholder": "Titel",
     "bodyPlaceholder": "Text …",
@@ -120,12 +120,9 @@
     "loadMore": "Ältere laden",
     "downloadFile": "{name} herunterladen"
   },
-  "view": {
-    "user": "App",
-    "admin": "Admin"
-  },
   "login": {
     "title": "Anmelden",
+    "lead": "Melde dich bei deinem Konto an.",
     "adminTitle": "Admin-Anmeldung",
     "email": "E-Mail",
     "password": "Passwort",
@@ -193,5 +190,39 @@
       "oidcRequired": "Für OIDC braucht es Issuer, Client-ID und Redirect-URI.",
       "generic": "Das hat nicht geklappt. Bitte erneut versuchen."
     }
+  },
+  "errors": {
+    "generic": "Das hat nicht geklappt. Bitte nochmals versuchen.",
+    "network": "Keine Verbindung zum Server. Bitte Netzwerk prüfen und nochmals versuchen.",
+    "server": "Serverfehler — bitte später nochmals versuchen.",
+    "invalid": "Die Eingabe wurde abgelehnt. Bitte prüfen und nochmals versuchen.",
+    "forbidden": "Dafür fehlt dir die Berechtigung.",
+    "notFound": "Nicht gefunden — vielleicht wurde es inzwischen gelöscht. Bitte neu laden.",
+    "conflict": "Das kollidiert mit einem bestehenden Eintrag.",
+    "rateLimited": "Zu viele Versuche. Bitte kurz warten."
+  },
+  "toast": {
+    "close": "Meldung schliessen"
+  },
+  "shell": {
+    "sidebar": "Seitenleiste",
+    "openNav": "Navigation öffnen",
+    "closeNav": "Navigation schliessen",
+    "collapseNav": "Seitenleiste einklappen",
+    "expandNav": "Seitenleiste ausklappen",
+    "adminConsole": "Admin-Konsole",
+    "backToApp": "Zurück zur App",
+    "userMenu": "Benutzermenü",
+    "roleAdmin": "Administrator",
+    "roleUser": "Benutzer",
+    "theme": "Darstellung",
+    "themeSystem": "Wie System",
+    "themeLight": "Hell",
+    "themeDark": "Dunkel",
+    "search": "Suchen und springen",
+    "searchPlaceholder": "Suchen …",
+    "shortcutMac": "⌘K",
+    "shortcutOther": "Strg K",
+    "noResults": "Keine Treffer"
   }
 }

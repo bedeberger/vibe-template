@@ -114,14 +114,14 @@
   margin-top: var(--card-gap-tight);
   margin-bottom: var(--card-gap-tight);
   background: var(--color-tag-bg);
-  border-radius: 0;
+  border-radius: var(--radius-full);
   overflow: hidden;
 }
 .progress-bar {
   height: 100%;
   width: var(--progress, 0%);
-  background: var(--color-text);
-  border-radius: 0;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
   transition: width var(--transition-emphasized);
 }
 /* Bar + status line are ONE block: the gap sits at the foot of the pair. */

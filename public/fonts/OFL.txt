@@ -8,12 +8,6 @@ Bundled fonts and their copyright holders:
     (https://github.com/rsms/inter)
     Reserved Font Name: "Inter"
 
-  Source Serif 4 (SourceSerif4.var.woff2, SourceSerif4-Italic.var.woff2)
-    Copyright 2014-2023 Adobe (http://www.adobe.com/)
-    Reserved Font Name: "Source"
-    "Source" is a trademark of Adobe in the United States and/or other
-    countries.
-
 -----------------------------------------------------------
 SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
 -----------------------------------------------------------

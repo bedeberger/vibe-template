@@ -1,50 +1,226 @@
-/* Sidebar navigation rendered from the feature registry
- * (public/js/app/features.js — SSoT, never hand-written entries).
- * Template-specific; styled after schreibwerkstatt's tree items
- * (page/page-list.css .page-item): muted row, accent-bordered selection. */
+/* Sidebar contents: brand, admin-console context, the navigation rendered
+ * from the feature registry (public/js/app/features.js — SSoT, never
+ * hand-written entries), and the user menu in the footer.
+ * The sidebar frame (column, drawer, rail) is layout/app-shell.css.
+ * DESIGN.md → "App-Shell", "Benutzermenü". */
 
 @layer components {
+/* === Header: brand + collapse/close === */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  min-height: 40px;
+  padding-left: var(--space-xs);
+}
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  min-width: 0;
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: var(--font-size-md);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-tight);
+}
+.sidebar-brand > .site-logo { width: 1.75rem; height: 1.75rem; }
+
+/* === Admin console context === */
+.sidebar-context {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+.sidebar-section-label {
+  padding-inline: var(--space-10);
+  font-size: var(--font-size-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-subtle);
+}
+
+/* === Navigation === */
 .app-nav {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2xs);
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
-.nav-item {
+.nav-item,
+.sidebar-back {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-10);
   width: 100%;
-  padding: var(--space-6) var(--space-sm);
-  border: var(--border-thin) solid transparent;
+  min-height: 36px;
+  padding: var(--space-6) var(--space-10);
+  border: none;
   border-radius: var(--radius-md);
   background: transparent;
-  font-size: var(--font-size-sm);
+  box-shadow: none;
+  font-size: var(--font-size-base);
+  font-weight: var(--fw-medium);
   color: var(--color-muted);
   text-align: left;
   cursor: pointer;
 }
-.nav-item:hover { background: var(--color-hover-light); color: var(--color-text); }
-.nav-item:active { transform: none; }
+.nav-item:hover,
+.sidebar-back:hover { background: var(--color-hover); color: var(--color-text); }
+.nav-item:active,
+.sidebar-back:active { transform: none; }
 .nav-item[aria-current="page"] {
-  border-color: var(--color-accent);
-  background: var(--color-accent-soft);
+  background: var(--color-surface);
   color: var(--color-text);
-  font-weight: var(--fw-medium);
+  box-shadow: var(--shadow-xs), inset 0 0 0 1px var(--color-border);
 }
-.nav-item:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: -2px;
+.nav-item[aria-current="page"] > .icon { color: var(--color-primary); }
+.nav-item:focus-visible,
+.sidebar-back:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
-.nav-item > .icon { font-size: var(--font-size-md); }
+.nav-item > .icon,
+.sidebar-back > .icon { flex-shrink: 0; font-size: var(--font-size-reading); }
 
-/* Mobile: the stacked sidebar turns into a horizontal, scrollable strip. */
-@media (max-width: 959.98px) {
-  .app-nav {
-    flex-direction: row;
-    overflow-x: auto;
-    gap: var(--space-xs);
-  }
-  .nav-item { width: auto; flex: 0 0 auto; }
+@media (pointer: coarse) {
+  .nav-item,
+  .sidebar-back,
+  .user-menu-item { min-height: 44px; }
 }
+
+/* === Footer: user menu trigger === */
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border);
+}
+.user-menu-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  width: 100%;
+  padding: var(--space-6);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+  color: var(--color-muted);
+}
+.user-menu-trigger:hover { background: var(--color-hover); }
+.user-menu-trigger:active { transform: none; }
+.user-menu-trigger:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--color-primary) 14%, var(--color-surface));
+  color: var(--color-primary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-caps);
+}
+.user-menu-identity {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: var(--lh-tight);
+}
+.user-menu-name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text);
+}
+.user-menu-role {
+  font-size: var(--font-size-xs);
+  color: var(--color-subtle);
+}
+
+/* === User menu panel (a .popover variant) === */
+.user-menu {
+  display: flex;
+  flex-direction: column;
+  width: 15rem;
+  padding: var(--space-xs);
+}
+.user-menu-header {
+  padding: var(--space-sm) var(--space-10);
+  border-bottom: 1px solid var(--color-border);
+}
+.user-menu-email {
+  display: block;
+  font-size: var(--font-size-mini);
+  color: var(--color-muted);
+}
+.user-menu-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  padding: var(--space-6) 0;
+}
+.user-menu-group + .user-menu-group { border-top: 1px solid var(--color-border); }
+.user-menu-group > .tabs { margin: 0 var(--space-xs); width: auto; }
+.user-menu-label {
+  padding: 0 var(--space-10) var(--space-xs);
+  font-size: var(--font-size-xs);
+  color: var(--color-subtle);
+}
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  width: 100%;
+  padding: var(--space-sm) var(--space-10);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  box-shadow: none;
+  color: var(--color-text);
+  font-weight: var(--fw-regular);
+  font-size: var(--font-size-sm);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.user-menu-item:hover { background: var(--color-hover); }
+.user-menu-item:active { transform: none; }
+.user-menu-item:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.user-menu-item > .icon { color: var(--color-muted); }
+
+/* `button:has(> .icon)` (icons.css, specificity 0-1-1) would turn these
+   button rows into inline-flex with a 6px gap — links (logout) would not be,
+   and the rows would misalign. Scoped here to keep one row geometry. */
+.sidebar :is(.nav-item, .sidebar-back, .user-menu-trigger),
+.user-menu .user-menu-item {
+  display: flex;
+  gap: var(--space-10);
+}
+
+/* === Collapsed rail (desktop) — labels hidden, icons centred === */
+.app-shell--collapsed .sidebar-label { display: none; }
+.app-shell--collapsed .sidebar-header {
+  flex-direction: column;
+  padding-left: 0;
+}
+.app-shell--collapsed .nav-item,
+.app-shell--collapsed .sidebar-back,
+.app-shell--collapsed .user-menu-trigger { justify-content: center; }
+.app-shell--collapsed .sidebar-context { padding-top: 0; }
+/* Rail tooltips sit to the right of the item; the nav may not clip them. */
+.app-shell--collapsed .app-nav { overflow: visible; }
 }

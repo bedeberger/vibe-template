@@ -65,7 +65,7 @@
   line-height: 1;
   padding: var(--space-2xs) var(--space-6);
   cursor: pointer;
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   margin-left: var(--space-xs);
   flex-shrink: 0;
 }
