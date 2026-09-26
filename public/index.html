@@ -226,6 +226,17 @@
         <p class="command-palette-empty" x-show="!paletteResults().length" x-text="t('shell.noResults')"></p>
       </div>
     </dialog>
+
+    <!-- App toast (DESIGN.md → Job-Toast): notify() + api() errors no card caught. -->
+    <div class="job-toast" :class="toast?.kind === 'err' ? 'job-toast--err' : 'job-toast--ok'"
+         :role="toast?.kind === 'err' ? 'alert' : 'status'" :aria-live="toast?.kind === 'err' ? 'assertive' : 'polite'"
+         x-show="toast" x-cloak>
+      <span class="job-toast-msg" x-text="toast?.text"></span>
+      <button type="button" class="job-toast-close" @click="closeToast()"
+              :aria-label="t('toast.close')" :data-tip="t('toast.close')">
+        <svg class="icon" aria-hidden="true"><use href="/icons.svg#x"/></svg>
+      </button>
+    </div>
   </div>
 
   <script type="module" src="/js/app.js"></script>

@@ -1322,9 +1322,12 @@ der App — ein Harness hat keine Shell, dort bleibt ein ungefangener Fehler lau
 
 **Markup:**
 ```html
-<div class="job-toast job-toast--ok" role="status" aria-live="polite" x-show="toast" x-cloak>
+<div class="job-toast" :class="toast?.kind === 'err' ? 'job-toast--err' : 'job-toast--ok'"
+     :role="toast?.kind === 'err' ? 'alert' : 'status'" :aria-live="toast?.kind === 'err' ? 'assertive' : 'polite'"
+     x-show="toast" x-cloak>
   <span class="job-toast-msg" x-text="toast?.text"></span>
-  <button type="button" class="job-toast-close" :aria-label="t('…')" @click="toast = null">
+  <button type="button" class="job-toast-close" @click="closeToast()"
+          :aria-label="t('toast.close')" :data-tip="t('toast.close')">
     <svg class="icon" aria-hidden="true"><use href="/icons.svg#x"/></svg>
   </button>
 </div>
