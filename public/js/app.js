@@ -12,6 +12,7 @@ import { FEATURES, DEFAULT_FEATURE, findFeature } from '/js/app/features.js';
 import { ensurePartial } from '/js/app/feature-host.js';
 import { setupRouting, hashFor } from '/js/app/router.js';
 import { registerCards } from '/js/app/register-cards.js';
+import { registerPlugins } from '/js/app/alpine-plugins.js';
 import { EVT } from '/js/events.js';
 import { configureI18n, t } from '/js/i18n.js';
 import { api, setTimezone, formatDate } from '/js/utils.js';
@@ -68,6 +69,7 @@ function appRoot() {
 async function boot() {
   // i18n BEFORE Alpine starts: the first render already has translated strings.
   await configureI18n('de');
+  registerPlugins(Alpine);
   registerCards(Alpine);
   Alpine.data('app', appRoot);
   window.Alpine = Alpine;

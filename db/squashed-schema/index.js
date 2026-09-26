@@ -20,7 +20,7 @@
 // moves. Note it in a comment here so the gap in the segments is explained.
 //
 // The segments are JS template literals: no backticks inside SQL comments.
-const SQUASHED_VERSION = 1;
+const SQUASHED_VERSION = 3;
 
 const SQUASHED_SCHEMA = [
   require('./core'),

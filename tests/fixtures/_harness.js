@@ -18,6 +18,7 @@ import { formatDate } from '/js/utils.js';
 import { findFeature } from '/js/app/features.js';
 import { ensurePartial } from '/js/app/feature-host.js';
 import { registerCards } from '/js/app/register-cards.js';
+import { registerPlugins } from '/js/app/alpine-plugins.js';
 
 export async function mountFeature(id, rootOverrides = {}) {
   const feature = findFeature(id);
@@ -38,6 +39,7 @@ export async function mountFeature(id, rootOverrides = {}) {
     init() { window.__app = this; },
     ...rootOverrides,
   }));
+  registerPlugins(Alpine);
   registerCards(Alpine);
   window.Alpine = Alpine;
   Alpine.start();

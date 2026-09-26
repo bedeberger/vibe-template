@@ -11,6 +11,7 @@ const helmet = require('helmet');
 const compression = require('compression');
 const session = require('express-session');
 const SqliteStore = require('better-sqlite3-session-store')(session);
+const authEnv = require('./lib/auth-env');
 
 // ── Production guard ──────────────────────────────────────────────────────
 // NODE_ENV=production (set by the systemd unit, docs/deployment.md) must never
@@ -22,7 +23,18 @@ if (IS_PROD) {
   if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
     throw new Error('SESSION_SECRET fehlt oder ist kürzer als 32 Zeichen (openssl rand -hex 32).');
   }
+  // The .env admin is the way into the admin console (docs/auth.md): a short
+  // password there is a short password on the most powerful account.
+  if (process.env.ADMIN_PASSWORD && process.env.ADMIN_PASSWORD.length < 16) {
+    throw new Error('ADMIN_PASSWORD ist kürzer als 16 Zeichen (openssl rand -base64 24).');
+  }
+  if (process.env.ADMIN_PASSWORD && !process.env.ADMIN_EMAIL) {
+    throw new Error('ADMIN_PASSWORD ohne ADMIN_EMAIL — der Admin-Login braucht beides.');
+  }
 }
+// AUTH_METHOD must be a known value in every environment — fail at boot, not at
+// the first login.
+authEnv.authMethod();
 
 const logger = require('./logger');
 const { runWithContext, setContext } = require('./lib/log-context');
@@ -30,18 +42,19 @@ const { runWithContext, setContext } = require('./lib/log-context');
 // DB setup + migrations run on import.
 const { db } = require('./db/schema');
 const appSettings = require('./lib/app-settings');
-const { ensureAdminFromEnv, requireAuth } = require('./lib/auth');
+const { ensureAdminFromEnv, requireAuth, requireAdmin } = require('./lib/auth');
 const { runDevSeedIfNeeded } = require('./lib/dev-seed');
 
 const authRouter = require('./routes/auth');
 const notesRouter = require('./routes/notes');
+const adminUsersRouter = require('./routes/admin-users');
 const jobsRouter = require('./routes/jobs'); // also registers the job runners + schedules
 const scheduler = require('./routes/jobs/shared/scheduler');
 
 // ── Boot-time bootstrap (idempotent) ───────────────────────────────────────
 try { appSettings.bootstrapFromEnv(); } catch (e) { logger.warn(`settings bootstrap: ${e.message}`); }
 try { ensureAdminFromEnv(); } catch (e) { logger.warn(`admin bootstrap: ${e.message}`); }
-try { runDevSeedIfNeeded(); } catch (e) { logger.warn(`dev seed: ${e.message}`); }
+runDevSeedIfNeeded().catch((e) => logger.warn(`dev seed: ${e.message}`));
 
 const app = express();
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -101,6 +114,7 @@ app.use(requireAuth);
 
 // Routes.
 app.use('/', authRouter);
+app.use('/api/admin', requireAdmin, adminUsersRouter);
 app.use('/api', notesRouter);
 app.use('/api', jobsRouter);
 
@@ -109,6 +123,7 @@ app.get('/api/config', (req, res) => {
   res.json({
     timezone: appSettings.getTimezone(),
     localDevMode: process.env.LOCAL_DEV_MODE === '1',
+    authMethod: authEnv.authMethod(),
   });
 });
 

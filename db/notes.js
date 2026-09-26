@@ -13,7 +13,11 @@ const { NOW_ISO_SQL } = require('./now');
 const _insertNotebook = db.prepare(
   `INSERT INTO notebooks (name, created_at) VALUES (?, ${NOW_ISO_SQL})`
 );
-const _allNotebooks = db.prepare('SELECT * FROM notebooks ORDER BY created_at');
+// note_count is derived at read time (no snapshot column).
+const _allNotebooks = db.prepare(
+  `SELECT nb.*, (SELECT COUNT(*) FROM notes n WHERE n.notebook_id = nb.id) AS note_count
+   FROM notebooks nb ORDER BY nb.created_at`
+);
 const _getNotebook = db.prepare('SELECT * FROM notebooks WHERE id = ?');
 
 function createNotebook(name) {
@@ -28,18 +32,24 @@ function getNotebook(id) {
 }
 
 // ── Notes ────────────────────────────────────────────────────────────────
+// Order: `position` ascending (manual, drag & drop). A new note goes on top —
+// one below the current minimum, so no other row has to move.
 const _insertNote = db.prepare(
-  `INSERT INTO notes (notebook_id, title, body, created_at, updated_at)
-   VALUES (@notebook_id, @title, @body, ${NOW_ISO_SQL}, ${NOW_ISO_SQL})`
+  `INSERT INTO notes (notebook_id, title, body, position, created_at, updated_at)
+   VALUES (@notebook_id, @title, @body,
+           (SELECT COALESCE(MIN(position), 0) - 1 FROM notes WHERE notebook_id = @notebook_id),
+           ${NOW_ISO_SQL}, ${NOW_ISO_SQL})`
 );
 const _getNote = db.prepare('SELECT * FROM notes WHERE id = ?');
 const _notesByNotebook = db.prepare(
-  'SELECT * FROM notes WHERE notebook_id = ? ORDER BY updated_at DESC'
+  'SELECT * FROM notes WHERE notebook_id = ? ORDER BY position, id'
 );
 const _updateNote = db.prepare(
   `UPDATE notes SET title = @title, body = @body, updated_at = ${NOW_ISO_SQL} WHERE id = @id`
 );
 const _deleteNote = db.prepare('DELETE FROM notes WHERE id = ?');
+// Position only — a reorder is not an edit, updated_at stays.
+const _setPosition = db.prepare('UPDATE notes SET position = ? WHERE id = ? AND notebook_id = ?');
 
 function createNote({ notebook_id, title, body = '' }) {
   const info = _insertNote.run({ notebook_id, title, body });
@@ -58,6 +68,10 @@ function updateNote(id, { title, body }) {
 function deleteNote(id) {
   return _deleteNote.run(id).changes > 0;
 }
+// ids = the notebook's notes in their new order; all or nothing.
+const reorderNotes = db.transaction((notebookId, ids) => {
+  ids.forEach((id, i) => _setPosition.run(i, id, notebookId));
+});
 
 module.exports = {
   createNotebook,
@@ -68,4 +82,5 @@ module.exports = {
   listNotes,
   updateNote,
   deleteNote,
+  reorderNotes,
 };

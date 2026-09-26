@@ -18,6 +18,8 @@ Registry, Tokens). Die Architekturregeln stehen in [CLAUDE.md](CLAUDE.md).
 
 ## Schnellstart
 
+Voraussetzung: Node 20–25 (`engines` in `package.json`).
+
 ```bash
 git clone <this repo>
 cd vibe-template
@@ -30,22 +32,41 @@ Im `LOCAL_DEV_MODE` meldet dich der Auth-Guard automatisch als `DEV_USER_EMAIL`
 an, und beim ersten Start entsteht ein Seed-Notebook mit zwei Notes. Kein Login
 nötig.
 
+Dieser Klon ist zum Ausprobieren: `origin` zeigt aufs Template-Repo, ein Push
+ginge dorthin. Für ein eigenes Projekt den nächsten Abschnitt nehmen.
+
 ## Eigenes Projekt starten
 
-Ein Repo aus diesem erstellen (GitHub: *Use this template*, ohne
-Template-Historie), klonen, dann benennen:
+Auf GitHub *Use this template* → eigenes Repo (ohne Template-Historie), dieses
+klonen und `npm install`. Danach benennen — **einer** der beiden Wege, nicht
+beide nacheinander:
+
+**Mit Claude Code (empfohlen):** im Projektordner Claude Code starten und
+
+```
+/projekt-init invoice-hub "Invoice Hub"
+```
+
+Der Befehl braucht einen sauberen Working Tree, führt das Script aus (erst
+`--dry-run`, dann echt, inkl. `npm run test:unit`) und begleitet durch den Rest:
+Remote prüfen, `.env` anlegen, Deploy-Variablen, Lizenz/Icon, später Ablösen des
+`note`-Beispiels.
+
+**Von Hand:**
 
 ```bash
-npm install
-npm run init -- invoice-hub --title "Invoice Hub"   # zuerst --dry-run, zeigt die Dateien
+npm run init -- invoice-hub --title "Invoice Hub" --dry-run   # zeigt die Dateien
+npm run init -- invoice-hub --title "Invoice Hub"
+cp .env.example .env
 ```
 
 Der Slug (kebab-case) wird Paketname, systemd-Unit, `/opt/<slug>` und
-Runner-Label; der Titel erscheint in der UI, im Browser-Tab und im Manifest. Das
-Skript setzt ausserdem `CHANGELOG.md` und die Version auf 0.1.0 zurück und führt
-`npm run test:unit` aus. In Claude Code führt `/projekt-init` es aus und begleitet
-durch den Rest (Remote, `.env`, Deploy-Variablen, später Ablösen des
-`note`-Beispiels).
+Runner-Label — später ändern heisst, das LXC neu aufzusetzen. Der Titel erscheint
+in der UI, im Browser-Tab und im Manifest. Das Skript setzt ausserdem
+`CHANGELOG.md` und die Version auf 0.1.0 zurück und führt `npm run test:unit`
+aus. Was es nicht erledigt (GitHub-Variablen `APP_NAME`/`DEPLOY_ENABLED`, LXC,
+Lizenz, Icon): [.claude/commands/projekt-init.md](.claude/commands/projekt-init.md)
+§3 und [docs/deployment.md](docs/deployment.md).
 
 ## Projektstruktur
 
@@ -64,7 +85,7 @@ scripts/           migrate · migrations-lock · migration-renumber · pending-m
 tests/             unit · integration · e2e (Fixture-Harnesses) · e2e-app (echte App) · fixtures
 docs/              deployment · migrations · testing
 .github/workflows/ ci (Tests) · deploy (self-hosted LXC-Runner)
-.claude/           commands (/feature · /karte · /migration · /regel · /release) · skills (css) · settings (Hooks)
+.claude/           commands (/feature · /karte · /migration · /regel · /release · /projekt-init) · skills (css) · settings (Hooks)
 ```
 
 Ein neues Frontend-Feature: `npm run feature:new -- <id>` (Anatomie: DESIGN.md →

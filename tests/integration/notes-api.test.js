@@ -53,6 +53,28 @@ test('note create → list → job → delete', async () => {
   assert.equal(del.deleted, true);
 });
 
+test('notebooks carry note_count; PUT note-order reorders and validates', async () => {
+  const nb = await (await send('/api/notebooks', 'POST', { name: 'Order API' })).json();
+  const a = await (await send('/api/notes', 'POST', { notebook_id: nb.id, title: 'a' })).json();
+  const b = await (await send('/api/notes', 'POST', { notebook_id: nb.id, title: 'b' })).json();
+
+  const listed = (await (await get('/api/notebooks')).json()).find((n) => n.id === nb.id);
+  assert.equal(listed.note_count, 2);
+  // New notes go on top.
+  let notes = await (await get(`/api/notes?notebook_id=${nb.id}`)).json();
+  assert.deepEqual(notes.map((n) => n.title), ['b', 'a']);
+
+  const ok = await send(`/api/notebooks/${nb.id}/note-order`, 'PUT', { ids: [a.id, b.id] });
+  assert.equal(ok.status, 200);
+  assert.deepEqual((await ok.json()).map((n) => n.title), ['a', 'b']);
+  notes = await (await get(`/api/notes?notebook_id=${nb.id}`)).json();
+  assert.deepEqual(notes.map((n) => n.title), ['a', 'b']);
+
+  assert.equal((await send(`/api/notebooks/${nb.id}/note-order`, 'PUT', { ids: [a.id] })).status, 400);
+  assert.equal((await send('/api/notebooks/99999/note-order', 'PUT', { ids: [] })).status, 404);
+  assert.equal((await send('/api/notebooks/x/note-order', 'PUT', { ids: [] })).status, 400);
+});
+
 test('unknown API route returns JSON 404', async () => {
   const res = await get('/api/nope');
   assert.equal(res.status, 404);

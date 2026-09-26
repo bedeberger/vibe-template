@@ -104,6 +104,7 @@ Ein Hook warnt, er lehrt nicht: die Alternative steht im Volltext der Regel.
 | Regel | Durchsetzung | Wo |
 |---|---|---|
 | Keine Inline-`style`/`<style>` (nur `:style="{ '--x': … }"`) | `style-guard.js` **blockt** · `no-inline-style.test` | public/ |
+| Kein natives `<select>` — `combobox` ([public/CLAUDE.md](public/CLAUDE.md)) | `style-guard.js` warnt | public/ |
 | Kein `datetime('now')` — `${NOW_ISO_SQL}` | `style-guard.js` warnt · `architecture-tripwire.test` | db/, lib/, routes/, scripts/, public/js |
 | Kein Roh-SQL auf `notes`/`notebooks`, kein `db/notes.js`-Import ausserhalb der Facade | `style-guard.js` warnt · `architecture-tripwire.test` | alles ausser db/ + lib/note-store.js |
 | Jeder String in `de.json` **und** `en.json`, gleiche `{Platzhalter}`, kein verwaister/fehlender Key, kein Hardcode-Text | `i18n-check.js` · `i18n-locale-parity` / `i18n-keys-defined` / `i18n-no-hardcoded-text.test` | public/ |

@@ -25,8 +25,19 @@ const LICENSE_DIR = path.join(VENDOR_DIR, 'LICENSES');
 // { pkg, file (inside the package), name (file-name stem), ext, license }.
 // `license`: path inside the package, or null when the package ships none (the
 // committed LICENSES/<name>-LICENSE.txt is then kept as is).
+//
+// Two kinds, two load paths (DESIGN.md → "Vendor-Libs"): Alpine core + plugins
+// are ESM, imported in js/app/alpine-plugins.js and registered before
+// Alpine.start(). The big feature libs are UMD builds, loaded on demand by
+// js/lazy-libs.js (a <script> tag at first use, never on page load).
 const LIBS = [
   { pkg: 'alpinejs', file: 'dist/module.esm.min.js', name: 'alpine', ext: '.esm.min.js', license: null },
+  { pkg: '@alpinejs/anchor', file: 'dist/module.esm.min.js', name: 'alpine-anchor', ext: '.esm.min.js', license: null },
+  { pkg: '@alpinejs/focus', file: 'dist/module.esm.min.js', name: 'alpine-focus', ext: '.esm.min.js', license: null },
+  { pkg: '@alpinejs/collapse', file: 'dist/module.esm.min.js', name: 'alpine-collapse', ext: '.esm.min.js', license: null },
+  { pkg: '@alpinejs/resize', file: 'dist/module.esm.min.js', name: 'alpine-resize', ext: '.esm.min.js', license: null },
+  { pkg: 'sortablejs', file: 'Sortable.min.js', name: 'sortable', ext: '.min.js', license: 'LICENSE' },
+  { pkg: 'chart.js', file: 'dist/chart.umd.min.js', name: 'chart', ext: '.umd.min.js', license: 'LICENSE.md' },
 ];
 
 function pkgVersion(pkg) {

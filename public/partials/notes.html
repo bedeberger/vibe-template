@@ -17,12 +17,11 @@
 
   <div class="card-form-grid">
     <div class="card-form-row">
-      <label class="card-form-label" for="notebook-select" x-text="t('notebook.label')"></label>
-      <select id="notebook-select" x-model.number="currentNotebookId" @change="selectNotebook(currentNotebookId)">
-        <template x-for="nb in notebooks" :key="nb.id">
-          <option :value="nb.id" x-text="nb.name"></option>
-        </template>
-      </select>
+      <label class="card-form-label" id="notebook-label" x-text="t('notebook.label')"></label>
+      <div id="notebook-select" aria-labelledby="notebook-label"
+           x-data="combobox()" x-modelable="value" x-model="currentNotebookId"
+           x-effect="options = notebooks.map((nb) => ({ value: nb.id, label: nb.name }))"
+           @combobox-change="selectNotebook($event.detail)"></div>
     </div>
     <div class="card-form-row">
       <label class="card-form-label" for="new-note-title" x-text="t('notes.newLabel')"></label>

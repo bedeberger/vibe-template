@@ -5,6 +5,7 @@
 // the tightest feedback loop (at the edit, not in the CI gate).
 //   • inline style / <style> / non-custom-prop :style in public/**/*.html|svg → BLOCK
 //   • same in browser JS (template strings, el.style.x = …)                   → WARN
+//   • native <select> in public/**/*.html                                      → WARN (combobox)
 //   • datetime('now') in server/browser JS                                     → WARN (${NOW_ISO_SQL})
 //   • raw SQL on notes/notebooks outside db/ + lib/note-store.js              → WARN (domain facade)
 //   • import of db/notes.js outside the facade                                 → WARN
@@ -44,6 +45,11 @@ function analyse(rel, text) {
         + `${[...new Set(v.map((x) => x.msg))].join('; ')}. CSS gehoert in ein Modul unter public/css/; `
         + 'Laufzeitwerte nur als Custom Property: :style="{ \'--progress\': pct + \'%\' }" + var(--progress) im CSS. '
         + 'Gate: tests/unit/no-inline-style.test.mjs.');
+    }
+    if (/<select[\s>]/i.test(text)) {
+      warns.push('Natives <select>: Auswahlfelder nutzen die Combobox (public/CLAUDE.md "Combobox statt <select>") — '
+        + 'leeres <div x-data="combobox(…)" x-modelable="value" x-model="…" x-effect="options = …">. '
+        + 'Bewusste Ausnahme (z. B. nativer Mobile-Picker) im Markup-Kommentar begruenden.');
     }
   }
 

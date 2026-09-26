@@ -40,6 +40,18 @@ test('every vendored lib has exactly one versioned file and a licence', () => {
   }
 });
 
+test('public/vendor/ holds nothing but the LIBS builds and their licences', () => {
+  // An unlisted file escapes sync, the version check and the licence check —
+  // it is either a leftover (delete it) or a lib missing from LIBS.
+  const known = new Set(vendor.LIBS.map((lib) => vendor.targetName(lib)));
+  const licences = new Set(vendor.LIBS.map((lib) => `${lib.name}-LICENSE.txt`));
+  const strays = [
+    ...fs.readdirSync(vendor.VENDOR_DIR).filter((f) => f !== 'LICENSES' && !known.has(f)),
+    ...fs.readdirSync(vendor.LICENSE_DIR).filter((f) => !licences.has(f)).map((f) => `LICENSES/${f}`),
+  ];
+  assert.deepEqual(strays, [], 'Unbekannte Datei in public/vendor/ — in scripts/vendor-sync.js LIBS eintragen oder löschen.');
+});
+
 test('every /vendor/ reference in public/ points at an existing file', () => {
   for (const file of sources) {
     for (const [, ref] of fs.readFileSync(file, 'utf8').matchAll(/\/vendor\/([\w.@-]+)/g)) {

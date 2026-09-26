@@ -23,7 +23,7 @@ wird.
 - [Buttons](#buttons) · [Badges](#badges) · [Aktions-Icon-Bibliothek](#aktions-icon-bibliothek-verbindlich) · [Icon-System](#icon-system-lucide-sprite) ·
   [Icon-Button](#icon-button-icon-btn) · [Schliessen-Button](#schliessen-button) ·
   [Tooltip](#tooltip-data-tip)
-- [Formulare](#formulare) · [Schalter (Toggle)](#schalter-toggle) · [Tabs](#tabs--modus-umschalter)
+- [Formulare](#formulare) · [Combobox](#combobox-auswahlfeld) · [Schalter (Toggle)](#schalter-toggle) · [Tabs](#tabs--modus-umschalter)
 - [Status / Laden / Leer / Fehler](#status--laden--leer--fehler) ·
   [Bestätigungsdialog](#bestätigungsdialog-modal) · [Gefahrenzone](#gefahrenzone) ·
   [Job-Toast](#job-toast) · [Sitzungs-Banner](#sitzungs-banner)
@@ -735,17 +735,86 @@ kartenweises Formularvokabular.
   Invalid-Klasse.
 - Gleiche Höhe pro Zeile: alle Standard-Bedienelemente oder alle kompakt, nie
   gemischt.
-- Natives `<select>` ist gestylt und erlaubt (es wird keine Combobox-Komponente
-  ausgeliefert).
+- Auswahl aus einer Werteliste = [Combobox](#combobox-auswahlfeld), kein
+  natives `<select>`. Ausnahme nur mit Begründung im Markup-Kommentar (z. B.
+  bewusst der native Mobile-Picker); die `select`-Grundstile bleiben dafür.
 - Alle Labels, Platzhalter und Meldungen über `t()`; Zahlen/Daten über `Intl`
   mit der UI-Locale.
+
+---
+
+## Combobox (Auswahlfeld)
+
+**Einsatz:** jede Auswahl aus einer Werteliste — ersetzt `<select>` durch ein
+durchsuchbares Dropdown mit Tastatur-Navigation; optional Mehrfachauswahl,
+Zweitzeile, Gruppen-Köpfe und eine Footer-Aktion.
+
+**Markup:** das Wrapper-Div bleibt **leer** — `init()` rendert Trigger,
+Dropdown, Suche und Liste selbst und überschreibt den Inhalt.
+```html
+<label class="card-form-label" id="x-label" x-text="t('…')"></label>
+<div aria-labelledby="x-label"
+     x-data="combobox()" x-modelable="value" x-model="selectedId"
+     x-effect="options = items.map((i) => ({ value: i.id, label: i.name }))"
+     @combobox-change="onPick($event.detail)"></div>
+```
+Pflicht sind `x-data="combobox(…)"`, `x-modelable="value"` und `x-model` —
+ohne `x-modelable` kommt die Auswahl nicht im Karten-State an. `init()` setzt
+Klassen, ARIA-Rollen, Outside-Close und Tastatur-Navigation selbst: kein
+`class`, kein `@click.outside`, kein `@keydown` im Markup.
+
+Aufruf: `combobox(placeholder?, emptyLabel?)` oder als Objekt
+`combobox({ placeholder, emptyLabel, compact, multiple, transient, footer: { label, action } })`.
+`placeholder`, `emptyLabel` und `footer.label` dürfen Funktionen sein
+(`() => t('…')`, reaktiv). Ohne Platzhalter: `combobox.choose`.
+- `emptyLabel` — zusätzliche erste Option mit Wert `''` („keine Auswahl").
+- `compact` (Default `true`) — Grösse wie `.btn-compact` für Filterleisten; in
+  einer `.card-form-row` rendert sie automatisch in Feldgrösse.
+- `multiple` — `value` ist ein Array, Klick togglet, das Dropdown bleibt offen.
+- `transient` — nach der Auswahl zurück auf `null` (Aktions-Picker: nur
+  `@combobox-change` zählt).
+- Option `{ value, label, sublabel?, group? }`: `sublabel` = gedämpfte
+  Zweitzeile (mitdurchsucht); `group` = nicht auswählbarer Kopf vor dem ersten
+  Eintrag jeder Gruppe — Optionen dafür **nach Gruppe sortiert** liefern.
+- Deaktivieren: `x-effect="…; _disabled = !items.length"`.
+- Wrapper für eine Spezialisierung (Filter, Entitäts-Picker): `comboboxData(cfg)`
+  spreaden statt die Mechanik nachzubauen.
+
+**Klassen** [combobox.css](public/css/components/combobox.css):
+- `.combobox-wrap` (+ `--compact`) — Wrapper, vom Helfer gesetzt.
+- `.combobox-trigger` — Feld-Look, gleiche Höhe wie `<input>`; `:disabled` = `--opacity-hint`.
+- `.combobox-value` (+ `--placeholder` gedämpft), `.combobox-chevron` (+ `--open` dreht 180°).
+- `.combobox-dropdown` — `position: fixed`, Lage über `--cb-top`/`--cb-left`/`--cb-width`.
+- `.combobox-search`, `.combobox-list`, `.combobox-option` (+ `--hl`, `--selected`), `.combobox-empty`.
+- `.combobox-option__label` / `.combobox-option__sub` — Label + Zweitzeile.
+- `.combobox-group` (+ `__label`) — Sticky-Gruppenkopf.
+- `.combobox-footer-btn` — Footer-Aktion unter der Liste.
+
+**Regeln:**
+- **Lage:** `_place()` misst beim Öffnen und bei `resize`: unter dem Trigger,
+  nach oben geklappt, wenn unten der Platz fehlt und oben mehr ist; horizontal
+  in den Viewport geklemmt. Scrollen ausserhalb schliesst das Dropdown (wie ein
+  natives `<select>`). Durch `position: fixed` schneidet ein `overflow`-Vorfahr
+  es nicht ab; ein Vorfahr mit `transform`/`filter`/`contain` würde es aber
+  verankern — die Combobox dann ausserhalb davon platzieren.
+- **Mobile:** auf Handy/Touch kein Auto-Fokus auf die Suche (die
+  Bildschirmtastatur würde das Dropdown verschieben); lange Labels umbrechen,
+  die Suche hat ≥ 16px (kein iOS-Zoom).
+- **Laufzeit-Methoden nutzen `_rootEl`, nicht `this.$el`** — im `@click` des
+  gerenderten Triggers zeigt `$el` auf den Button, nicht auf den Wrapper.
+- Escape schliesst nur das Dropdown (`stopPropagation`) — ein umschliessender
+  Dialog bricht nicht mit ab.
+
+**Beispiele:** [notes.html](public/partials/notes.html) (Notizbuch-Wahl);
+Komponente [js/components/combobox.js](public/js/components/combobox.js),
+registriert in [register-cards.js](public/js/app/register-cards.js).
 
 ---
 
 ## Schalter (Toggle)
 
 **Einsatz:** eine einzelne boolesche Einstellung (ein/aus). Für eine Wahl
-zwischen Werten eine Radio-Gruppe oder `<select>` nutzen.
+zwischen Werten eine Radio-Gruppe oder die [Combobox](#combobox-auswahlfeld) nutzen.
 
 **Markup:**
 ```html
@@ -1059,6 +1128,7 @@ ausser `tokens*` legt ihre Regeln in einen Layer.
 | `css/components/skeleton.css` | components | Skeleton-Shimmer, Spinner | `chat.css`, `page/page-content-skeleton.css`, `page/page-list.css` (zusammengeführt) |
 | `css/components/tabs.css` | components | Tabs / Segment-Umschalter | `components/tabs.css` |
 | `css/components/toggle-switch.css` | components | boolescher Schalter | `components/toggle-switch.css` |
+| `css/components/combobox.css` | components | durchsuchbares Auswahlfeld (ersetzt `<select>`) | `components/combobox.css` |
 | `css/components/tooltip.css` | base, components | reiner CSS-Tooltip über `data-tip` | neu (ersetzt die JS-Tooltip-Schicht) |
 | `css/components/confirm-dialog.css` | components | natives `<dialog>` für Bestätigung/Modal | `components/confirm-dialog.css` |
 | `css/components/danger-zone.css` | components | Gefahrenzone | `components/danger-zone.css` |

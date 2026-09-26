@@ -47,3 +47,39 @@ test('note CRUD lifecycle', () => {
 test('createNote rejects unknown notebook', () => {
   assert.throws(() => noteStore.createNote({ notebookId: 99999, title: 'x' }), /unknown notebook/);
 });
+
+test('listNotebooks derives note_count at read time', () => {
+  const nb = noteStore.createNotebook('Counted');
+  noteStore.createNote({ notebookId: nb.id, title: 'a' });
+  noteStore.createNote({ notebookId: nb.id, title: 'b' });
+  assert.equal(noteStore.listNotebooks().find((n) => n.id === nb.id).note_count, 2);
+});
+
+test('a new note goes on top; reorderNotes persists the given order', () => {
+  const nb = noteStore.createNotebook('Order');
+  const a = noteStore.createNote({ notebookId: nb.id, title: 'a' });
+  const b = noteStore.createNote({ notebookId: nb.id, title: 'b' });
+  const c = noteStore.createNote({ notebookId: nb.id, title: 'c' });
+  assert.deepEqual(noteStore.listNotes(nb.id).map((n) => n.title), ['c', 'b', 'a']);
+
+  const listed = noteStore.reorderNotes(nb.id, [a.id, c.id, b.id]);
+  assert.deepEqual(listed.map((n) => n.title), ['a', 'c', 'b']);
+  assert.deepEqual(noteStore.listNotes(nb.id).map((n) => n.title), ['a', 'c', 'b']);
+  // A reorder is not an edit.
+  assert.equal(noteStore.getNote(a.id).updated_at, a.updated_at);
+});
+
+test('reorderNotes rejects anything but a permutation of the notebook', () => {
+  const nb = noteStore.createNotebook('Strict');
+  const other = noteStore.createNotebook('Other');
+  const a = noteStore.createNote({ notebookId: nb.id, title: 'a' });
+  const b = noteStore.createNote({ notebookId: nb.id, title: 'b' });
+  const x = noteStore.createNote({ notebookId: other.id, title: 'x' });
+  const msg = /every note of the notebook exactly once/;
+  assert.throws(() => noteStore.reorderNotes(nb.id, [a.id]), msg);           // incomplete
+  assert.throws(() => noteStore.reorderNotes(nb.id, [a.id, a.id]), msg);     // duplicate
+  assert.throws(() => noteStore.reorderNotes(nb.id, [a.id, x.id]), msg);     // foreign note
+  assert.throws(() => noteStore.reorderNotes(nb.id, 'nope'), /array/);
+  assert.throws(() => noteStore.reorderNotes(99999, []), /unknown notebook/);
+  assert.deepEqual(noteStore.listNotes(nb.id).map((n) => n.id), [b.id, a.id]); // untouched
+});

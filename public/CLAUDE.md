@@ -33,6 +33,11 @@ Gilt zusätzlich zur Root-[CLAUDE.md](../CLAUDE.md); CSS-Regeln in
 - **`x-html` nur mit vorab-escaptem Content** (`escHtml()` aus
   [js/utils.js](js/utils.js)), kein Runtime-Sanitizer. Referenz: `bodyHtml` in
   note-item-card.js; gegated durch die Harness-Spec `tests/e2e/notes-card.spec.js`.
+- **Combobox statt `<select>`** — jede Auswahl aus einer Werteliste nutzt
+  `Alpine.data('combobox')` ([js/components/combobox.js](js/components/combobox.js)):
+  leeres Wrapper-Div mit `x-data="combobox(…)" x-modelable="value" x-model="…"`,
+  Optionen via `x-effect="options = …"`. Natives `<select>` nur mit Begründung
+  im Markup-Kommentar. Details: DESIGN.md → "Combobox".
 - **Strings nur via `t('area.field')`** — inklusive `aria-label`, `data-tip`,
   Placeholder. Neuer Key → `js/i18n/de.json` **und** `en.json`.
 - **API-Aufrufe via `api()`** ([js/utils.js](js/utils.js)): JSON rein/raus, wirft

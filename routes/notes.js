@@ -27,6 +27,19 @@ router.post('/notebooks', (req, res) => {
   }
 });
 
+// Manual order (drag & drop): body { ids } = every note of the notebook in
+// its new order. Answers with the reordered list.
+router.put('/notebooks/:id/note-order', (req, res) => {
+  const id = toIntId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'invalid id' });
+  setContext({ entity: id });
+  try {
+    res.json(noteStore.reorderNotes(id, req.body?.ids));
+  } catch (e) {
+    res.status(e.message === 'unknown notebook' ? 404 : 400).json({ error: e.message });
+  }
+});
+
 // ── Notes ────────────────────────────────────────────────────────────────
 router.get('/notes', (req, res) => {
   const notebookId = toIntId(req.query.notebook_id);

@@ -1,0 +1,191 @@
+@layer components {
+/* === Combobox (searchable select) — DESIGN.md → "Combobox" ===
+   Markup is rendered by public/js/components/combobox.js. */
+.combobox-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.combobox-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  width: 100%;
+  flex: 1 1 auto;
+  padding: var(--size-default-padding-y) var(--space-10);
+  border: var(--border-thin) solid var(--color-border-input);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font: inherit;
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+}
+.combobox-trigger:hover { background: var(--color-hover); }
+.combobox-trigger:active { transform: none; }
+.combobox-trigger:focus-visible { outline: none; border-color: var(--color-border-focus); }
+.combobox-trigger[aria-expanded="true"] { border-color: var(--color-border-focus); }
+.combobox-trigger:disabled {
+  opacity: var(--opacity-hint);
+  cursor: not-allowed;
+}
+.combobox-value {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.combobox-value--placeholder { color: var(--color-muted); }
+.combobox-chevron {
+  flex-shrink: 0;
+  opacity: var(--opacity-muted);
+  transition: transform var(--transition-base);
+}
+.combobox-chevron--open { transform: rotate(180deg); }
+/* Fixed, placed by combobox.js (_place → --cb-top/--cb-left/--cb-width):
+   escapes overflow-clipping ancestors, flips above when there is no room below. */
+.combobox-dropdown {
+  position: fixed;
+  top: var(--cb-top, 0);
+  left: var(--cb-left, 0);
+  width: var(--cb-width, auto);
+  max-width: calc(100vw - 2 * var(--space-sm));
+  z-index: var(--z-popover);
+  background: var(--color-surface);
+  border: var(--border-thin) solid var(--color-border-focus);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  transition: opacity var(--transition-base);
+}
+/* Entry fade (display:none → block) — opacity only, so the height measured by
+   _place() is not affected. */
+@starting-style {
+  .combobox-dropdown { opacity: 0; }
+}
+.combobox-search {
+  display: block;
+  width: 100%;
+  padding: var(--pad-btn-compact);
+  border: none;
+  border-bottom: var(--border-thin) solid var(--color-border);
+  border-radius: 0;
+  background: var(--color-bg);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+}
+.combobox-search:focus-visible { outline: none; }
+.combobox-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  /* No scroll chaining: at the list's end the window would scroll on, which
+     fires the scroll listener and closes the dropdown. */
+  overscroll-behavior: contain;
+}
+.combobox-option {
+  padding: var(--pad-btn-compact);
+  font-size: var(--font-size-base);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+/* Optional second line (opt.sublabel). Both spans clip on their own — the
+   option's ellipsis does not reach block children. */
+.combobox-option__label,
+.combobox-option__sub {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.combobox-option__sub {
+  margin-top: var(--space-1);
+  font-size: var(--size-compact-font-size);
+  color: var(--color-muted);
+}
+.combobox-option:hover,
+.combobox-option--hl { background: var(--color-hover); }
+.combobox-option--selected { color: var(--color-accent); }
+.combobox-option--selected.combobox-option--hl,
+.combobox-option--selected:hover { background: var(--color-accent-hover); }
+.combobox-empty {
+  padding: var(--pad-btn-compact);
+  font-size: var(--font-size-base);
+  font-style: italic;
+  color: var(--color-muted);
+}
+/* Non-selectable group header (opt.group): a section band, sticky within its
+   group while the list scrolls. */
+.combobox-group {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-base);
+  padding: var(--space-6) var(--space-10) var(--space-5);
+  background: var(--color-bg);
+  border-bottom: var(--border-thin) solid var(--color-border);
+  font-size: var(--size-compact-font-size);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--color-muted);
+  cursor: default;
+}
+/* Optional footer action (cfg.footer). Outside keyboard nav on purpose. */
+.combobox-footer-btn {
+  display: block;
+  width: 100%;
+  padding: var(--pad-btn-compact);
+  border: none;
+  border-top: var(--border-thin) solid var(--color-border);
+  border-radius: 0;
+  background: transparent;
+  font: inherit;
+  font-size: var(--font-size-base);
+  color: var(--color-accent);
+  text-align: left;
+  cursor: pointer;
+}
+.combobox-footer-btn:hover,
+.combobox-footer-btn:focus-visible { background: var(--color-hover); outline: none; }
+
+/* Compact (default) — sized like .btn-compact, for dense rows (filter bars). */
+.combobox-wrap--compact .combobox-trigger {
+  padding: var(--size-compact-padding);
+  font-size: var(--size-compact-font-size);
+  border-color: var(--color-border);
+  background: var(--color-bg);
+}
+.combobox-wrap--compact :is(.combobox-search, .combobox-option, .combobox-empty, .combobox-footer-btn) {
+  padding: var(--space-5) var(--space-sm);
+  font-size: var(--size-compact-font-size);
+}
+.combobox-wrap--compact .combobox-group { padding-inline: var(--space-sm); }
+
+/* In a form row a compact combobox takes the field geometry of the inputs
+   next to it — no per-call flag needed. */
+.card-form-row .combobox-wrap--compact .combobox-trigger {
+  padding: var(--size-default-padding-y) var(--space-10);
+  font-size: var(--font-size-base);
+  border-color: var(--color-border-input);
+  background: var(--color-surface);
+}
+
+/* Phone: long labels wrap instead of ellipsing; search ≥ 16px (no iOS zoom). */
+@media (max-width: 600px) {
+  .combobox-option,
+  .combobox-option__label,
+  .combobox-option__sub {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    overflow: visible;
+    text-overflow: clip;
+  }
+  .combobox-search,
+  .combobox-wrap--compact .combobox-search { font-size: 16px; }
+}
+}

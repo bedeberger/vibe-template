@@ -23,9 +23,36 @@ test('x-html sink renders the body escaped (no live markup)', async ({ page }) =
 });
 
 test('switching the notebook reloads the list', async ({ page }) => {
-  await page.locator('#notebook-select').selectOption({ label: 'Zweites' });
+  const picker = page.getByRole('combobox', { name: 'Notizbuch' });
+  await picker.getByRole('button').click();
+  await picker.getByRole('option', { name: 'Zweites' }).click();
   await expect(page.locator('.note-card')).toHaveCount(1);
   await expect(page.locator('.note-card .card-title')).toHaveText('Anderes Buch');
+  await expect(picker.getByRole('listbox')).toBeHidden();
+  await expect(picker.getByRole('button')).toHaveText('Zweites');
+});
+
+test('combobox: search filters, keyboard picks, Escape closes', async ({ page }) => {
+  const picker = page.getByRole('combobox', { name: 'Notizbuch' });
+  const trigger = picker.getByRole('button');
+  await expect(trigger).toHaveText('Harness');
+  await trigger.click();
+  const search = picker.getByRole('textbox', { name: 'Suchen …' });
+  await expect(search).toBeFocused();
+  await search.fill('zwei');
+  await expect(picker.getByRole('option')).toHaveCount(1);
+  await search.press('Enter');
+  await expect(page.locator('.note-card')).toHaveCount(1);
+  await expect(page.locator('.note-card .card-title')).toHaveText('Anderes Buch');
+  await expect(trigger).toBeFocused();
+
+  await trigger.press('ArrowDown');
+  await expect(picker.getByRole('listbox')).toBeVisible();
+  await search.fill('nichts davon');
+  await expect(picker.getByText('Keine Treffer')).toBeVisible();
+  await search.press('Escape');
+  await expect(picker.getByRole('listbox')).toBeHidden();
+  await expect(trigger).toHaveText('Zweites');
 });
 
 test('add → POST and the new note is on top', async ({ page, request }) => {
@@ -76,5 +103,16 @@ test.describe('phone viewport', () => {
     await card.getByRole('button', { name: 'Bearbeiten' }).click();
     const editOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(editOverflow).toBeLessThanOrEqual(0);
+  });
+
+  test('notebook combobox opens inside the viewport and stays usable', async ({ page }) => {
+    const picker = page.getByRole('combobox', { name: 'Notizbuch' });
+    await picker.getByRole('button').click();
+    const list = picker.getByRole('listbox');
+    await expect(list).toBeInViewport({ ratio: 1 });
+    // Touch/phone: no auto-focus (the on-screen keyboard would shift the dropdown).
+    await expect(picker.getByRole('textbox')).not.toBeFocused();
+    await picker.getByRole('option', { name: 'Zweites' }).click();
+    await expect(page.locator('.note-card')).toHaveCount(1);
   });
 });

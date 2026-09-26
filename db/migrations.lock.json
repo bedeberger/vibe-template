@@ -3,5 +3,15 @@
     "version": 1,
     "name": "init",
     "fingerprint": "b1470702b534e5fddd0a5507eb7f9b017b7cade987013f3e16e3e1eda9fec9d3"
+  },
+  {
+    "version": 2,
+    "name": "local_auth",
+    "fingerprint": "309398984436541da4fc1d6872cb848a296de728f971deacd1a0ca91e07f455f"
+  },
+  {
+    "version": 3,
+    "name": "note_position",
+    "fingerprint": "e99ed83cfc24649f4dc69e105850633b7a48fa96a0a198fe6fb75e06f17a5cb3"
   }
 ]

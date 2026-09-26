@@ -31,6 +31,12 @@
     "bodyPlaceholder": "Text …",
     "newLabel": "Neue Notiz"
   },
+  "combobox": {
+    "choose": "Auswählen …",
+    "search": "Suchen …",
+    "noMatches": "Keine Treffer",
+    "multiSelected": "{n} ausgewählt"
+  },
   "a11y": {
     "skipToMain": "Zum Inhalt springen"
   }
