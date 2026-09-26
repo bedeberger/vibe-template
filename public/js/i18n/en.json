@@ -201,9 +201,6 @@
     "conflict": "That conflicts with an existing entry.",
     "rateLimited": "Too many attempts. Please wait a moment."
   },
-  "toast": {
-    "close": "Close message"
-  },
   "shell": {
     "sidebar": "Sidebar",
     "openNav": "Open navigation",

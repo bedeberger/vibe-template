@@ -18,7 +18,7 @@ app.db-*
 
 # Logs
 *.log
-logs/
+/logs/
 
 # Test artefacts
 test-results/

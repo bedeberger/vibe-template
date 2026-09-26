@@ -201,9 +201,6 @@
     "conflict": "Das kollidiert mit einem bestehenden Eintrag.",
     "rateLimited": "Zu viele Versuche. Bitte kurz warten."
   },
-  "toast": {
-    "close": "Meldung schliessen"
-  },
   "shell": {
     "sidebar": "Seitenleiste",
     "openNav": "Navigation öffnen",

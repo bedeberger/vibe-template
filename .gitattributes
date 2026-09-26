@@ -13,3 +13,7 @@
 
 # Generated: collapsed in diffs.
 db/migrations.lock.json  linguist-generated=true
+
+# Vendored: byte-identical to the npm package (vendor-integrity.test compares
+# bytes; some licences ship with CRLF).
+public/vendor/** -text
